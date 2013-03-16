@@ -18,20 +18,20 @@ This implementation uses OpenMP to utilize multiple cores in a single shared-mem
 ### tHogbomCleanCuda
 This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU.
 
-
 Convolutional Resamping Benchmark (tConvolve)
 ---------------------------------------------
-The tConvolve benchmark programs measures the performance of a convolutional 
-resampling algorithm as used in radio astronomy data processing. The benchmark is 
-configured to reflect the computing needs of the Australian Square Kilometer Array 
-Pathfinder (ASKAP) Science Data Processor. A more detailed description and some analysis
+
+The tConvolve benchmark programs measures the performance of a convolutional
+resampling algorithm as used in radio astronomy data processing. The benchmark is
+configured to reflect the computing needs of the Australian Square Kilometer Array
+Pathfinder (ASKAP) Science Data Processor. A more detailed description and some analysis
 of this algorithm is found in [SKA Memo 132](http://www.skatelescope.org/uploaded/59116_132_Memo_Humphreys.pdf).
 
-### tConvolveMPI 
-The implementation distributes work to multiple CPU cores or multiple nodes via Message 
-Passing Interface (MPI) much like the ASKAP software, and while it is possible to 
-benchmark an entire cluster the aim of the benchmark is primarily to benchmark a 
-single compute node. 
+### tConvolveMPI
+The implementation distributes work to multiple CPU cores or multiple nodes via Message
+Passing Interface (MPI) much like the ASKAP software, and while it is possible to
+benchmark an entire cluster the aim of the benchmark is primarily to benchmark a single compute node.
 
 ### tConvolveCuda
 This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU.
+
