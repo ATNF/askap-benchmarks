@@ -34,20 +34,12 @@
 
 using namespace std;
 
-HogbomOMP::HogbomOMP()
-{
-}
-
-HogbomOMP::~HogbomOMP()
-{
-}
-
 void HogbomOMP::deconvolve(const vector<float>& dirty,
-        const size_t dirtyWidth,
-        const vector<float>& psf,
-        const size_t psfWidth,
-        vector<float>& model,
-        vector<float>& residual)
+                           const size_t dirtyWidth,
+                           const vector<float>& psf,
+                           const size_t psfWidth,
+                           vector<float>& model,
+                           vector<float>& residual)
 {
     residual = dirty;
 
@@ -56,8 +48,8 @@ void HogbomOMP::deconvolve(const vector<float>& dirty,
     size_t psfPeakPos = 0;
     findPeak(psf, psfPeakVal, psfPeakPos);
     cout << "Found peak of PSF: " << "Maximum = " << psfPeakVal
-        << " at location " << idxToPos(psfPeakPos, psfWidth).x << ","
-       << idxToPos(psfPeakPos, psfWidth).y << endl;
+         << " at location " << idxToPos(psfPeakPos, psfWidth).x << ","
+         << idxToPos(psfPeakPos, psfWidth).y << endl;
 
     for (unsigned int i = 0; i < g_niters; ++i) {
         // Find the peak in the residual image
@@ -83,49 +75,60 @@ void HogbomOMP::deconvolve(const vector<float>& dirty,
 }
 
 void HogbomOMP::subtractPSF(const vector<float>& psf,
-        const size_t psfWidth,
-        vector<float>& residual,
-        const size_t residualWidth,
-        const size_t peakPos, const size_t psfPeakPos,
-        const float absPeakVal,
-        const float gain)
+                            const size_t psfWidth,
+                            vector<float>& residual,
+                            const size_t residualWidth,
+                            const size_t peakPos, const size_t psfPeakPos,
+                            const float absPeakVal,
+                            const float gain)
 {
+    // The x,y coordinate for the peak of the PSF (usually the centre)
     const int rx = idxToPos(peakPos, residualWidth).x;
     const int ry = idxToPos(peakPos, residualWidth).y;
 
+    // The x,y coordinate of the peak in the residual image
     const int px = idxToPos(psfPeakPos, psfWidth).x;
     const int py = idxToPos(psfPeakPos, psfWidth).y;
 
+    // The PSF needs to be overlayed on the residual image at the position
+    // where the peaks align. This is the offset between the above two points
     const int diffx = rx - px;
     const int diffy = ry - px;
 
+    // The top-left-corner of the region of the residual to subtract from.
+    // This will either be the top right corner of the PSF too, or on an edge
+    // in the case the PSF spills outside of the residual image
     const int startx = max(0, rx - px);
     const int starty = max(0, ry - py);
 
+    // This is the bottom-right corner of the region of the residual to
+    // subtract from.
     const int stopx = min(residualWidth - 1, rx + (psfWidth - px - 1));
     const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
 
-    #pragma omp parallel for default(shared) schedule(static)
+#pragma omp parallel for default(shared) schedule(static)
+
     for (int y = starty; y <= stopy; ++y) {
         for (int x = startx; x <= stopx; ++x) {
             residual[posToIdx(residualWidth, Position(x, y))] -= gain * absPeakVal
-                * psf[posToIdx(psfWidth, Position(x - diffx, y - diffy))];
+                    * psf[posToIdx(psfWidth, Position(x - diffx, y - diffy))];
         }
     }
 }
 
 void HogbomOMP::findPeak(const vector<float>& image,
-        float& maxVal, size_t& maxPos)
+                         float& maxVal, size_t& maxPos)
 {
     maxVal = 0.0;
     maxPos = 0;
     const size_t size = image.size();
 
-    #pragma omp parallel
+#pragma omp parallel
     {
         float threadAbsMaxVal = 0.0;
         size_t threadAbsMaxPos = 0;
-        #pragma omp for schedule(static)
+#pragma omp for schedule(static)
+
         for (size_t i = 0; i < size; ++i) {
             if (abs(image[i]) > abs(threadAbsMaxVal)) {
                 threadAbsMaxVal = image[i];
@@ -135,7 +138,8 @@ void HogbomOMP::findPeak(const vector<float>& image,
 
         // Avoid using the double-checked locking optimization here unless
         // we can be certain that the load of a float is atomic
-        #pragma omp critical
+#pragma omp critical
+
         if (abs(threadAbsMaxVal) > abs(maxVal)) {
             maxVal = threadAbsMaxVal;
             maxPos = threadAbsMaxPos;

@@ -27,9 +27,17 @@
 
 class Stopwatch {
     public:
+
+        /// Constructor
         Stopwatch();
+
+        /// Destructor
         ~Stopwatch();
+
+        // Start the stopwatch
         void start();
+        
+        // Returns the time in seconds since start() was called.
         double stop();
 
     private:
