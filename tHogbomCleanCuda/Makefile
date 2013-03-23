@@ -24,21 +24,21 @@
 
 CXX = g++
 CFLAGS = -g -Wall -Wextra -O3 -fstrict-aliasing -fPIC
+INCLUDE = -I/usr/local/cuda/include
 
 NVCC = nvcc
-NVCCFLAGS = -g -O3 --compiler-options -fPIC
-INCLUDE = -I/usr/local/cuda/include
+NVCCFLAGS = -O3 --compiler-options -fPIC
 
 EXENAME = tHogbomCleanCuda
 OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomCuda.o
 
 all:		$(EXENAME)
 
-HogbomCuda.o: HogbomCuda.h HogbomCuda.cu Parameters.h
-			$(NVCC) $(NVCCFLAGS) $(INCLUDE) -c HogbomCuda.cu
+HogbomCuda.o:	HogbomCuda.cu HogbomCuda.h Parameters.h
+		$(NVCC) $(NVCCFLAGS) $(INCLUDE) -c $<
 
 %.o:		%.cc %.h Parameters.h
-			$(CXX) $(CFLAGS) $(INCLUDE) -c $<
+		$(CXX) $(CFLAGS) $(INCLUDE) -c $<
 
 $(EXENAME):	$(OBJS)
 		$(NVCC) $(NVCCFLAGS) -o $(EXENAME) $(OBJS)

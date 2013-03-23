@@ -18,9 +18,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
-CXX=mpicxx
-CFLAGS=-O3 -fstrict-aliasing -fcx-limited-range -Wall -Wextra
-LIBS=
+CXX = mpicxx
+CFLAGS = -O3 -fstrict-aliasing -fcx-limited-range -Wall -Wextra
 
 EXENAME = tConvolveMPI
 OBJS = tConvolveMPI.o Stopwatch.o Benchmark.o
@@ -31,8 +30,7 @@ all:		$(EXENAME)
 		$(CXX) $(CFLAGS) -c $<
 
 $(EXENAME):	$(OBJS)
-		$(CXX) -o $(EXENAME) $(OBJS) $(LIBS)
+		$(CXX) -o $(EXENAME) $(OBJS)
 
 clean:
 		rm -f $(EXENAME) *.o
-

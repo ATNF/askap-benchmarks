@@ -21,29 +21,24 @@
 
 CXX = g++
 CFLAGS = -Wall -Wextra -O2 -fstrict-aliasing -fcx-limited-range -fPIC
+INCLUDE = -I. -I/usr/local/cuda/include
 
 EXENAME = tConvolveCuda
-EXEOBJS = $(EXENAME).o
-EXELIBS = -lCudaGridder
+OBJS = $(EXENAME).o CudaGridder.o CudaGridKernel.o Stopwatch.o
 
-LIBNAME=libCudaGridder.so
-LIBOBJS=CudaGridder.o CudaGridKernel.o Stopwatch.o
+NVCC = nvcc
+NVCCFLAGS = -O3 --compiler-options -fPIC
 
-NVCCFLAGS=-O3 --compiler-options -fPIC
+all:		$(EXENAME)
 
-all:		$(EXENAME) $(LIBNAME)
+CudaGridKernel.o:	CudaGridKernel.cu CudaGridKernel.h
+			$(NVCC) $(NVCCFLAGS) -c $<
 
 %.o:		%.cc %.h
-		$(CXX) $(CFLAGS) -c $<
+		$(CXX) $(CFLAGS) $(INCLUDE) -c $<
 
-$(LIBNAME):	CudaGridder.cc CudaGridder.h CudaGridKernel.cu Stopwatch.o
-		nvcc $(NVCCFLAGS) -I/usr/local/cuda/include -c CudaGridKernel.cu
-		$(CXX) $(CFLAGS) -I/usr/local/cuda/include -c CudaGridder.cc
-		nvcc $(NVCCFLAGS) -shared -o $(LIBNAME) $(LIBOBJS)
-
-$(EXENAME):	$(EXEOBJS) $(LIBNAME)
-		$(CXX) $(CFLAGS) -L. -L/usr/local/cuda -o $(EXENAME) $(EXEOBJS) $(EXELIBS)
+$(EXENAME):	$(OBJS) 
+		$(NVCC) $(NVCCFLAGS) -o $(EXENAME) $(OBJS)
 
 clean: 
-		rm -f $(EXENAME) $(LIBNAME) *.o
-
+		rm -f $(EXENAME) *.o
