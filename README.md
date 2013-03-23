@@ -12,8 +12,9 @@ deconvolution algorithm.  This benchmark is quite minimal and actually omits the
 convolution of the model with the clean beam, but this involves the similar operations to
 the other steps as far as the CPU is concerned.
 
-Execution of both the tHogbomClean benchmarks will require the existance of the point spread function (PSF)
-image and the dirty image (the image to be cleaned) the working directory. These can be downloaded from here:
+Execution of both the tHogbomClean benchmarks will require the existance of the point spread
+function (PSF) image and the dirty image (the image to be cleaned) the working directory.
+These can be downloaded from here:
 
 * http://www.atnf.csiro.au/people/Ben.Humphreys/dirty.img
 * http://www.atnf.csiro.au/people/Ben.Humphreys/psf.img
@@ -22,13 +23,17 @@ image and the dirty image (the image to be cleaned) the working directory. These
 This implementation uses OpenMP to utilize multiple cores in a single shared-memory system.
 
 ### tHogbomCleanCuda
-This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU.
+This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU. Note, a
+faster version of this benchmark implemented by Mark Harris of NVIDIA can be found
+here: https://github.com/harrism/tHogbomCleanHemi
+
 
 Convolutional Resamping Benchmark (tConvolve)
 ---------------------------------------------
-
-The tConvolve benchmark programs measures the performance of a convolutional
-resampling algorithm as used in radio astronomy data processing. The benchmark is
+This benchmark suite include parallel implementations of [Tim Cornwell's](http://www.atnf.csiro.au/people/tim.cornwell/)
+original [tConvolveBLAS](http://wfit.googlecode.com/svn-history/r1088/wfit/doc/code/tConvolveBLAS.cc)
+benchmark. The tConvolve benchmark programs measures the performance of a convolutional
+resampling algorithm as used in radio astronomy data processing. The benchmark is
 configured to reflect the computing needs of the Australian Square Kilometer Array
 Pathfinder (ASKAP) Science Data Processor. A more detailed description and some analysis
 of this algorithm is found in [SKA Memo 132](http://www.skatelescope.org/uploaded/59116_132_Memo_Humphreys.pdf).
@@ -36,7 +41,8 @@ of this algorithm is found in [SKA Memo 132](http://www.skatelescope.org/uploade
 ### tConvolveMPI
 The implementation distributes work to multiple CPU cores or multiple nodes via Message
 Passing Interface (MPI) much like the ASKAP software, and while it is possible to
-benchmark an entire cluster the aim of the benchmark is primarily to benchmark a single compute node.
+benchmark an entire cluster the aim of the benchmark is primarily to benchmark a single
+compute node.
 
 ### tConvolveCuda
 This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU.
