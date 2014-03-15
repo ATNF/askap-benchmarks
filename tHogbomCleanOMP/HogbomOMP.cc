@@ -82,11 +82,11 @@ void HogbomOMP::subtractPSF(const vector<float>& psf,
                             const float absPeakVal,
                             const float gain)
 {
-    // The x,y coordinate for the peak of the PSF (usually the centre)
+    // The x,y coordinate of the peak in the residual image
     const int rx = idxToPos(peakPos, residualWidth).x;
     const int ry = idxToPos(peakPos, residualWidth).y;
 
-    // The x,y coordinate of the peak in the residual image
+    // The x,y coordinate for the peak of the PSF (usually the centre)
     const int px = idxToPos(psfPeakPos, psfWidth).x;
     const int py = idxToPos(psfPeakPos, psfWidth).y;
 

@@ -176,18 +176,27 @@ static void subtractPSF(const float* d_psf, const int psfWidth,
 {
     const int blockDim = 16;
 
+    // The x,y coordinate of the peak in the residual image
     const int rx = idxToPos(peakPos, residualWidth).x;
     const int ry = idxToPos(peakPos, residualWidth).y;
 
+    // The x,y coordinate for the peak of the PSF (usually the centre)
     const int px = idxToPos(psfPeakPos, psfWidth).x;
     const int py = idxToPos(psfPeakPos, psfWidth).y;
 
+    // The PSF needs to be overlayed on the residual image at the position
+    // where the peaks align. This is the offset between the above two points
     const int diffx = rx - px;
     const int diffy = ry - px;
 
+    // The top-left-corner of the region of the residual to subtract from.
+    // This will either be the top right corner of the PSF too, or on an edge
+    // in the case the PSF spills outside of the residual image
     const int startx = max(0, rx - px);
     const int starty = max(0, ry - py);
 
+    // This is the bottom-right corner of the region of the residual to
+    // subtract from.
     const int stopx = min(residualWidth - 1, rx + (psfWidth - px - 1));
     const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
 
