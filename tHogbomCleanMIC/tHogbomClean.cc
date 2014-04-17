@@ -123,7 +123,7 @@ int main(int /*argc*/, char** /* argv*/)
 
         Stopwatch sw;
         sw.start();
-        //golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
+        golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
         const double time = sw.stop();
 
         // Report on timings

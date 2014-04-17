@@ -27,7 +27,7 @@
 CXX=icpc
 CFLAGS=-O3 -openmp -vec-report
 
-EXENAME = tHogbomCleanMIC
+EXENAME = tHogbomClean
 OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomMIC.o
 
 all:		$(EXENAME)
