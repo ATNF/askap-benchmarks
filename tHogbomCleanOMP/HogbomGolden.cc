@@ -56,9 +56,9 @@ void HogbomGolden::deconvolve(const vector<float>& dirty,
         float absPeakVal = 0.0;
         size_t absPeakPos = 0;
         findPeak(residual, absPeakVal, absPeakPos);
-        //cout << "Iteration: " << i + 1 << " - Maximum = " << absPeakVal
-        //    << " at location " << idxToPos(absPeakPos, dirtyWidth).x << ","
-        //    << idxToPos(absPeakPos, dirtyWidth).y << endl;
+        cout << "Iteration: " << i + 1 << " - Maximum = " << absPeakVal
+            << " at location " << idxToPos(absPeakPos, dirtyWidth).x << ","
+            << idxToPos(absPeakPos, dirtyWidth).y << endl;
 
         // Check if threshold has been reached
         if (abs(absPeakVal) < g_threshold) {
@@ -93,7 +93,7 @@ void HogbomGolden::subtractPSF(const vector<float>& psf,
     // The PSF needs to be overlayed on the residual image at the position
     // where the peaks align. This is the offset between the above two points
     const int diffx = rx - px;
-    const int diffy = ry - px;
+    const int diffy = ry - py;
 
     // The top-left-corner of the region of the residual to subtract from.
     // This will either be the top right corner of the PSF too, or on an edge
