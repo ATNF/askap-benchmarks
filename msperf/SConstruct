@@ -9,7 +9,5 @@ from askapenv import env
 pkg = env.AskapPackage("msperf")
 pkg.AddSubPackage("writers")
 
-env.Append(CCFLAGS=['-O2', '-g'])
-
 # run the build process
 pkg()
