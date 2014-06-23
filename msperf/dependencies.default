@@ -1,4 +1,3 @@
 common=3rdParty/LOFAR/Common/Common-3.3
 cmdlineparser=3rdParty/cmdlineparser/cmdlineparser-0.1.1
 casacore=3rdParty/casacore/casacore-1.6.0a;casa_ms casa_images casa_components casa_mirlib casa_coordinates casa_fits casa_lattices casa_measures casa_scimath casa_scimath_f casa_tables casa_casa
-openmpi=3rdParty/openmpi/current
