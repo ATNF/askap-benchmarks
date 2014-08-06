@@ -174,7 +174,7 @@ static void subtractPSF(const float* d_psf, const int psfWidth,
         const size_t peakPos, const size_t psfPeakPos,
         const float absPeakVal, const float gain)
 {
-    const int blockDim = 16;
+    const dim3 blockDim(32, 4);
 
     // The x,y coordinate of the peak in the residual image
     const int rx = idxToPos(peakPos, residualWidth).x;
@@ -201,12 +201,12 @@ static void subtractPSF(const float* d_psf, const int psfWidth,
     const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
 
     // Note: Both start* and stop* locations are inclusive.
-    const int blocksx = ceil((stopx-startx+1.0) / static_cast<float>(blockDim));
-    const int blocksy = ceil((stopy-starty+1.0) / static_cast<float>(blockDim));
+    const int blocksx = ceil((stopx-startx+1.0) / static_cast<float>(blockDim.x));
+    const int blocksy = ceil((stopy-starty+1.0) / static_cast<float>(blockDim.y));
 
     dim3 numBlocks(blocksx, blocksy);
-    dim3 threadsPerBlock(blockDim, blockDim);
-    d_subtractPSF<<<numBlocks,threadsPerBlock>>>(d_psf, psfWidth, d_residual, residualWidth,
+
+    d_subtractPSF<<<numBlocks, blockDim>>>(d_psf, psfWidth, d_residual, residualWidth,
             startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gain);
     cudaError_t err = cudaGetLastError();
     checkerror(err);
