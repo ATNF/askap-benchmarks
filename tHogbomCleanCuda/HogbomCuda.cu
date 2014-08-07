@@ -88,19 +88,6 @@ struct MaxOp
     }
 };
 
-__device__ inline
-void findPeakReduce(Peak *peaks, Peak threadMax)
-{
-    typedef cub::BlockReduce<Peak, findPeakWidth> BlockMax;
-    __shared__ typename BlockMax::TempStorage temp_storage;
-    MaxOp op;
-    threadMax = BlockMax(temp_storage).Reduce(threadMax, op);
-    if (threadIdx.x == 0)
-    {           
-        peaks[blockIdx.x] = threadMax;
-    }
-}
-
 __global__ 
 void d_findPeak(Peak *peaks, const float* __restrict__ image, int size)
 {
@@ -116,7 +103,12 @@ void d_findPeak(Peak *peaks, const float* __restrict__ image, int size)
         }
     }
 
-    findPeakReduce(peaks, threadMax);
+    // Use CUB to find the max for each thread block.
+    typedef cub::BlockReduce<Peak, findPeakWidth> BlockMax;
+    __shared__ typename BlockMax::TempStorage temp_storage;
+    threadMax = BlockMax(temp_storage).Reduce(threadMax, MaxOp());
+
+    if (threadIdx.x == 0) peaks[blockIdx.x] = threadMax;
 }
 
 __host__
