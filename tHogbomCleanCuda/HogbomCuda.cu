@@ -39,7 +39,7 @@
 using namespace std;
 
 // Some constants for findPeak
-const int findPeakNBlocks = 26;
+int findPeakNBlocks = 26;
 const int findPeakWidth = 1024;
 
 struct Peak {
@@ -107,7 +107,9 @@ void d_findPeak(Peak *peaks, const float* image, int size)
     Peak threadMax = {0.0, 0};   
         
     // parallel raking reduction (independent threads)
-    for (int i = findPeakWidth * blockIdx.x + threadIdx.x; i < size; i += findPeakNBlocks * findPeakWidth) {
+    for (int i = findPeakWidth * blockIdx.x + threadIdx.x; 
+        i < size; 
+        i += gridDim.x * findPeakWidth) {
         if (abs(image[i]) > abs(threadMax.val)) {
             threadMax.val = image[i];
             threadMax.pos = i;
@@ -151,9 +153,8 @@ void d_subtractPSF(const float* d_psf,
     const int x =  startx + threadIdx.x + (blockIdx.x * blockDim.x);
     const int y =  starty + threadIdx.y + (blockIdx.y * blockDim.y);
 
-    // Because thread blocks are of size 16, and the workload is not always
-    // a multiple of 16, need to ensure only those threads whos responsibility
-    // lies in the work area actually do work
+    // Because workload is not always a multiple of thread block size, 
+    // need to ensure only threads in the work area actually do work
     if (x <= stopx && y <= stopy) {
         d_residual[posToIdx(residualWidth, Position(x, y))] -= gain * absPeakVal
             * d_psf[posToIdx(psfWidth, Position(x - diffx, y - diffy))];
@@ -226,14 +227,14 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
     residual = dirty;
 
     // Allocate device memory
-    float* d_dirty;
+    //float* d_dirty;
     float* d_psf;
     float* d_residual;
     Peak*  d_peaks; // temporary array for per-block peaks
 
     cudaError_t err;
-    err = cudaMalloc((void **) &d_dirty, dirty.size() * sizeof(float));
-    checkerror(err);
+    //err = cudaMalloc((void **) &d_dirty, dirty.size() * sizeof(float));
+    //checkerror(err);
     err = cudaMalloc((void **) &d_psf, psf.size() * sizeof(float));
     checkerror(err);
     err = cudaMalloc((void **) &d_residual, residual.size() * sizeof(float));
@@ -243,8 +244,8 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
 
 
     // Copy host vectors to device arrays
-    err = cudaMemcpy(d_dirty, &dirty[0], dirty.size() * sizeof(float), cudaMemcpyHostToDevice);
-    checkerror(err);
+    //err = cudaMemcpy(d_dirty, &dirty[0], dirty.size() * sizeof(float), cudaMemcpyHostToDevice);
+    //checkerror(err);
     err = cudaMemcpy(d_psf, &psf[0], psf.size() * sizeof(float), cudaMemcpyHostToDevice);
     checkerror(err);
     err = cudaMemcpy(d_residual, &residual[0], residual.size() * sizeof(float), cudaMemcpyHostToDevice);
@@ -280,20 +281,14 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
 
         // Add to model
         model[peak.pos] += peak.val * g_gain;
-
-        // Wait for the PSF subtraction to finish
-        err = cudaDeviceSynchronize();
-        checkerror(err);
     }
 
     // Copy device arrays back into the host vector
     err = cudaMemcpy(&residual[0], d_residual, residual.size() * sizeof(float), cudaMemcpyDeviceToHost);
     checkerror(err);
-    err = cudaDeviceSynchronize();
-    checkerror(err);
-
+    
     // Free device memory
-    cudaFree(d_dirty);
+    //cudaFree(d_dirty);
     cudaFree(d_psf);
     cudaFree(d_residual);
     cudaFree(d_peaks);
@@ -309,4 +304,7 @@ void HogbomCuda::reportDevice(void)
     cudaGetDeviceProperties(&devprop, device);
     std::cout << "    Using CUDA Device " << device << ": "
         << devprop.name << std::endl;
+
+    // Allocate 2 blocks per multiprocessor
+    findPeakNBlocks = 2 * devprop.multiProcessorCount;
 }
