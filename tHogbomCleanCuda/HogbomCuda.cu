@@ -102,7 +102,7 @@ void findPeakReduce(Peak *peaks, Peak threadMax)
 }
 
 __global__ 
-void d_findPeak(Peak *peaks, const float* image, int size)
+void d_findPeak(Peak *peaks, const float* __restrict__ image, int size)
 {
     Peak threadMax = {0.0, 0};   
         
@@ -141,7 +141,7 @@ static Peak findPeak(Peak *d_peaks, const float* d_image, size_t size)
 }
 
 __global__
-void d_subtractPSF(const float* d_psf,
+void d_subtractPSF(const float* __restrict__ d_psf,
     const int psfWidth,
     float* d_residual,
     const int residualWidth,
