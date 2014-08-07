@@ -224,17 +224,13 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
         vector<float>& residual)
 {
     reportDevice();
-    residual = dirty;
 
     // Allocate device memory
-    //float* d_dirty;
     float* d_psf;
     float* d_residual;
     Peak*  d_peaks; // temporary array for per-block peaks
 
     cudaError_t err;
-    //err = cudaMalloc((void **) &d_dirty, dirty.size() * sizeof(float));
-    //checkerror(err);
     err = cudaMalloc((void **) &d_psf, psf.size() * sizeof(float));
     checkerror(err);
     err = cudaMalloc((void **) &d_residual, residual.size() * sizeof(float));
@@ -242,13 +238,10 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
     err = cudaMalloc((void **) &d_peaks, findPeakNBlocks * sizeof(Peak));
     checkerror(err);
 
-
     // Copy host vectors to device arrays
-    //err = cudaMemcpy(d_dirty, &dirty[0], dirty.size() * sizeof(float), cudaMemcpyHostToDevice);
-    //checkerror(err);
     err = cudaMemcpy(d_psf, &psf[0], psf.size() * sizeof(float), cudaMemcpyHostToDevice);
     checkerror(err);
-    err = cudaMemcpy(d_residual, &residual[0], residual.size() * sizeof(float), cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_residual, &dirty[0], residual.size() * sizeof(float), cudaMemcpyHostToDevice);
     checkerror(err);
 
     // Find peak of PSF
@@ -283,12 +276,11 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
         model[peak.pos] += peak.val * g_gain;
     }
 
-    // Copy device arrays back into the host vector
+    // Copy device array back into the host vector
     err = cudaMemcpy(&residual[0], d_residual, residual.size() * sizeof(float), cudaMemcpyDeviceToHost);
     checkerror(err);
     
     // Free device memory
-    //cudaFree(d_dirty);
     cudaFree(d_psf);
     cudaFree(d_residual);
     cudaFree(d_peaks);

@@ -140,7 +140,7 @@ int main(int /*argc*/, char** /* argv*/)
     //
     // Run the CUDA version of the code
     //
-    vector<float> cudaResidual;
+    vector<float> cudaResidual(dirty.size());
     vector<float> cudaModel(dirty.size());
     zeroInit(cudaModel);
     {
