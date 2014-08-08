@@ -21,6 +21,7 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 
 // System includes
+#include <string.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -98,7 +99,7 @@ bool compare(const vector<float>& expected, const vector<float>& actual)
     return true;
 }
 
-int main(int /*argc*/, char** /* argv*/)
+int main(int argc, char** argv)
 {
     cout << "Reading dirty image and psf image" << endl;
     // Load dirty image and psf
@@ -106,6 +107,10 @@ int main(int /*argc*/, char** /* argv*/)
     const size_t dim = checkSquare(dirty);
     vector<float> psf = readImage(g_psfFile);
     const size_t psfDim = checkSquare(psf);
+
+    bool computeGolden = true;
+    if (argc > 1 && !strstr(argv[0], "skipgolden"))
+        computeGolden = false;
 
     // Reports some numbers
     cout << "Iterations = " << g_niters << endl;
@@ -115,22 +120,26 @@ int main(int /*argc*/, char** /* argv*/)
     //
     vector<float> goldenResidual;
     vector<float> goldenModel(dirty.size());
-    zeroInit(goldenModel);
+
+    if (computeGolden)
     {
-        // Now we can do the timing for the serial (Golden) CPU implementation
-        cout << "+++++ Forward processing (CPU Golden) +++++" << endl;
-        HogbomGolden golden;
+        zeroInit(goldenModel);
+        {
+            // Now we can do the timing for the serial (Golden) CPU implementation
+            cout << "+++++ Forward processing (CPU Golden) +++++" << endl;
+            HogbomGolden golden;
 
-        Stopwatch sw;
-        sw.start();
-        golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
-        const double time = sw.stop();
+            Stopwatch sw;
+            sw.start();
+            golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
+            const double time = sw.stop();
 
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
-        cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
-        cout << "Done" << endl;
+            // Report on timings
+            cout << "    Time " << time << " (s) " << endl;
+            cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
+            cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
+            cout << "Done" << endl;
+        }
     }
 
     // Write images out
@@ -146,7 +155,7 @@ int main(int /*argc*/, char** /* argv*/)
     {
         // Now we can do the timing for the CUDA implementation
         cout << "+++++ Forward processing (CUDA) +++++" << endl;
-        HogbomCuda cuda;
+        HogbomCuda cuda(psf.size(), cudaResidual.size());
 
         Stopwatch sw;
         sw.start();
