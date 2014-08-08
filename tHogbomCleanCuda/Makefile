@@ -24,7 +24,7 @@
 
 CXX = g++
 CFLAGS = -Wall -Wextra -O3 -fstrict-aliasing -fPIC
-INCLUDE = -I/usr/local/cuda/include -I../cub/cub
+INCLUDE = -I$(CUDA_INSTALL)/include -I../cub/cub
 
 NVCC = nvcc
 NVCCFLAGS = -O3 --compiler-options -fPIC

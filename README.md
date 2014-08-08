@@ -29,7 +29,7 @@ This implementation uses OpenMP to utilize multiple cores in a single shared-mem
 
 ### tHogbomCleanCuda
 This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU. Note, a
-faster version of this benchmark implemented by Mark Harris of NVIDIA can be found
+more portable version of this benchmark implemented by Mark Harris of NVIDIA can be found
 here: https://github.com/harrism/tHogbomCleanHemi
 
 
