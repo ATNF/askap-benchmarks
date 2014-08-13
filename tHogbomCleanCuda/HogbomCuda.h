@@ -30,9 +30,14 @@
 // Cuda includes
 #include <cuda_runtime_api.h>
 
+struct Peak {
+    float val;
+    int pos;
+};
+
 class HogbomCuda {
     public:
-        HogbomCuda();
+        HogbomCuda(size_t psfSize, size_t residualSize);
         ~HogbomCuda();
 
         void deconvolve(const std::vector<float>& dirty,
@@ -45,6 +50,10 @@ class HogbomCuda {
     private:
 
         void reportDevice(void);
+
+        float* d_psf;
+        float* d_residual;
+        Peak*  d_peaks;     // temporary array for per-block peaks
 };
 
 #endif

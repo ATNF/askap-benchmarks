@@ -40,12 +40,7 @@ using namespace std;
 
 // Some constants for findPeak
 int findPeakNBlocks = 26;
-const int findPeakWidth = 1024;
-
-struct Peak {
-    int pos;
-    float val;
-};
+static const int findPeakWidth = 1024;
 
 struct Position {
     __host__ __device__
@@ -198,13 +193,26 @@ static void subtractPSF(const float* d_psf, const int psfWidth,
 }
 
 __host__
-HogbomCuda::HogbomCuda()
+HogbomCuda::HogbomCuda(size_t psfSize, size_t residualSize)
 {
+    reportDevice();
+
+    cudaError_t err;
+    err = cudaMalloc((void **) &d_psf, psfSize * sizeof(float));
+    checkerror(err);
+    err = cudaMalloc((void **) &d_residual, residualSize * sizeof(float));
+    checkerror(err);
+    err = cudaMalloc((void **) &d_peaks, findPeakNBlocks * sizeof(Peak));
+    checkerror(err);
 }
 
 __host__
 HogbomCuda::~HogbomCuda()
 {
+    // Free device memory
+    cudaFree(d_psf);
+    cudaFree(d_residual);
+    cudaFree(d_peaks);
 }
 
 __host__
@@ -215,20 +223,7 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
         vector<float>& model,
         vector<float>& residual)
 {
-    reportDevice();
-
-    // Allocate device memory
-    float* d_psf;
-    float* d_residual;
-    Peak*  d_peaks; // temporary array for per-block peaks
-
     cudaError_t err;
-    err = cudaMalloc((void **) &d_psf, psf.size() * sizeof(float));
-    checkerror(err);
-    err = cudaMalloc((void **) &d_residual, residual.size() * sizeof(float));
-    checkerror(err);
-    err = cudaMalloc((void **) &d_peaks, findPeakNBlocks * sizeof(Peak));
-    checkerror(err);
 
     // Copy host vectors to device arrays
     err = cudaMemcpy(d_psf, &psf[0], psf.size() * sizeof(float), cudaMemcpyHostToDevice);
@@ -271,11 +266,6 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
     // Copy device array back into the host vector
     err = cudaMemcpy(&residual[0], d_residual, residual.size() * sizeof(float), cudaMemcpyDeviceToHost);
     checkerror(err);
-    
-    // Free device memory
-    cudaFree(d_psf);
-    cudaFree(d_residual);
-    cudaFree(d_peaks);
 }
 
 __host__
