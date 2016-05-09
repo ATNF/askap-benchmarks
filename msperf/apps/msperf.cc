@@ -36,7 +36,7 @@
 // ASKAPsoft includes
 #include "CommandLineParser.h"
 #include "Common/ParameterSet.h"
-#include "casa/OS/Timer.h"
+#include "casacore/casa/OS/Timer.h"
 
 // Local includes
 #include "writers/DataSet.h"

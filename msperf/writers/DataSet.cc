@@ -34,13 +34,13 @@
 
 // ASKAPsoft includes
 #include <Common/ParameterSet.h>
-#include <casa/Arrays/Matrix.h>
-#include <tables/Tables/TableDesc.h>
-#include <tables/Tables/SetupNewTab.h>
-#include <tables/Tables/IncrementalStMan.h>
-#include <tables/Tables/StandardStMan.h>
-#include <tables/Tables/TiledShapeStMan.h>
-#include <ms/MeasurementSets/MSColumns.h>
+#include <casacore/casa/Arrays/Matrix.h>
+#include <casacore/tables/Tables/TableDesc.h>
+#include <casacore/tables/Tables/SetupNewTab.h>
+#include <casacore/tables/Tables/IncrementalStMan.h>
+#include <casacore/tables/Tables/StandardStMan.h>
+#include <casacore/tables/Tables/TiledShapeStMan.h>
+#include <casacore/ms/MeasurementSets/MSColumns.h>
 
 using namespace casa;
 using LOFAR::ParameterSet;

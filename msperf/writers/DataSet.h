@@ -31,7 +31,7 @@
 #include <string>
 
 // ASKAPsoft includes
-#include "ms/MeasurementSets/MeasurementSet.h"
+#include "casacore/ms/MeasurementSets/MeasurementSet.h"
 #include "Common/ParameterSet.h"
 
 class DataSet
