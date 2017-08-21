@@ -1,0 +1,11 @@
+# Integration time in seconds
+mpiperf.integrationTime  = 5
+
+# Number of channels per task
+mpiperf.nChan            = 1024
+
+mpiperf.nIntegrations    = 120
+mpiperf.nAntenna         = 36
+mpiperf.nFeeds           = 36
+mpiperf.nPol             = 4
+mpiperf.nFields          = 1
