@@ -119,6 +119,9 @@ int main(int argc, char *argv[])
         if (rank == 0) {
             const float realtime = timer.real();
             const float perf = static_cast<float>(intTime) / realtime;
+            if (perf < 1) {
+                std::cout << "WARNING "
+            }
             std::cout << "Received integration " << i <<
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
