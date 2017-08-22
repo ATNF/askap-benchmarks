@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
     int baselines = (antennas*(antennas-1)/2);
 
-    size_t nElements = baselines*channels*beams*nPol*2;
+    size_t nElements = baselines*channels*beams*pol*2;
     size_t sendBufferSize = nElements*sizeof(float);
     size_t recvBufferSize = wsize*sendBufferSize;
 
