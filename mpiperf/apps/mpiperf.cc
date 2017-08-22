@@ -60,8 +60,8 @@ static ParameterSet getParameterSet(int argc, char *argv[])
 
     return parset;
 }
-void doWorkRoot(void *buffer) {
-
+void doWorkRoot(void *buffer, int time) {
+    sleep(time);
 }
 void doWorkWorker(void *buffer) {
 
@@ -110,9 +110,6 @@ int main(int argc, char *argv[])
         timer.mark();
         doWorkWorker(sBuf);
         MPI_Gatherv((void *) sBuf,nElements,MPI_FLOAT,(void *) rBuf,rcounts,displs,MPI_FLOAT,0,MPI_COMM_WORLD);
-        if (rank == 0) {
-            doWorkRoot(sBuf);
-        }
         MPI_Barrier(MPI_COMM_WORLD);
 
         // Report progress
@@ -125,6 +122,8 @@ int main(int argc, char *argv[])
             std::cout << "Received integration " << i <<
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
+            std::cout << "Doing some work" << std::endl;
+            doWorkRoot(rBuf,intTime);
         }
     }
 
