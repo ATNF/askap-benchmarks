@@ -85,9 +85,9 @@ int main(int argc, char *argv[])
     int beams = subset.getInt32("nFeeds");
     int pol = subset.getInt32("nPol");
 
-    int baselines = (antennas*pol*(antennas*pol-pol)/2);
+    int baselines = (antennas*(antennas-1)/2);
 
-    size_t nElements = baselines*channels*beams*2;
+    size_t nElements = baselines*channels*beams*nPol*2;
     size_t sendBufferSize = nElements*sizeof(float);
     size_t recvBufferSize = wsize*sendBufferSize;
 
