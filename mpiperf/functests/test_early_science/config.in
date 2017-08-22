@@ -2,7 +2,7 @@
 mpiperf.integrationTime  = 5
 
 # Number of channels per task
-mpiperf.nChan            = 1024
+mpiperf.nChan            = 2048
 
 mpiperf.nIntegrations    = 120
 mpiperf.nAntenna         = 12
