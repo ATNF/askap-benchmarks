@@ -66,11 +66,16 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
     casa::Timer work;
     int rtn=0;
     work.mark();
-
-    rtn=fwrite(buffer,buffsize,1,fptr);
-    if (rtn!=1) {
-        std::cout << "WARNING - failed write" << std::endl;
+    if (fptr != NULL) {
+        rtn=fwrite(buffer,buffsize,1,fptr);
+        if (rtn!=1) {
+            std::cout << "WARNING - failed write" << std::endl;
+        }
     }
+    else {
+        std::cout << "WARNING - not writing"<< std::endl;
+    }
+
     *workTime = work.real();
 
 
@@ -79,15 +84,7 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
 void doWorkWorker(void *buffer) {
 
 }
-static std::string itostr(const int i)
-{
-    std::stringstream ss;
-    std::string str;
-    ss << i;
-    ss >> str;
 
-    return str;
-}
 
 int main(int argc, char *argv[])
 {
@@ -103,7 +100,7 @@ int main(int argc, char *argv[])
 
     // Replace in the filename the %w pattern with the rank number
     std::string filename = subset.getString("filename");
-    
+
     // create the output file
     FILE *fptr=fopen(filename.c_str(),"w");
 
