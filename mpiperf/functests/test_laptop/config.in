@@ -2,10 +2,10 @@
 mpiperf.integrationTime  = 5
 mpiperf.filename = /Users/ord006/test.dat
 # Number of channels per task
-mpiperf.nChan            = 1024
+mpiperf.nChan            = 2000
 
-mpiperf.nIntegrations    = 120
-mpiperf.nAntenna         = 6
-mpiperf.nFeeds           = 1
+mpiperf.nIntegrations    = 1
+mpiperf.nAntenna         = 12
+mpiperf.nFeeds           = 36
 mpiperf.nPol             = 4
 mpiperf.nFields          = 1

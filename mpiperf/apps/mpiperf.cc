@@ -134,6 +134,14 @@ int main(int argc, char *argv[])
     casa::Timer timer;
     casa::Timer total;
     total.mark();
+    if (rank == 0) {
+        std::cout << "Gathering and Writing " << integrations << " integrations of " << intTime << " seconds " << std::endl;
+        std::cout << "There are " << wsize << " blocks of " << channels << " channels " << std::endl;
+        std::cout << "With " << antennas << " antennas and " << beams << " beams " << std::endl;
+        std::cout << "For a datasize (in Mbytes) per integration of " << sendBufferSize/(1024*1024) << " per rank and " << recvBufferSize/(1024*1024) << " in total " << std::endl;
+        std::cout << "Datarate in MB/s is " << recvBufferSize/(intTime*1024*1024) << std::endl;
+    }
+
     for (int i = 0; i < integrations; ++i) {
 
         timer.mark();
