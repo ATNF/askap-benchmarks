@@ -31,6 +31,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <mpi.h>
 
 // ASKAPsoft includes
@@ -60,12 +61,34 @@ static ParameterSet getParameterSet(int argc, char *argv[])
 
     return parset;
 }
-void doWorkRoot(void *buffer, int time) {
-    sleep(time);
+void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
+
+    casa::Timer work;
+    int rtn=0;
+    work.mark();
+
+    rtn=fwrite(buffer,buffsize,1,fptr);
+    if (rtn!=1) {
+        std::cout << "WARNING - failed write" << std::endl;
+    }
+    *workTime = work.real();
+
+
+
 }
 void doWorkWorker(void *buffer) {
 
 }
+static std::string itostr(const int i)
+{
+    std::stringstream ss;
+    std::string str;
+    ss << i;
+    ss >> str;
+
+    return str;
+}
+
 int main(int argc, char *argv[])
 {
     // MPI init
@@ -77,6 +100,15 @@ int main(int argc, char *argv[])
 
     ParameterSet parset = getParameterSet(argc, argv);
     ParameterSet subset(parset.makeSubset("mpiperf."));
+
+    // Replace in the filename the %w pattern with the rank number
+    std::string filename = subset.getString("filename");
+    
+    // create the output file
+    FILE *fptr=fopen(filename.c_str(),"w");
+
+    assert(fptr);
+
 
     int intTime = subset.getInt32("integrationTime");
     int integrations = subset.getInt32("nIntegrations");
@@ -123,7 +155,18 @@ int main(int argc, char *argv[])
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
             std::cout << "Doing some work" << std::endl;
-            doWorkRoot(rBuf,intTime);
+            float workTime;
+            doWorkRoot(rBuf,recvBufferSize,&workTime,fptr);
+            std::cout << "Wrote integration " << i <<  " in "
+            << workTime << " seconds" << std::endl;
+            float combinedTime = workTime + realtime;
+            if (combinedTime < intTime) {
+                useconds_t timetosleep = (useconds_t) 1000.0*(intTime-combinedTime);
+                usleep(timetosleep);
+            }
+            else {
+                std::cout << "WARNING combined time greater than integration time" << std::endl;
+            }
         }
     }
 
