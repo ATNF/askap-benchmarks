@@ -71,6 +71,10 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
     size_t write_block=BLOCKSIZE;
     char * buffptr= (char *) buffer;
     while (towrite>0) {
+
+        if (towrite < write_block)
+            write_block = towrite;
+
         if (fptr != NULL) {
             rtn=fwrite(buffptr,write_block,1,fptr);
             if (rtn!=1) {
@@ -176,7 +180,7 @@ int main(int argc, char *argv[])
             oss << filename << "_" << i << ".dat";
             fptr = fopen(oss.str().c_str(),"w");
             assert(fptr);
-            setvbuf(fptr,NULL,BLOCKSIZE,_IOFBF);
+            setvbuf(fptr,NULL,recvBufferSize,_IOFBF);
 
         }
         timer.mark();
