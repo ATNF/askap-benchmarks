@@ -161,8 +161,11 @@ int main(int argc, char *argv[])
             if (fptr != NULL) {
                 fclose(fptr);
             }
-            fptr = fopen(filename.c_str(),"w");
+            std::ostringstream oss;
+            oss << filename << "_" << i << ".dat";
+            fptr = fopen(oss.str().c_str(),"w");
             assert(fptr);
+
         }
         timer.mark();
         doWorkWorker(sBuf);
