@@ -39,6 +39,7 @@
 #include "Common/ParameterSet.h"
 #include "casacore/casa/OS/Timer.h"
 
+#define BLOCKSIZE 4*1024*1024
 
 // Using
 using LOFAR::ParameterSet;
@@ -66,14 +67,24 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
     casa::Timer work;
     int rtn=0;
     work.mark();
-    if (fptr != NULL) {
-        rtn=fwrite(buffer,buffsize,1,fptr);
-        if (rtn!=1) {
-            std::cout << "WARNING - failed write" << std::endl;
+    size_t towrite=buffsize;
+    size_t write_block=BLOCKSIZE;
+    char * buffptr= (char *) buffer;
+    while (towrite>0) {
+        if (fptr != NULL) {
+            rtn=fwrite(buffptr,write_block,1,fptr);
+            if (rtn!=1) {
+                std::cout << "WARNING - failed write" << std::endl;
+            }
+            else {
+                towrite = towrite - write_block;
+                buffptr = buffptr+write_block;
+            }
         }
-    }
-    else {
-        std::cout << "WARNING - not writing"<< std::endl;
+        else {
+            std::cout << "WARNING - not writing"<< std::endl;
+            towrite = 0;
+        }
     }
 
     *workTime = work.real();
@@ -165,6 +176,7 @@ int main(int argc, char *argv[])
             oss << filename << "_" << i << ".dat";
             fptr = fopen(oss.str().c_str(),"w");
             assert(fptr);
+            setvbuf(fptr,NULL,BLOCKSIZE,_IOFBF);
 
         }
         timer.mark();
