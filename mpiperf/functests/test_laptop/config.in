@@ -3,7 +3,7 @@ mpiperf.integrationTime  = 5
 mpiperf.filename = /Users/ord006/test.dat
 # Number of channels per task
 mpiperf.nChan            = 2000
-
+mpiperf.maxfilesizeMB = 512
 mpiperf.nIntegrations    = 1
 mpiperf.nAntenna         = 12
 mpiperf.nFeeds           = 36

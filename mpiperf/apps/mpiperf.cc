@@ -102,23 +102,33 @@ int main(int argc, char *argv[])
     std::string filename = subset.getString("filename");
 
     // create the output file
-    FILE *fptr=fopen(filename.c_str(),"w");
-
-    assert(fptr);
+    FILE *fptr=NULL;
 
 
-    int intTime = subset.getInt32("integrationTime");
-    int integrations = subset.getInt32("nIntegrations");
-    int antennas = subset.getInt32("nAntenna");
-    int channels = subset.getInt32("nChan");
-    int beams = subset.getInt32("nFeeds");
-    int pol = subset.getInt32("nPol");
+
+
+    int intTime = subset.getInt32("integrationTime",5);
+    int integrations = subset.getInt32("nIntegrations",1);
+    int antennas = subset.getInt32("nAntenna",36);
+    int channels = subset.getInt32("nChan",2048);
+    int beams = subset.getInt32("nFeeds",36);
+    int pol = subset.getInt32("nPol",4);
+    int maxfilesizeMB = subset.getInt32("maxfilesizeMB",0);
 
     int baselines = (antennas*(antennas-1)/2);
 
     size_t nElements = baselines*channels*beams*pol*2;
     size_t sendBufferSize = nElements*sizeof(float);
     size_t recvBufferSize = wsize*sendBufferSize;
+
+    int intPerFile = integrations;
+
+    if (maxfilesizeMB != 0) {
+        float temp = recvBufferSize/(1024*1024);
+        temp = maxfilesizeMB/temp;
+        intPerFile = ceil(temp);
+    }
+
 
     float *sBuf = (float *) malloc(sendBufferSize);
     float *rBuf = (float *) malloc(recvBufferSize);
@@ -140,10 +150,20 @@ int main(int argc, char *argv[])
         std::cout << "With " << antennas << " antennas and " << beams << " beams " << std::endl;
         std::cout << "For a datasize (in Mbytes) per integration of " << sendBufferSize/(1024*1024) << " per rank and " << recvBufferSize/(1024*1024) << " in total " << std::endl;
         std::cout << "Datarate in MB/s is " << recvBufferSize/(intTime*1024*1024) << std::endl;
+        if (maxfilesizeMB !=0) {
+            std::cout << "Integrations per file " << intPerFile << std::endl;
+        }
     }
 
     for (int i = 0; i < integrations; ++i) {
 
+        if (i==0 || i%intPerFile == 0) {
+            if (fptr != NULL) {
+                fclose(fptr);
+            }
+            fptr = fopen(filename.c_str(),"w");
+            assert(fptr);
+        }
         timer.mark();
         doWorkWorker(sBuf);
         MPI_Gatherv((void *) sBuf,nElements,MPI_FLOAT,(void *) rBuf,rcounts,displs,MPI_FLOAT,0,MPI_COMM_WORLD);
@@ -182,6 +202,9 @@ int main(int argc, char *argv[])
         std::cout << "Received " << integrations << " integrations "
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
+    }
+    if (fptr != NULL) {
+        fclose(fptr);
     }
     free(sBuf);
     free(rBuf);

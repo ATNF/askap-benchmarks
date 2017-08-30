@@ -52,7 +52,7 @@ print("log file : " + args.logfile)
 plotFile = args.plotfile
 
 #reLine = re.compile("mssink took ([0-9]*(\.[0-9]*)?)")
-reLine = re.compile("Wrote integration ([0-9]*) in ([0-9]*(\.[0-9]*)?) seconds ")
+reLine = re.compile("Wrote integration ([0-9]*) in ([0-9]*(\.[0-9]*)?) seconds")
 # This is the data for /scratch2 run
 with open(args.logfile) as fp:
     count = 0
@@ -61,6 +61,7 @@ with open(args.logfile) as fp:
     min = 99
     max = 0
     for line in iter(fp.readline, ''):
+        print(line)
         match = reLine.search(line)
         print(match)
         if match:
@@ -101,7 +102,7 @@ plot = pl.plot(values, "b.", label="times")
 pl.axhline(sum(values)/N, color="red", label="average")
 pl.xlim(0, N)
 pl.ylim(timeMin, timeMax)
-pl.title("MPI gather per integration")
+pl.title("Write time per integration")
 pl.xlabel("integration cycle")
 pl.ylabel("time (s)")
 pl.legend(numpoints=1)
