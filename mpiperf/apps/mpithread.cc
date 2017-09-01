@@ -34,6 +34,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <pthread.h>
+#include <string.h> // for memcpy
 
 // ASKAPsoft includes
 #include "CommandLineParser.h"
