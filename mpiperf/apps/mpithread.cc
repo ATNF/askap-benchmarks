@@ -163,8 +163,8 @@ int main(int argc, char *argv[])
 {
     // MPI init
     int provided;
-    MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELLED,&provided);
-    
+    MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
+
     int rank,wsize;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
