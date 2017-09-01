@@ -162,7 +162,9 @@ void *thread_x(void *arg)
 int main(int argc, char *argv[])
 {
     // MPI init
-    MPI_Init(&argc, &argv);
+    int provided;
+    MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELLED,&provided);
+    
     int rank,wsize;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
