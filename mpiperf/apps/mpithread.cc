@@ -159,12 +159,20 @@ void *thread_x(void *arg)
 
     }
 }
+void transpose(float *in, float *out) {
+
+}
 int main(int argc, char *argv[])
 {
     // MPI init
     int provided;
-    MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
-
+    // This is correct initializer
+    // MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
+    //
+    // This is not correct
+    //
+    MPI_Init(&argc, &argv);
+    //
     int rank,wsize;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
