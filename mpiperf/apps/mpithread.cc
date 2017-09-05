@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
 
         if (i==0 || i%intPerFile == 0) {
             if (fptr != NULL) {
-                fclose(fptr);
+                TIME_FUNC(fclose(fptr),"Write:closing file");
             }
             std::ostringstream oss;
             oss << filename << "_" << i << ".dat";
