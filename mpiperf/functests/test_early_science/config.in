@@ -1,10 +1,10 @@
 # Integration time in seconds
 mpiperf.integrationTime  = 5
-
+mpiperf.filename = /astro/askap/sord/test.dat
 # Number of channels per task
 mpiperf.nChan            = 2048
-
-mpiperf.nIntegrations    = 120
+mpiperf.maxfilesizeMB = 8000
+mpiperf.nIntegrations    = 1440
 mpiperf.nAntenna         = 12
 mpiperf.nFeeds           = 36
 mpiperf.nPol             = 4
