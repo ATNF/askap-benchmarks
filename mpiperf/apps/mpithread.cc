@@ -203,9 +203,9 @@ int main(int argc, char *argv[])
     ParameterSet parset = getParameterSet(argc, argv);
     ParameterSet subset(parset.makeSubset("mpiperf."));
 
-    // Replace in the filename the %w pattern with the rank number
-    std::string filename = subset.getString("filename");
 
+    std::string filename = subset.getString("filename","data");
+    std::string logname = subset.getString("logname","test");
 
     // initialise the mutex lock
     pthread_mutex_init(&full_lock, NULL);
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
 
     //open the logptr
     std::ostringstream oss;
-    oss << "test" << "_" << rank << ".log";
+    oss << logname << "_" << rank << ".log";
     logfile.open(oss.str().c_str(), std::ios::out | std::ios::trunc);
 
 
