@@ -35,6 +35,7 @@
 #include <mpi.h>
 #include <pthread.h>
 #include <string.h> // for memcpy
+#include <sys/timeb.h>
 
 // ASKAPsoft includes
 #include "CommandLineParser.h"
@@ -43,12 +44,31 @@
 
 #define BLOCKSIZE 4*1024*1024
 
+
+// the output file
+FILE *fptr=NULL;
+
+// the log file
+
+std::ofstream logfile;
+
+int rank, wsize;
+
+#define INFLUXDB_LOG(func,tag) {\
+  { \
+    casa::Timer work; \
+    work.mark(); \
+    func; \
+    std::chrono::nanoseconds ns = std::chrono::duration_cast< std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch()); \
+    logfile << tag  << "rank=" << rank << " " << "time_secs=" << work.real() << " " << ns.count() << std::endl; \
+  } \
+}
 #define TIME_FUNC(func,tag) { \
     { \
         casa::Timer work; \
         work.mark(); \
         func; \
-        std::cout << tag << ":" << work.real() << std::endl; \
+        std::cout << "#" << tag << ":" << work.real() << std::endl; \
     } \
 }
 // Using
@@ -90,12 +110,12 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
     int rtn=0;
 
 
-    TIME_FUNC(pthread_mutex_lock(&swap_lock),"Write:acquire_swaplock");
-    std::cout << "Write: released the swap lock and waiting for signal" << std::endl;
+    TIME_FUNC(pthread_mutex_lock(&swap_lock),"mutex action=aquire,");
+    std::cout << "#Write: released the swap lock and waiting for signal" << std::endl;
     // wait and release lock
-    TIME_FUNC(pthread_cond_wait(&buffer_swapped,&swap_lock),"Write:wait");
+    TIME_FUNC(pthread_cond_wait(&buffer_swapped,&swap_lock),"mutex action=wait,");
 
-    std::cout << "Write: acquired the swap lock" << std::endl;
+    std::cout << "#Write: acquired the swap lock" << std::endl;
 
     size_t towrite=buffsize;
     size_t write_block=BLOCKSIZE;
@@ -109,7 +129,7 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
         if (fptr != NULL) {
             rtn=fwrite(buffptr,write_block,1,fptr);
             if (rtn!=1) {
-                std::cout << "WARNING - failed write" << std::endl;
+                std::cout << "#WARNING - failed write" << std::endl;
             }
             else {
                 towrite = towrite - write_block;
@@ -117,13 +137,13 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
             }
         }
         else {
-            std::cout << "WARNING - not writing"<< std::endl;
+            std::cout << "#WARNING - not writing"<< std::endl;
             towrite = 0;
         }
     }
-    TIME_FUNC(pthread_mutex_unlock(&swap_lock),"Write:released swap lock");
+    TIME_FUNC(pthread_mutex_unlock(&swap_lock),"mutex action=unlock,");
     *workTime = work.real();
-    std::cout << "Write:Actual write:" << *workTime << std::endl;
+    std::cout << "#Write:Actual write:" << *workTime << std::endl;
 
 
 }
@@ -144,36 +164,38 @@ void *thread_x(void *arg)
     thread_args *x_ptr = (thread_args *) arg;
     while (1) {
         // wait for a full buffer
-        TIME_FUNC(pthread_mutex_lock (&full_lock),"Worker:acquire full_lock");
-        std::cout << "Worker: releasing full_lock and waiting" << std::endl;
-        TIME_FUNC(pthread_cond_wait(&buffer_full,&full_lock),"Worker:wait-time:");
-        std::cout << "Worker: acquired full_lock" << std::endl;
+        TIME_FUNC(pthread_mutex_lock (&full_lock),"mutex action=lock,");
+        std::cout << "#Worker: releasing full_lock and waiting" << std::endl;
+        TIME_FUNC(pthread_cond_wait(&buffer_full,&full_lock),"mutex action=wait,");
+        std::cout << "#Worker: acquired full_lock" << std::endl;
         // release wait and release lock
         // do something
-        TIME_FUNC(memcpy(x_ptr->out, x_ptr->in,x_ptr->nelements*sizeof(float)),"Worker:memcpy");
+        INFLUXDB_LOG(memcpy(x_ptr->out, x_ptr->in,x_ptr->nelements*sizeof(float)),"memory,action=copy,");
 
-        TIME_FUNC(pthread_mutex_unlock (&full_lock),"Worker:released full_lock");
-        TIME_FUNC(pthread_mutex_lock (&swap_lock),"Worker:acquired swap_lock");
-        TIME_FUNC(pthread_cond_signal(&buffer_swapped),"Worker:signalling swap");
-        TIME_FUNC(pthread_mutex_unlock (&swap_lock),"Worker: released swap_lock");
+        TIME_FUNC(pthread_mutex_unlock (&full_lock),"mutex action=unlock,");
+        TIME_FUNC(pthread_mutex_lock (&swap_lock),"mutex action=lock,");
+        TIME_FUNC(pthread_cond_signal(&buffer_swapped),"mutex action=signal,");
+        TIME_FUNC(pthread_mutex_unlock (&swap_lock),"mutex action=unlock,");
 
     }
 }
 void transpose(float *in, float *out) {
 
 }
+
+
 int main(int argc, char *argv[])
 {
     // MPI init
     int provided;
     // This is correct initializer
-    // MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
+    MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
     //
     // This is not correct
     //
-    MPI_Init(&argc, &argv);
+    // MPI_Init(&argc, &argv);
     //
-    int rank,wsize;
+
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &wsize);
@@ -184,8 +206,6 @@ int main(int argc, char *argv[])
     // Replace in the filename the %w pattern with the rank number
     std::string filename = subset.getString("filename");
 
-    // create the output file
-    FILE *fptr=NULL;
 
     // initialise the mutex lock
     pthread_mutex_init(&full_lock, NULL);
@@ -240,26 +260,32 @@ int main(int argc, char *argv[])
        rcounts[i] = nElements;
     }
 
+    //open the logptr
+    std::ostringstream oss;
+    oss << "test" << "_" << rank << ".log";
+    logfile.open(oss.str().c_str(), std::ios::out | std::ios::trunc);
+
+
     casa::Timer timer;
     casa::Timer total;
     total.mark();
     if (rank == 0) {
-        std::cout << "Gathering and Writing " << integrations << " integrations of " << intTime << " seconds " << std::endl;
-        std::cout << "There are " << wsize << " blocks of " << channels << " channels " << std::endl;
-        std::cout << "With " << antennas << " antennas and " << beams << " beams " << std::endl;
-        std::cout << "For a datasize (in Mbytes) per integration of " << sendBufferSize/(1024*1024) << " per rank and " << recvBufferSize/(1024*1024) << " in total " << std::endl;
-        std::cout << "Datarate in MB/s is " << recvBufferSize/(intTime*1024*1024) << std::endl;
+        std::cout << "#Gathering and Writing " << integrations << " integrations of " << intTime << " seconds " << std::endl;
+        std::cout << "#There are " << wsize << " blocks of " << channels << " channels " << std::endl;
+        std::cout << "#With " << antennas << " antennas and " << beams << " beams " << std::endl;
+        std::cout << "#For a datasize (in Mbytes) per integration of " << sendBufferSize/(1024*1024) << " per rank and " << recvBufferSize/(1024*1024) << " in total " << std::endl;
+        std::cout << "#Datarate in MB/s is " << recvBufferSize/(intTime*1024*1024) << std::endl;
         if (maxfilesizeMB !=0) {
-            std::cout << "Integrations per file " << intPerFile << std::endl;
+            std::cout << "#Integrations per file " << intPerFile << std::endl;
         }
         // Spawn a thread
 
 
-        std::cout << "Spawning a thread" << std::endl;
+        std::cout << "#Spawning a thread" << std::endl;
 
         if (pthread_create(&x_thread, &attr, thread_x, &work_dat)) {
 
-            fprintf(stderr, "Error creating thread\n");
+            fprintf(stderr, "#Error creating thread\n");
             return 1;
 
         }
@@ -270,7 +296,7 @@ int main(int argc, char *argv[])
 
         if (i==0 || i%intPerFile == 0) {
             if (fptr != NULL) {
-                TIME_FUNC(fclose(fptr),"Write:closing file");
+                INFLUXDB_LOG(fclose(fptr),"file,operation=close,");
             }
             std::ostringstream oss;
             oss << filename << "_" << i << ".dat";
@@ -283,10 +309,10 @@ int main(int argc, char *argv[])
         doWorkWorker(sBuf);
 
         if (rank == 0) {
-            TIME_FUNC(pthread_mutex_lock(&full_lock),"Write: acquired full_lock");
-            std::cout << "Starting the Gathering" << std::endl;
+            TIME_FUNC(pthread_mutex_lock(&full_lock),"mutex action=lock,");
+            std::cout << "#Starting the Gathering" << std::endl;
         }
-        MPI_Gatherv((void *) sBuf,nElements,MPI_FLOAT,(void *) rBuf,rcounts,displs,MPI_FLOAT,0,MPI_COMM_WORLD);
+        INFLUXDB_LOG(MPI_Gatherv((void *) sBuf,nElements,MPI_FLOAT,(void *) rBuf,rcounts,displs,MPI_FLOAT,0,MPI_COMM_WORLD),"mpi,action=gather,");
         MPI_Barrier(MPI_COMM_WORLD);
 
         // Report progress
@@ -294,15 +320,15 @@ int main(int argc, char *argv[])
             const float realtime = timer.real();
             const float perf = static_cast<float>(intTime) / realtime;
             if (perf < 1) {
-                std::cout << "WARNING ";
+                std::cout << "#WARNING ";
             }
-            std::cout << "MPI Gather for integration " << i <<
+            std::cout << "#MPI Gather for integration " << i <<
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
 
 
-            TIME_FUNC(pthread_cond_signal(&buffer_full),"Write: signalling buffer full");
-            TIME_FUNC(pthread_mutex_unlock(&full_lock),"Write: released full_lock");
+            TIME_FUNC(pthread_cond_signal(&buffer_full),"mutex action=signal,");
+            TIME_FUNC(pthread_mutex_unlock(&full_lock),"mutex action=unlock,");
 
             float workTime;
 
@@ -310,7 +336,7 @@ int main(int argc, char *argv[])
             // aquire lock
             //first get the lock so things stay sync'd
 
-            TIME_FUNC(doWorkRoot(rBuf,recvBufferSize,&workTime,fptr),"Write: Total time:");
+            INFLUXDB_LOG(doWorkRoot(rBuf,recvBufferSize,&workTime,fptr),"file,action=write,");
 
 
 
@@ -322,7 +348,7 @@ int main(int argc, char *argv[])
     if (rank == 0) {
         const float realtime = total.real();
         const float perf = static_cast<float>(intTime * integrations) / realtime;
-        std::cout << "Received " << integrations << " integrations "
+        std::cout << "#Received " << integrations << " integrations "
             " in " << realtime << " seconds"
             << " (" << perf << "x requirement)" << std::endl;
     }
@@ -330,7 +356,9 @@ int main(int argc, char *argv[])
         fclose(fptr);
     }
 
-
+    if (logfile.is_open()) {
+      logfile.close();
+    }
     pthread_attr_destroy(&attr);
     // pthread_kill(x_thread,SIGKILL);
     // pthread_join(x_thread, NULL);
