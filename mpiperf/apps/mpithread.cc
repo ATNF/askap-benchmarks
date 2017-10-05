@@ -36,6 +36,7 @@
 #include <pthread.h>
 #include <string.h> // for memcpy
 #include <sys/timeb.h>
+#include <chrono>
 
 // ASKAPsoft includes
 #include "CommandLineParser.h"
@@ -155,6 +156,7 @@ typedef struct {
     char *in;
     char *out;
     size_t nelements;
+    int intTime;
 } thread_args ;
 
 /* this function is run by the second thread */
@@ -170,6 +172,7 @@ void *thread_x(void *arg)
         std::cout << "#Worker: acquired full_lock" << std::endl;
         // release wait and release lock
         // do something
+        usleep(x_ptr->intTime*1E6); 
         INFLUXDB_LOG(memcpy(x_ptr->out, x_ptr->in,x_ptr->nelements*sizeof(float)),"memory,action=copy,");
 
         TIME_FUNC(pthread_mutex_unlock (&full_lock),"mutex action=unlock,");
@@ -189,6 +192,8 @@ int main(int argc, char *argv[])
     // MPI init
     int provided;
     // This is correct initializer
+
+    std::cout << "#Attempting MPI " << std::endl;
     MPI_Init_thread(&argc, &argv,MPI_THREAD_FUNNELED,&provided);
     //
     // This is not correct
@@ -199,6 +204,8 @@ int main(int argc, char *argv[])
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &wsize);
+
+    std::cout << "#Rank " << rank << " started" << std::endl;
 
     ParameterSet parset = getParameterSet(argc, argv);
     ParameterSet subset(parset.makeSubset("mpiperf."));
@@ -250,7 +257,7 @@ int main(int argc, char *argv[])
     work_dat.in = (char *) rBuf;
     work_dat.out = (char *) oBuf;
     work_dat.nelements = wsize*nElements;
-
+    work_dat.intTime = intTime;
 
     int *displs = (int *)malloc(wsize*sizeof(int));
     int *rcounts = (int *)malloc(wsize*sizeof(int));

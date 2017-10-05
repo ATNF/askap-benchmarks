@@ -1,6 +1,9 @@
-#SBATCH --partitiontion=askap
-#SBATCH —nodelist=galaxy-ingest07,galaxy-ingest15
+#!/bin/bash
+#SBATCH --partition=askap
+#SBATCH --nodelist=galaxy-ingest07,galaxy-ingest15
 #SBATCH --export=NONE
+#SBATCH --account=askaprt
+#SBATCH --time=11:00:00
 
 module load sandybridge gcc mvapich 
 
