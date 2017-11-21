@@ -102,6 +102,31 @@ static ParameterSet getParameterSet(int argc, char *argv[])
 
     return parset;
 }
+void doWrite(FILE *fptr,size_t towrite,size_t write_block,char *buffptr) {
+
+    int rtn;
+
+    while (towrite>0) {
+
+      if (towrite < write_block)
+          write_block = towrite;
+
+      if (fptr != NULL) {
+          rtn=fwrite(buffptr,write_block,1,fptr);
+          if (rtn!=1) {
+              std::cout << "#WARNING - failed write" << std::endl;
+          }
+          else {
+              towrite = towrite - write_block;
+              buffptr = buffptr+write_block;
+          }
+      }
+      else {
+          std::cout << "#WARNING - not writing"<< std::endl;
+          towrite = 0;
+      }
+  }
+}
 void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
 
 
@@ -122,26 +147,9 @@ void doWorkRoot(void *buffer, size_t buffsize, float *workTime,FILE *fptr) {
     size_t write_block=BLOCKSIZE;
     char * buffptr= (char *) buffer;
     work.mark();
-    while (towrite>0) {
+    // here's hoping this is recursive
+    INFLUXDB_LOG(doWrite(fptr,towrite,write_block,buffptr),"file action=write,");
 
-        if (towrite < write_block)
-            write_block = towrite;
-
-        if (fptr != NULL) {
-            rtn=fwrite(buffptr,write_block,1,fptr);
-            if (rtn!=1) {
-                std::cout << "#WARNING - failed write" << std::endl;
-            }
-            else {
-                towrite = towrite - write_block;
-                buffptr = buffptr+write_block;
-            }
-        }
-        else {
-            std::cout << "#WARNING - not writing"<< std::endl;
-            towrite = 0;
-        }
-    }
     TIME_FUNC(pthread_mutex_unlock(&swap_lock),"mutex action=unlock,");
     *workTime = work.real();
     std::cout << "#Write:Actual write:" << *workTime << std::endl;
@@ -172,7 +180,7 @@ void *thread_x(void *arg)
         std::cout << "#Worker: acquired full_lock" << std::endl;
         // release wait and release lock
         // do something
-        usleep(x_ptr->intTime*1E6); 
+        usleep(x_ptr->intTime*1E6);
         INFLUXDB_LOG(memcpy(x_ptr->out, x_ptr->in,x_ptr->nelements*sizeof(float)),"memory,action=copy,");
 
         TIME_FUNC(pthread_mutex_unlock (&full_lock),"mutex action=unlock,");
@@ -303,7 +311,7 @@ int main(int argc, char *argv[])
 
         if (i==0 || i%intPerFile == 0) {
             if (fptr != NULL) {
-                INFLUXDB_LOG(fclose(fptr),"file,operation=close,");
+                INFLUXDB_LOG(fclose(fptr),"file,action=close,");
             }
             std::ostringstream oss;
             oss << filename << "_" << i << ".dat";
