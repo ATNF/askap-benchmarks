@@ -1,8 +1,10 @@
-# Copyright (c) 2011 CSIRO
+# Copyright (c) 2010 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
 # atnf-enquiries@csiro.au
+#
+# This file is part of the ASKAP software distribution.
 #
 # The ASKAP software distribution is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -23,22 +25,22 @@
 #
 
 CXX = g++
-CFLAGS = -Wall -Wextra -O3 -fstrict-aliasing -fPIC
-INCLUDE = -I$(CUDA_INSTALL)/include -I../cub/cub
+CFLAGS = -g -Wall -Wextra -O3 -fstrict-aliasing -fPIC
 
 NVCC = nvcc
-NVCCFLAGS = -O3 --compiler-options -fPIC
+NVCCFLAGS = -g -O3 -arch=sm_20 --compiler-options -fPIC
+INCLUDE = -I/usr/local/cuda/include
 
 EXENAME = tHogbomCleanCuda
 OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomCuda.o
 
 all:		$(EXENAME)
 
-HogbomCuda.o:	HogbomCuda.cu HogbomCuda.h Parameters.h
-		$(NVCC) $(NVCCFLAGS) $(INCLUDE) -c $<
+HogbomCuda.o: HogbomCuda.h HogbomCuda.cu Parameters.h
+			$(NVCC) $(NVCCFLAGS) $(INCLUDE) -c HogbomCuda.cu
 
 %.o:		%.cc %.h Parameters.h
-		$(CXX) $(CFLAGS) $(INCLUDE) -c $<
+			$(CXX) $(CFLAGS) $(INCLUDE) -c $<
 
 $(EXENAME):	$(OBJS)
 		$(NVCC) $(NVCCFLAGS) -o $(EXENAME) $(OBJS)

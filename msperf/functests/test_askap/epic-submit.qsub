@@ -1,0 +1,17 @@
+#!/bin/bash -l
+#PBS -W group_list=astronomy554
+#PBS -l select=2:ncpus=12:mem=23GB:mpiprocs=12
+#PBS -l walltime=01:00:00
+#PBS -M ben.humphreys@csiro.au
+#PBS -N msperf
+#PBS -m a
+#PBS -j oe
+#PBS -r n
+
+cd $PBS_O_WORKDIR
+
+source ../../init_package_env.sh
+
+rm -rf *.ms
+
+mpirun -np 16 msperf.sh -c config.in | tee output.$PBS_JOBID.out

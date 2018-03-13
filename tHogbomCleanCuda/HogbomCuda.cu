@@ -4,6 +4,8 @@
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
 ///
+/// This file is part of the ASKAP software distribution.
+///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
 /// published by the Free Software Foundation; either version 2 of the License,
@@ -34,13 +36,16 @@
 // Local includes
 #include "Parameters.h"
 
-#include <cub.cuh>
-
 using namespace std;
 
 // Some constants for findPeak
-int findPeakNBlocks = 26;
-static const int findPeakWidth = 1024;
+const int findPeakNBlocks = 4;
+const int findPeakWidth = 1024;
+
+struct Peak {
+    size_t pos;
+    float val;
+};
 
 struct Position {
     __host__ __device__
@@ -59,7 +64,7 @@ static void checkerror(cudaError_t err)
     }
 }
 
-__host__ __device__ inline
+__host__ __device__
 static Position idxToPos(const size_t idx, const int width)
 {
     const int y = idx / width;
@@ -67,68 +72,84 @@ static Position idxToPos(const size_t idx, const int width)
     return Position(x, y);
 }
 
-__host__ __device__ inline
+__host__ __device__
 static size_t posToIdx(const int width, const Position& pos)
 {
     return (pos.y * width) + pos.x;
 }
 
-// For CUB
-struct MaxOp
+__global__
+void d_findPeak(const float* image, size_t size, Peak* absPeak)
 {
-    __host__ __device__ inline
-    Peak operator()(const Peak &a, const Peak &b)
-    {
-        return (abs(b.val) > abs(a.val)) ? b : a;
-    }
-};
+    __shared__ float maxVal[findPeakWidth];
+    __shared__ size_t maxPos[findPeakWidth];
+    const int column = threadIdx.x + (blockIdx.x * blockDim.x);
+    maxVal[threadIdx.x] = 0.0;
+    maxPos[threadIdx.x] = 0;
 
-__global__ 
-void d_findPeak(Peak *peaks, const float* __restrict__ image, int size)
-{
-    Peak threadMax = {0.0, 0};   
-        
-    // parallel raking reduction (independent threads)
-    for (int i = findPeakWidth * blockIdx.x + threadIdx.x; 
-        i < size; 
-        i += gridDim.x * findPeakWidth) {
-        if (abs(image[i]) > abs(threadMax.val)) {
-            threadMax.val = image[i];
-            threadMax.pos = i;
+    for (int idx = column; idx < size; idx += 4096) {
+        if (abs(image[idx]) > abs(maxVal[threadIdx.x])) {
+            maxVal[threadIdx.x] = image[idx];
+            maxPos[threadIdx.x] = idx;
         }
     }
 
-    // Use CUB to find the max for each thread block.
-    typedef cub::BlockReduce<Peak, findPeakWidth> BlockMax;
-    __shared__ typename BlockMax::TempStorage temp_storage;
-    threadMax = BlockMax(temp_storage).Reduce(threadMax, MaxOp());
-
-    if (threadIdx.x == 0) peaks[blockIdx.x] = threadMax;
+    __syncthreads();
+    if (threadIdx.x == 0) {
+        absPeak[blockIdx.x].val = 0.0;
+        absPeak[blockIdx.x].pos = 0;
+        for (int i = 0; i < findPeakWidth; ++i) {
+            if (abs(maxVal[i]) > abs(absPeak[blockIdx.x].val)) {
+                absPeak[blockIdx.x].val = maxVal[i];
+                absPeak[blockIdx.x].pos = maxPos[i];
+            }
+        }
+    }
 }
 
 __host__
-static Peak findPeak(Peak *d_peaks, const float* d_image, size_t size)
+static Peak findPeak(const float* d_image, size_t size)
 {
-    // Find peak
-    d_findPeak<<<findPeakNBlocks, findPeakWidth>>>(d_peaks, d_image, size);   
-    
-    // Get the peaks array back from the device
-    Peak peaks[findPeakNBlocks];
-    cudaError_t err = cudaMemcpy(peaks, d_peaks, findPeakNBlocks * sizeof(Peak), cudaMemcpyDeviceToHost);
+    const int nBlocks = findPeakNBlocks;
+    Peak peaks[nBlocks];
+
+    // Initialise a peaks array on the device. Each thread block will return
+    // a peak. Note:  the d_peaks array is not initialized (hence avoiding the
+    // memcpy), it is up to the device function to do that
+    cudaError_t err;
+    Peak* d_peak;
+    err = cudaMalloc((void **) &d_peak, nBlocks * sizeof(Peak));
     checkerror(err);
-    
-    Peak p = peaks[0];
-    // serial final reduction
-    for (int i = 1; i < findPeakNBlocks; ++i) {
-        if (abs(peaks[i].val) > abs(p.val))
-            p = peaks[i];
+
+    // Find peak
+    d_findPeak<<<nBlocks, findPeakWidth>>>(d_image, size, d_peak);
+    err = cudaGetLastError();
+    checkerror(err);
+
+    // Get the peaks array back from the device
+    err = cudaMemcpy(&peaks, d_peak, nBlocks * sizeof(Peak), cudaMemcpyDeviceToHost);
+    checkerror(err);
+    err = cudaDeviceSynchronize();
+    checkerror(err);
+    cudaFree(d_peak);
+
+    // Each thread block returned a peak, find the absolute maximum
+    Peak p;
+    p.val = 0;
+    p.pos = 0;
+    for (int i = 0; i < nBlocks; ++i) {
+        if (abs(peaks[i].val) > abs(p.val)) {
+            p.val = peaks[i].val;
+            p.pos = peaks[i].pos;
+
+        }
     }
 
     return p;
 }
 
 __global__
-void d_subtractPSF(const float* __restrict__ d_psf,
+void d_subtractPSF(const float* d_psf,
     const int psfWidth,
     float* d_residual,
     const int residualWidth,
@@ -140,8 +161,9 @@ void d_subtractPSF(const float* __restrict__ d_psf,
     const int x =  startx + threadIdx.x + (blockIdx.x * blockDim.x);
     const int y =  starty + threadIdx.y + (blockIdx.y * blockDim.y);
 
-    // Because workload is not always a multiple of thread block size, 
-    // need to ensure only threads in the work area actually do work
+    // Because thread blocks are of size 16, and the workload is not always
+    // a multiple of 16, need to ensure only those threads whos responsibility
+    // lies in the work area actually do work
     if (x <= stopx && y <= stopy) {
         d_residual[posToIdx(residualWidth, Position(x, y))] -= gain * absPeakVal
             * d_psf[posToIdx(psfWidth, Position(x - diffx, y - diffy))];
@@ -153,66 +175,44 @@ static void subtractPSF(const float* d_psf, const int psfWidth,
         float* d_residual, const int residualWidth,
         const size_t peakPos, const size_t psfPeakPos,
         const float absPeakVal, const float gain)
-{  
-    // The x,y coordinate of the peak in the residual image
+{
+    const int blockDim = 16;
+
     const int rx = idxToPos(peakPos, residualWidth).x;
     const int ry = idxToPos(peakPos, residualWidth).y;
 
-    // The x,y coordinate for the peak of the PSF (usually the centre)
     const int px = idxToPos(psfPeakPos, psfWidth).x;
     const int py = idxToPos(psfPeakPos, psfWidth).y;
 
-    // The PSF needs to be overlayed on the residual image at the position
-    // where the peaks align. This is the offset between the above two points
     const int diffx = rx - px;
-    const int diffy = ry - py;
+    const int diffy = ry - px;
 
-    // The top-left-corner of the region of the residual to subtract from.
-    // This will either be the top right corner of the PSF too, or on an edge
-    // in the case the PSF spills outside of the residual image
     const int startx = max(0, rx - px);
     const int starty = max(0, ry - py);
 
-    // This is the bottom-right corner of the region of the residual to
-    // subtract from.
     const int stopx = min(residualWidth - 1, rx + (psfWidth - px - 1));
     const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
 
-    const dim3 blockDim(32, 4);
-
     // Note: Both start* and stop* locations are inclusive.
-    const int blocksx = ceil((stopx-startx+1.0f) / static_cast<float>(blockDim.x));
-    const int blocksy = ceil((stopy-starty+1.0f) / static_cast<float>(blockDim.y));
+    const int blocksx = ceil((stopx-startx+1.0) / static_cast<float>(blockDim));
+    const int blocksy = ceil((stopy-starty+1.0) / static_cast<float>(blockDim));
 
-    dim3 gridDim(blocksx, blocksy);
-
-    d_subtractPSF<<<gridDim, blockDim>>>(d_psf, psfWidth, d_residual, residualWidth,
-        startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gain);
+    dim3 numBlocks(blocksx, blocksy);
+    dim3 threadsPerBlock(blockDim, blockDim);
+    d_subtractPSF<<<numBlocks,threadsPerBlock>>>(d_psf, psfWidth, d_residual, residualWidth,
+            startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gain);
     cudaError_t err = cudaGetLastError();
     checkerror(err);
 }
 
 __host__
-HogbomCuda::HogbomCuda(size_t psfSize, size_t residualSize)
+HogbomCuda::HogbomCuda()
 {
-    reportDevice();
-
-    cudaError_t err;
-    err = cudaMalloc((void **) &d_psf, psfSize * sizeof(float));
-    checkerror(err);
-    err = cudaMalloc((void **) &d_residual, residualSize * sizeof(float));
-    checkerror(err);
-    err = cudaMalloc((void **) &d_peaks, findPeakNBlocks * sizeof(Peak));
-    checkerror(err);
 }
 
 __host__
 HogbomCuda::~HogbomCuda()
 {
-    // Free device memory
-    cudaFree(d_psf);
-    cudaFree(d_residual);
-    cudaFree(d_peaks);
 }
 
 __host__
@@ -223,16 +223,32 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
         vector<float>& model,
         vector<float>& residual)
 {
+    reportDevice();
+    residual = dirty;
+
+    // Allocate device memory
+    float* d_dirty;
+    float* d_psf;
+    float* d_residual;
+
     cudaError_t err;
+    err = cudaMalloc((void **) &d_dirty, dirty.size() * sizeof(float));
+    checkerror(err);
+    err = cudaMalloc((void **) &d_psf, psf.size() * sizeof(float));
+    checkerror(err);
+    err = cudaMalloc((void **) &d_residual, residual.size() * sizeof(float));
+    checkerror(err);
 
     // Copy host vectors to device arrays
+    err = cudaMemcpy(d_dirty, &dirty[0], dirty.size() * sizeof(float), cudaMemcpyHostToDevice);
+    checkerror(err);
     err = cudaMemcpy(d_psf, &psf[0], psf.size() * sizeof(float), cudaMemcpyHostToDevice);
     checkerror(err);
-    err = cudaMemcpy(d_residual, &dirty[0], residual.size() * sizeof(float), cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_residual, &residual[0], residual.size() * sizeof(float), cudaMemcpyHostToDevice);
     checkerror(err);
 
     // Find peak of PSF
-    Peak psfPeak = findPeak(d_peaks, d_psf, psf.size());
+    Peak psfPeak = findPeak(d_psf, psf.size());
 
     cout << "Found peak of PSF: " << "Maximum = " << psfPeak.val 
         << " at location " << idxToPos(psfPeak.pos, psfWidth).x << ","
@@ -241,7 +257,7 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
 
     for (unsigned int i = 0; i < g_niters; ++i) {
         // Find peak in the residual image
-        Peak peak = findPeak(d_peaks, d_residual, residual.size());
+        Peak peak = findPeak(d_residual, residual.size());
 
         assert(peak.pos <= residual.size());
         //cout << "Iteration: " << i + 1 << " - Maximum = " << peak.val
@@ -261,11 +277,22 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
 
         // Add to model
         model[peak.pos] += peak.val * g_gain;
+
+        // Wait for the PSF subtraction to finish
+        err = cudaDeviceSynchronize();
+        checkerror(err);
     }
 
-    // Copy device array back into the host vector
+    // Copy device arrays back into the host vector
     err = cudaMemcpy(&residual[0], d_residual, residual.size() * sizeof(float), cudaMemcpyDeviceToHost);
     checkerror(err);
+    err = cudaDeviceSynchronize();
+    checkerror(err);
+
+    // Free device memory
+    cudaFree(d_dirty);
+    cudaFree(d_psf);
+    cudaFree(d_residual);
 }
 
 __host__
@@ -278,7 +305,4 @@ void HogbomCuda::reportDevice(void)
     cudaGetDeviceProperties(&devprop, device);
     std::cout << "    Using CUDA Device " << device << ": "
         << devprop.name << std::endl;
-
-    // Allocate 2 blocks per multiprocessor
-    findPeakNBlocks = 2 * devprop.multiProcessorCount;
 }

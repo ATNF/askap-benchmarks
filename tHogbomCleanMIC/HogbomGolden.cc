@@ -20,6 +20,7 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
+/// @author Ben Humphreys <ben.humphreys@csiro.au>
 
 // Include own header file first
 #include "HogbomGolden.h"
@@ -28,6 +29,7 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <cstddef>
 
 // Local includes
 #include "Parameters.h"
@@ -90,27 +92,18 @@ void HogbomGolden::subtractPSF(const vector<float>& psf,
         const float absPeakVal,
         const float gain)
 {
-    // The x,y coordinate of the peak in the residual image
     const int rx = idxToPos(peakPos, residualWidth).x;
     const int ry = idxToPos(peakPos, residualWidth).y;
 
-    // The x,y coordinate for the peak of the PSF (usually the centre)
     const int px = idxToPos(psfPeakPos, psfWidth).x;
     const int py = idxToPos(psfPeakPos, psfWidth).y;
 
-    // The PSF needs to be overlayed on the residual image at the position
-    // where the peaks align. This is the offset between the above two points
     const int diffx = rx - px;
     const int diffy = ry - px;
 
-    // The top-left-corner of the region of the residual to subtract from.
-    // This will either be the top right corner of the PSF too, or on an edge
-    // in the case the PSF spills outside of the residual image
     const int startx = max(0, rx - px);
     const int starty = max(0, ry - py);
 
-    // This is the bottom-right corner of the region of the residual to
-    // subtract from.
     const int stopx = min(residualWidth - 1, rx + (psfWidth - px - 1));
     const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
 
@@ -125,17 +118,15 @@ void HogbomGolden::subtractPSF(const vector<float>& psf,
 void HogbomGolden::findPeak(const vector<float>& image,
                         float& maxVal, size_t& maxPos)
 {
-    float localmaxVal = 0.0;
-    int localmaxPos = 0;
-    int size = image.size();
-    for (int i = 0; i < size; ++i) {
-        if (abs(image[i]) > localmaxVal) {
-            localmaxVal = abs(image[i]);
-            localmaxPos = i;
+    maxVal = 0.0;
+    maxPos = 0;
+    const size_t size = image.size();
+    for (size_t i = 0; i < size; ++i) {
+        if (abs(image[i]) > abs(maxVal)) {
+            maxVal = image[i];
+            maxPos = i;
         }
     }
-    maxVal = image[localmaxPos];
-    maxPos = localmaxPos;
 }
 
 HogbomGolden::Position HogbomGolden::idxToPos(const int idx, const size_t width)

@@ -4,6 +4,8 @@
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
 ///
+/// This file is part of the ASKAP software distribution.
+///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
 /// published by the Free Software Foundation; either version 2 of the License,
@@ -21,7 +23,6 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 
 // System includes
-#include <string.h>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -99,7 +100,7 @@ bool compare(const vector<float>& expected, const vector<float>& actual)
     return true;
 }
 
-int main(int argc, char** argv)
+int main(int /*argc*/, char** /* argv*/)
 {
     cout << "Reading dirty image and psf image" << endl;
     // Load dirty image and psf
@@ -107,10 +108,6 @@ int main(int argc, char** argv)
     const size_t dim = checkSquare(dirty);
     vector<float> psf = readImage(g_psfFile);
     const size_t psfDim = checkSquare(psf);
-
-    bool computeGolden = true;
-    if (argc > 1 && !strstr(argv[0], "skipgolden"))
-        computeGolden = false;
 
     // Reports some numbers
     cout << "Iterations = " << g_niters << endl;
@@ -120,26 +117,22 @@ int main(int argc, char** argv)
     //
     vector<float> goldenResidual;
     vector<float> goldenModel(dirty.size());
-
-    if (computeGolden)
+    zeroInit(goldenModel);
     {
-        zeroInit(goldenModel);
-        {
-            // Now we can do the timing for the serial (Golden) CPU implementation
-            cout << "+++++ Forward processing (CPU Golden) +++++" << endl;
-            HogbomGolden golden;
+        // Now we can do the timing for the serial (Golden) CPU implementation
+        cout << "+++++ Forward processing (CPU Golden) +++++" << endl;
+        HogbomGolden golden;
 
-            Stopwatch sw;
-            sw.start();
-            golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
-            const double time = sw.stop();
+        Stopwatch sw;
+        sw.start();
+        golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
+        const double time = sw.stop();
 
-            // Report on timings
-            cout << "    Time " << time << " (s) " << endl;
-            cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
-            cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
-            cout << "Done" << endl;
-        }
+        // Report on timings
+        cout << "    Time " << time << " (s) " << endl;
+        cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
+        cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
+        cout << "Done" << endl;
     }
 
     // Write images out
@@ -149,13 +142,13 @@ int main(int argc, char** argv)
     //
     // Run the CUDA version of the code
     //
-    vector<float> cudaResidual(dirty.size());
+    vector<float> cudaResidual;
     vector<float> cudaModel(dirty.size());
     zeroInit(cudaModel);
     {
         // Now we can do the timing for the CUDA implementation
         cout << "+++++ Forward processing (CUDA) +++++" << endl;
-        HogbomCuda cuda(psf.size(), cudaResidual.size());
+        HogbomCuda cuda;
 
         Stopwatch sw;
         sw.start();

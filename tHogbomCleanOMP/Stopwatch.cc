@@ -1,8 +1,10 @@
-/// @copyright (c) 2009 CSIRO
+/// @copyright (c) 2007 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
+///
+/// This file is part of the ASKAP software distribution.
 ///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
@@ -49,7 +51,7 @@ void Stopwatch::start()
 double Stopwatch::stop()
 {
     struct tms t;
-    const clock_t stop = times(&t);
+    clock_t stop = times(&t);
 
     if (m_start == static_cast<clock_t>(-1)) {
         throw std::runtime_error("Start time not set");

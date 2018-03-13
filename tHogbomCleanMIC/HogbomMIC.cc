@@ -20,6 +20,7 @@
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
+/// @author Ben Humphreys <ben.humphreys@csiro.au>
 
 // Include own header file first
 #include "HogbomMIC.h"
@@ -28,18 +29,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+// MIC includes
 #include <offload.h>
-#pragma offload_attribute(push,target(mic))
-#include <iostream>
-#pragma offload_attribute(pop)
+#include <immintrin.h>
 
 // Local includes
 #include "Parameters.h"
 
 using namespace std;
 
-struct Position{
-__declspec(target(mic))
+struct Position {
     inline Position(int _x, int _y) : x(_x), y(_y) { };
     int x;
     int y;
@@ -82,7 +82,6 @@ static void subtractPSF(const float* psf,
 
     const int stopx = min(residualWidth - 1, rx + (psfWidth - px - 1));
     const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
-
     const float MUL = gain * absPeakVal;
 
     int lhsIdx;
@@ -90,64 +89,78 @@ static void subtractPSF(const float* psf,
 
     #pragma omp parallel for default(shared) private(lhsIdx,rhsIdx)
     for (int y = starty; y <= stopy; ++y) {
-        lhsIdx = y * residualWidth + startx; 
+        lhsIdx = y * residualWidth + startx;
         rhsIdx = (y - diffy) * psfWidth + (startx - diffx);
         for (int x = startx; x <= stopx; ++x, lhsIdx++, rhsIdx++) {
             residual[lhsIdx] -= MUL * psf[rhsIdx];
         }
     }
-
 }
 
-__declspec(target(mic)) int num_t = 120;
 __declspec(target(mic))
 static void findPeak(const float* image, const size_t imageSize,
-        float& maxVal, size_t& maxPos)
+        float& maxVal, int& maxPos)
 {
+#ifdef __MIC__
     maxVal = 0.0;
+    int *aligned_maxPos = (int*)_mm_malloc(16*sizeof(int),64);
     maxPos = 0;
 
-    int DIST = 1;
-    float *temp_Peak = (float*)malloc(DIST*sizeof(float)*num_t);
-    int *temp_Pos = (int*)malloc(DIST*sizeof(int)*num_t);
-
+    __m512 reduceMaxAbsVal_v = _mm512_setzero_ps();
+    __mmask reduceThreadMaxMask;
+    __m512i reduceThreadMaxPos_v = _mm512_setzero_pi();
     #pragma omp parallel
     {
-        float threadAbsMaxVal = 0.0;
-        int threadAbsMaxPos = 0;
+        int m=0;
+        __m512 threadMaxVal_v = _mm512_setzero_ps();
+        __m512i threadMaxPos_v = _mm512_setzero_pi();
+
+        int *seq_1_16 = (int*)_mm_malloc(16*sizeof(int),64);
+        for(m=0; m < 16; m++) { seq_1_16[m] = m; }
+        __m512 seq_1_16_v = _mm512_load_epi32(seq_1_16, _MM_UPCONV_EPI32_NONE, _MM_BROADCAST32_NONE, _MM_HINT_NONE);
+
+        float *threadAbs_image = (float*)_mm_malloc(16*sizeof(float),64);
+        __m512 threadAbs_image_v;
+        __mmask threadMaxMask;
+
         #pragma omp for
-	#pragma unroll(4)
-        for (int i = 0; i < imageSize; ++i) {
-            if (fabsf(image[i]) > threadAbsMaxVal) {
-                threadAbsMaxVal = fabsf(image[i]);
-                threadAbsMaxPos = i;
-            }
-        }
+        for (int i = 0; i < imageSize; i+=16) {
+          const float *inPtr; inPtr = image + i;
+          _mm_vprefetch2 (inPtr + 384, _MM_PFHINT_NONE);
+          /* Compute absolute of 16 elements in the input vector */
+          for(m=0; m < 16; m++) threadAbs_image[m] = fabs(*(inPtr + m));
+          _mm_vprefetch1 (inPtr + 256, _MM_PFHINT_NONE);
 
-        // Avoid using the double-checked locking optimization here unless
-        // we can be certain that the load of a float is atomic
-#ifdef USECRITICAL
+          threadAbs_image_v = _mm512_loadd(threadAbs_image, _MM_FULLUPC_NONE, _MM_BROADCAST32_NONE, _MM_HINT_NONE);
+          /* Compute the vector maxima of 16 elements in parallel - across 16 lanes */
+          threadMaxVal_v = _mm512_max_ps(threadMaxVal_v,threadAbs_image_v);
+
+          __m512i thread_i_v = _mm512_set_1to16_pi(i);
+
+          /* Determine which locations the maxima occur */
+          threadMaxMask = _mm512_cmpeq_ps(threadMaxVal_v,threadAbs_image_v);
+          threadMaxPos_v = _mm512_mask_add_pi(threadMaxPos_v,threadMaxMask,thread_i_v,seq_1_16_v);
+        }
         #pragma omp critical
-        if (threadAbsMaxVal > maxVal) {
-            maxVal = threadAbsMaxVal;
-            maxPos = threadAbsMaxPos;
+        {
+          reduceMaxAbsVal_v = _mm512_max_ps(reduceMaxAbsVal_v, threadMaxVal_v);
+          reduceThreadMaxMask = _mm512_cmpeq_ps(reduceMaxAbsVal_v,threadMaxVal_v);
+          reduceThreadMaxPos_v = _mm512_mask_mov_epi32(reduceThreadMaxPos_v,reduceThreadMaxMask,threadMaxPos_v);
         }
-    }
-#else 
-        int t_num = omp_get_thread_num();
-        temp_Peak[DIST*t_num] = threadAbsMaxVal;
-        temp_Pos[DIST*t_num] = threadAbsMaxPos;
-    }
-    for (int k = 0; k < num_t ; k++) {
-        if ((temp_Peak[DIST*k]) > (maxVal)) {
-            maxVal = temp_Peak[DIST*k];
-            maxPos = temp_Pos[DIST*k];
-        }
-    }
-#endif
-    maxVal = image[maxPos];
-}
 
+        _mm_free(seq_1_16);
+        _mm_free(threadAbs_image);
+    }
+    float maxAbsVal = _mm512_reduce_max_ps(reduceMaxAbsVal_v);
+    __m512 maxAbsVal_v = _mm512_set_1to16_ps(maxAbsVal);
+    __mmask maxPosMask = _mm512_cmpeq_ps(reduceMaxAbsVal_v,maxAbsVal_v);
+    _mm512_mask_store_epi32(aligned_maxPos,maxPosMask,reduceThreadMaxPos_v,_MM_DOWNCONV_EPI32_NONE,_MM_HINT_NONE);
+    maxPos = aligned_maxPos[(int)log2(_mm512_mask2int(maxPosMask))];
+    maxVal = image[(int)maxPos];
+
+    _mm_free(aligned_maxPos);
+#endif
+}
 
 void mic_deconvolve(const float* dirty,
         const size_t dirtyWidth,
@@ -159,26 +172,26 @@ void mic_deconvolve(const float* dirty,
     const int dirtySize = dirtyWidth*dirtyWidth;
     const int psfSize = psfWidth*psfWidth;
     memcpy(residual, dirty, dirtySize * sizeof(float));
-    __declspec(target(mic)) int num_threads=num_t;
 
-    #pragma offload target(mic)                             \
-            in(dirty:length(dirtySize) )         \
-            in(psf:length(psfSize) ) \
-            inout(model:length(dirtySize) ) \
-            inout(residual:length(dirtySize) )
+    // Use one less than the number of cores in the card
+    omp_set_num_threads_target(TARGET_MIC, 0, 31);
+
+    #pragma offload target(mic) in(dirty:length(dirtySize)) \
+            in(psf:length(psfSize))                         \
+            inout(model:length(dirtySize))                  \
+            inout(residual:length(dirtySize))
     {
-        omp_set_num_threads(num_threads);
         // Find the peak of the PSF
         float psfPeakVal = 0.0;
-        size_t psfPeakPos = 0;
+        int psfPeakPos = 0;
         findPeak(psf, psfSize, psfPeakVal, psfPeakPos);
-//        printf("Found peak of PSF: Maximum = %.2f at location %d,%d\n",
-//                psfPeakVal, idxToPos(psfPeakPos, psfWidth).x,
-//                idxToPos(psfPeakPos, psfWidth).y);
+        printf("Found peak of PSF: Maximum = %.2f at location %d,%d\n",
+                psfPeakVal, idxToPos(psfPeakPos, psfWidth).x,
+                idxToPos(psfPeakPos, psfWidth).y);
         for (unsigned int i = 0; i < g_niters; ++i) {
             // Find the peak in the residual image
             float absPeakVal = 0.0;
-            size_t absPeakPos = 0;
+            int absPeakPos = 0;
             findPeak(residual, dirtySize, absPeakVal, absPeakPos);
 
             // Check if threshold has been reached

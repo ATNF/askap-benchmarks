@@ -4,6 +4,8 @@
 # PO Box 76, Epping NSW 1710, Australia
 # atnf-enquiries@csiro.au
 #
+# This file is part of the ASKAP software distribution.
+#
 # The ASKAP software distribution is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation; either version 2 of the License,
@@ -31,7 +33,7 @@ OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomOMP.o
 all:		$(EXENAME)
 
 %.o:		%.cc %.h Parameters.h
-		$(CXX) $(CFLAGS) -c $<
+			$(CXX) $(CFLAGS) -c $<
 
 $(EXENAME):	$(OBJS)
 		$(CXX) $(CFLAGS) -o $(EXENAME) $(OBJS)
