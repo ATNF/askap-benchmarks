@@ -379,7 +379,7 @@ int randomInt()
 int main()
 {
     // Change these if necessary to adjust run time
-    const int nSamples = 160000; // Number of data samples
+    const int nSamples = 1600000; // Number of data samples
     const int wSize = 33; // Number of lookup planes in w projection
     const int nChan = 1; // Number of spectral channels
 

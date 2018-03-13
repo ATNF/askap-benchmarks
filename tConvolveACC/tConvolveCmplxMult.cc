@@ -1,4 +1,4 @@
-/// @copyright (c) 2017 CSIRO
+/// @copyright (c) 2007 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -22,7 +22,6 @@
 ///
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
-/// @author Daniel Mitchell <daniel.mitchell@csiro.au>
 
 // System includes
 #include <iostream>
@@ -137,6 +136,76 @@ void gridKernel(const std::vector<Value>& data, const int support,
     }
 }
 
+void gridKernelACComplex(const std::vector<Value>& data, const int support,
+        const std::vector<Value>& C, const std::vector<int>& cOffset,
+        const std::vector<int>& iu, const std::vector<int>& iv,
+        std::vector<Value>& grid, const int gSize)
+{
+    const int sSize = 2 * support + 1;
+
+    // Value = std::complex<Real> = std::complex<float>
+    //Real *d_grid = (Real *)grid.data();
+    Value *d_grid = grid.data();
+    const int d_size = data.size();
+    const Value *d_data = data.data();
+    const Value *d_C = C.data();
+    const int *d_cOffset = cOffset.data();
+    const int *d_iu = iu.data();
+    const int *d_iv = iv.data();
+
+    int dind;
+    // Both of the following approaches are the same when running on multicore CPUs.
+    // Using "gang vector" here without the inner pragma below sets 1 vis per vector element (c.f. CUDA thread)
+    //#pragma acc parallel loop gang vector
+    // Using "gang" here with the inner pragma below sets 1 vis per gang, and 1 pixel per vec element
+
+#ifdef GPU
+    #pragma acc parallel loop
+#endif
+    for (dind = 0; dind < d_size; ++dind) {
+
+        int cind = d_cOffset[dind];
+        //const Real *c_C = (Real *)&d_C[cind];
+        //#pragma acc cache(c_C[0:2*sSize*sSize])
+
+        // The actual grid point
+        int gind = d_iu[dind] + gSize * d_iv[dind] - support;
+        // The Convoluton function point from which we offset
+        int suppu, suppv;
+        const Real dre = d_data[dind].real();
+        const Real dim = d_data[dind].imag();
+
+        // It seems that all of CPU hyper threads are going to gangs (if code is limited by race conditions) ??? 
+        // -- try some other things:
+        //#pragma acc loop collapse(2) vector // this with the loop above took 7x
+        //#pragma acc loop collapse(2) // this by itself took 1x
+        //#pragma acc loop collapse(2) vector // this by itself took 1x
+        //#pragma acc parallel loop collapse(2) // this by itself didn't work. Index mixup?
+
+#ifdef GPU
+        #pragma acc loop collapse(2)
+#else
+        #pragma acc parallel loop gang vector collapse(2)
+#endif
+        for (suppv = 0; suppv < sSize; suppv++) {
+            for (suppu = 0; suppu < sSize; suppu++) {
+                Real *dref = (Real *)&d_grid[gind+suppv*gSize+suppu];
+                const std::complex<Real> cval = d_data[dind] * d_C[cind+suppv*sSize+suppu];
+#ifdef GPU
+                #pragma acc atomic update
+#endif
+                dref[0] = dref[0] + cval.real();
+#ifdef GPU
+                #pragma acc atomic update
+#endif
+                dref[1] = dref[1] + cval.imag();
+            }
+        }
+
+    }
+
+}
+
 void gridKernelACC(const std::vector<Value>& data, const int support,
         const std::vector<Value>& C, const std::vector<int>& cOffset,
         const std::vector<int>& iu, const std::vector<int>& iv,
@@ -190,22 +259,17 @@ void gridKernelACC(const std::vector<Value>& data, const int support,
 #endif
         for (suppv = 0; suppv < sSize; suppv++) {
             for (suppu = 0; suppu < sSize; suppu++) {
-                //Real *dref = (Real *)&d_grid[gind+suppu];
-                //const std::complex<Real> cval = d_data[dind] * d_C[cind+suppu];
                 Real *dref = (Real *)&d_grid[gind+suppv*gSize+suppu];
-                //const std::complex<Real> cval = d_data[dind] * d_C[cind+suppv*sSize+suppu];
                 const int suppre = 2 * (suppv*sSize+suppu);
                 const Real reval = dre * c_C[suppre] - dim * c_C[suppre+1];
                 const Real imval = dim * c_C[suppre] + dre * c_C[suppre+1];
 #ifdef GPU
                 #pragma acc atomic update
 #endif
-                //dref[0] = dref[0] + cval.real();
                 dref[0] = dref[0] + reval;
 #ifdef GPU
                 #pragma acc atomic update
 #endif
-                //dref[1] = dref[1] + cval.imag();
                 dref[1] = dref[1] + imval;
             }
             //gind += gSize;
@@ -279,6 +343,52 @@ void degridKernel(const std::vector<Value>& grid, const int gSize, const int sup
     }
 }
 
+void degridKernelACComplex(const std::vector<Value>& grid, const int gSize, const int support,
+                     const std::vector<Value>& C, const std::vector<int>& cOffset,
+                     const std::vector<int>& iu, const std::vector<int>& iv,
+                     std::vector<Value>& data)
+{
+    const int sSize = 2 * support + 1;
+
+    const int d_size = data.size();
+    Value *d_data = data.data();
+    const Value *d_grid = grid.data();
+    const Value *d_C = C.data();
+    const int *d_cOffset = cOffset.data();
+    const int *d_iu = iu.data();
+    const int *d_iv = iv.data();
+
+    int dind;
+    // Both of the following approaches are the same when running on multicore CPUs.
+    // Using "gang vector" here without the inner pragma below sets 1 vis per vector element (c.f. CUDA thread)
+    //#pragma acc parallel loop gang vector
+    // Using "gang" here with the inner pragma below sets 1 vis per gang, and 1 pixel per vec element
+
+    #pragma acc parallel loop
+    for (dind = 0; dind < d_size; ++dind) {
+
+        // The actual grid point from which we offset
+        int gind = d_iu[dind] + gSize * d_iv[dind] - support;
+        // The Convoluton function point from which we offset
+        int cind = d_cOffset[dind];
+
+        //Real *dref = (Real *)&d_data[dind];
+
+        float re = 0.0, im = 0.0;
+        #pragma acc loop reduction(+:re,im) collapse(2)
+        for (int suppv = 0; suppv < sSize; suppv++) {
+            for (int suppu = 0; suppu < sSize; suppu++) {
+                const Value cval = d_grid[gind+suppv*gSize+suppu] * d_C[cind+suppv*sSize+suppu];
+                re = re + cval.real();
+                im = im + cval.imag();
+            }
+        }
+        d_data[dind] = Value(re,im);
+
+    }
+
+}
+
 void degridKernelACC(const std::vector<Value>& grid, const int gSize, const int support,
                      const std::vector<Value>& C, const std::vector<int>& cOffset,
                      const std::vector<int>& iu, const std::vector<int>& iv,
@@ -335,6 +445,76 @@ void degridKernelACC(const std::vector<Value>& grid, const int gSize, const int 
         float re = 0.0, im = 0.0;
 //#ifdef GPU
         #pragma acc loop reduction(+:re,im) collapse(2)
+        for (int suppv = 0; suppv < sSize; suppv++) {
+            for (int suppu = 0; suppu < sSize; suppu++) {
+                //const Value cval = d_grid[gind+suppv*gSize+suppu] * d_C[cind+suppv*sSize+suppu];
+                //re = re + cval.real();
+                //im = im + cval.imag();
+                re = re + d_grid[gind+suppv*gSize+suppu].real() * d_C[cind+suppv*sSize+suppu].real() -
+                          d_grid[gind+suppv*gSize+suppu].imag() * d_C[cind+suppv*sSize+suppu].imag();
+                im = im + d_grid[gind+suppv*gSize+suppu].imag() * d_C[cind+suppv*sSize+suppu].real() +
+                          d_grid[gind+suppv*gSize+suppu].real() * d_C[cind+suppv*sSize+suppu].imag();
+            }
+        }
+        d_data[dind] = Value(re,im);
+
+/*
+#else
+        #pragma acc parallel loop gang vector collapse(2)
+        for (int suppv = 0; suppv < sSize; suppv++) {
+            for (int suppu = 0; suppu < sSize; suppu++) {
+                Real *dref = (Real *)&d_grid[gind+suppv*gSize+suppu];
+                dref[0] += d_grid[gind+suppv*gSize+suppu].real() * d_C[cind+suppv*sSize+suppu].real() -
+                           d_grid[gind+suppv*gSize+suppu].imag() * d_C[cind+suppv*sSize+suppu].imag();
+                dref[1] += d_grid[gind+suppv*gSize+suppu].imag() * d_C[cind+suppv*sSize+suppu].real() +
+                           d_grid[gind+suppv*gSize+suppu].real() * d_C[cind+suppv*sSize+suppu].imag();
+            }
+        }
+#endif
+*/
+
+    }
+
+}
+
+void degridKernelAlt(const std::vector<Value>& grid, const int gSize, const int support,
+                     const std::vector<Value>& C, const std::vector<int>& cOffset,
+                     const std::vector<int>& iu, const std::vector<int>& iv,
+                     std::vector<Value>& data)
+{
+    const int sSize = 2 * support + 1;
+
+    const int d_size = data.size();
+    Value *d_data = data.data();
+    const Value *d_grid = grid.data();
+    const Value *d_C = C.data();
+    const int *d_cOffset = cOffset.data();
+    const int *d_iu = iu.data();
+    const int *d_iv = iv.data();
+
+    int dind;
+    // Both of the following approaches are the same when running on multicore CPUs.
+    // Using "gang vector" here without the inner pragma below sets 1 vis per vector element (c.f. CUDA thread)
+    //#pragma acc parallel loop gang vector
+    // Using "gang" here with the inner pragma below sets 1 vis per gang, and 1 pixel per vec element
+#ifdef GPU
+    #pragma acc parallel loop
+#endif
+    for (dind = 0; dind < d_size; ++dind) {
+
+        // The actual grid point from which we offset
+        int gind = d_iu[dind] + gSize * d_iv[dind] - support;
+        // The Convoluton function point from which we offset
+        int cind = d_cOffset[dind];
+
+        //Real *dref = (Real *)&d_data[dind];
+
+        float re = 0.0, im = 0.0;
+#ifdef GPU
+        #pragma acc loop reduction(+:re,im) collapse(2)
+#else
+        #pragma acc parallel loop reduction(+:re,im) collapse(2)
+#endif
         for (int suppv = 0; suppv < sSize; suppv++) {
             for (int suppu = 0; suppu < sSize; suppu++) {
                 //const Value cval = d_grid[gind+suppv*gSize+suppu] * d_C[cind+suppv*sSize+suppu];
@@ -583,7 +763,7 @@ int main()
     cpugrid.assign(cpugrid.size(), Value(0.0));
     {
         // Now we can do the timing for the CPU implementation
-        cout << "+++++ Forward processing (CPU with complex mult) +++++" << endl;
+        cout << "+++++ Forward processing (CPU complex mult) +++++" << endl;
 
         Stopwatch sw;
         sw.start();
@@ -603,7 +783,7 @@ int main()
     cpureal.assign(cpureal.size(), Value(0.0));
     {
         // Now we can do the timing for the CPU implementation
-        cout << "+++++ Forward processing (CPU) +++++" << endl;
+        cout << "+++++ Forward processing (CPU real mult) +++++" << endl;
 
         Stopwatch sw;
         sw.start();
@@ -641,7 +821,7 @@ int main()
     accgrid.assign(accgrid.size(), Value(0.0));
     {
         // Now we can do the timing for the GPU implementation
-        cout << "+++++ Forward processing (OpenACC) +++++" << endl;
+        cout << "+++++ Forward processing (OpenACC complex mult) +++++" << endl;
 
         // Time is measured inside this function call, unlike the CPU versions
         Stopwatch sw;
@@ -669,6 +849,45 @@ int main()
         if (fabs(cpugrid[i].real() - accgrid[i].real()) > 0.00001) {
             cout << "Fail (Expected " << cpugrid[i].real() << " got "
                      << accgrid[i].real() << " at index " << i << ")"
+                     << std::endl;
+            return 1;
+        }
+    }
+
+    cout << "Pass" << std::endl;
+
+    std::vector<Value> accreal(gSize*gSize);
+    accreal.assign(accreal.size(), Value(0.0));
+    {
+        // Now we can do the timing for the GPU implementation
+        cout << "+++++ Forward processing (OpenACC real mult) +++++" << endl;
+
+        // Time is measured inside this function call, unlike the CPU versions
+        Stopwatch sw;
+        sw.start();
+        gridKernelACC(data, support, C, cOffset, iu, iv, accreal, gSize);
+        const double acctime = sw.stop();
+
+        // Report on timings
+        cout << "    Time " << acctime << " (s) = serial version / " << time/acctime << " (s) = complex version / " << timeComplex/acctime << endl;
+        cout << "    Time per visibility spectral sample " << 1e6*acctime / double(data.size()) << " (us) " << endl;
+        cout << "    Time per gridding   " << 1e9*acctime / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
+        cout << "    Gridding rate   " << (griddings / 1000000) / acctime << " (million grid points per second)" << endl;
+
+        cout << "Done" << endl;
+    }
+
+    cout << "Verifying result...";
+
+    if (cpugrid.size() != accreal.size()) {
+        cout << "Fail (Grid sizes differ)" << std::endl;
+        return 1;
+    }
+
+    for (unsigned int i = 0; i < cpugrid.size(); ++i) {
+        if (fabs(cpugrid[i].real() - accreal[i].real()) > 0.00001) {
+            cout << "Fail (Expected " << cpugrid[i].real() << " got "
+                     << accreal[i].real() << " at index " << i << ")"
                      << std::endl;
             return 1;
         }
@@ -753,7 +972,7 @@ int main()
     {
         cpugrid.assign(cpugrid.size(), Value(1.0));
         // Now we can do the timing for the CPU implementation
-        cout << "+++++ Reverse processing (CPU with complex mult) +++++" << endl;
+        cout << "+++++ Reverse processing (CPU complex mult) +++++" << endl;
 
         Stopwatch sw;
         sw.start();
@@ -772,7 +991,7 @@ int main()
     {
         cpureal.assign(cpureal.size(), Value(1.0));
         // Now we can do the timing for the GPU implementation
-        cout << "+++++ Reverse processing (OpenACC) +++++" << endl;
+        cout << "+++++ Reverse processing (CPU real mult) +++++" << endl;
 
         // Time is measured inside this function call, unlike the CPU versions
         Stopwatch sw;
@@ -817,6 +1036,46 @@ int main()
         Stopwatch sw;
         sw.start();
         degridKernelACC(accgrid, gSize, support, C, cOffset, iu, iv, accoutdata);
+        const double acctime = sw.stop();
+
+        // Report on timings
+        cout << "    Time " << acctime << " (s) = serial version / " << time/acctime << " (s) = complex version / " << timeComplex/acctime << endl;
+        cout << "    Time per visibility spectral sample " << 1e6*acctime / double(data.size()) << " (us) " << endl;
+        cout << "    Time per degridding   " << 1e9*acctime / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
+        cout << "    Degridding rate   " << (griddings / 1000000) / acctime << " (million grid points per second)" << endl;
+
+        cout << "Done" << endl;
+    }
+
+    // Verify degridding results
+    cout << "Verifying result...";
+
+    if (cpuoutdata.size() != accoutdata.size()) {
+        cout << "Fail (Data vector sizes differ)" << std::endl;
+        return 1;
+    }
+
+    for (unsigned int i = 0; i < cpuoutdata.size(); ++i) {
+        if (fabs(cpuoutdata[i].real() - accoutdata[i].real()) > 0.00001) {
+            cout << "Fail (Expected " << cpuoutdata[i].real() << " got "
+                     << accoutdata[i].real() << " at index " << i << ")"
+                     << std::endl;
+            return 1;
+        }
+    }
+
+    cout << "Pass" << std::endl;
+
+    std::vector<Value> altgrid(gSize*gSize);
+    {
+        altgrid.assign(altgrid.size(), Value(1.0));
+        // Now we can do the timing for the GPU implementation
+        cout << "+++++ Reverse processing (OpenACC -- alt) +++++" << endl;
+
+        // Time is measured inside this function call, unlike the CPU versions
+        Stopwatch sw;
+        sw.start();
+        degridKernelACC(altgrid, gSize, support, C, cOffset, iu, iv, accoutdata);
         const double acctime = sw.stop();
 
         // Report on timings

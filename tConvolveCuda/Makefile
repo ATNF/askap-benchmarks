@@ -24,6 +24,7 @@
 CXX = g++
 CFLAGS = -Wall -Wextra -O2 -fstrict-aliasing -fcx-limited-range -fPIC
 
+CUDA = $(CUDATOOLKIT_HOME)/include
 EXENAME = tConvolveCuda
 EXEOBJS = $(EXENAME).o
 EXELIBS = -lCudaGridder
@@ -31,16 +32,16 @@ EXELIBS = -lCudaGridder
 LIBNAME=libCudaGridder.so
 LIBOBJS=CudaGridder.o CudaGridKernel.o Stopwatch.o
 
-NVCCFLAGS=-O3 --compiler-options -fPIC
+NVCCFLAGS= --compiler-options -fPIC
 
 all:		$(EXENAME) $(LIBNAME)
 
 %.o:		%.cc %.h
-		$(CXX) $(CFLAGS) -c $<
+		$(CXX) $(CFLAGS) -I$(CUDA) -c $<
 
 $(LIBNAME):	CudaGridder.cc CudaGridder.h CudaGridKernel.cu Stopwatch.o
-		nvcc $(NVCCFLAGS) -I/usr/local/cuda/include -c CudaGridKernel.cu
-		$(CXX) $(CFLAGS) -I/usr/local/cuda/include -c CudaGridder.cc
+		nvcc $(NVCCFLAGS) -I$(CUDA) -c CudaGridKernel.cu
+		$(CXX) $(CFLAGS) -I$(CUDA) -c CudaGridder.cc
 		nvcc $(NVCCFLAGS) -shared -o $(LIBNAME) $(LIBOBJS)
 
 $(EXENAME):	$(EXEOBJS) $(LIBNAME)

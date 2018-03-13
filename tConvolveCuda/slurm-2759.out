@@ -1,0 +1,39 @@
+ModuleCmd_Switch.c(172):ERROR:152: Module 'PrgEnv-cray' is currently not loaded
+ModuleCmd_Switch.c(172):ERROR:152: Module 'gcc/4.8.2' is currently not loaded
+python(4):ERROR:105: Unable to locate a modulefile for 'python/2.7.10'
+gcc(4):ERROR:105: Unable to locate a modulefile for 'gcc/4.9.0'
+Initializing W projection convolution function
+Support = 64 pixels
+W cellsize = 566.034 wavelengths
+Size of convolution function = 268 MB
+Shape of convolution function = [129, 129, 8, 8, 33]
++++++ Forward processing (CPU) +++++
+    Time 5.63 (s) 
+    Time per visibility spectral sample 35.1875 (us) 
+    Time per gridding   2.11451 (ns) 
+    Gridding rate   472.924 (million grid points per second)
+Done
++++++ Forward processing (GPU) +++++
+    Using CUDA Device 0: Tesla P100-SXM2-16GB
+    Used 17417 kernel launches
+    Time 0.19 (s) 
+    Time per visibility spectral sample 1.1875 (us) 
+    Time per gridding   0.0713599 (ns) 
+    Gridding rate   14013.5 (million grid points per second)
+Done
+Verifying result...Pass
++++++ Reverse processing (CPU) +++++
+    Time 6.01 (s) 
+    Time per visibility spectral sample 37.5625 (us) 
+    Time per degridding   2.25723 (ns) 
+    Degridding rate   443.022 (million grid points per second)
+Done
++++++ Reverse processing (GPU) +++++
+    Using CUDA Device 0: Tesla P100-SXM2-16GB
+    Used 3 kernel launches
+    Time 0.07 (s) 
+    Time per visibility spectral sample 0.4375 (us) 
+    Time per degridding   0.0262905 (ns) 
+    Degridding rate   38036.6 (million grid points per second)
+Done
+Verifying result...Pass

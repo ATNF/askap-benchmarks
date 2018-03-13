@@ -1,4 +1,4 @@
-/// @copyright (c) 2017 CSIRO
+/// @copyright (c) 2011 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -21,7 +21,6 @@
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
-/// @author Daniel Mitchell <daniel.mitchell@csiro.au>
 
 // Include own header file first
 #include "HogbomACC.h"

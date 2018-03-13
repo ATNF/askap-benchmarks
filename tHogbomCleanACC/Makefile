@@ -1,4 +1,4 @@
-# Copyright (c) 2017 CSIRO
+# Copyright (c) 2010 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -27,11 +27,10 @@
 CXX=pgc++
 #CFLAGS=-g -O3 -fstrict-aliasing -Wall -Wextra -fopenmp
 # target arch: tesla gpu with managed memory
-CFLAGS=-g -fast -O3 -acc -ta=nvidia,managed
-#CFLAGS=-g -fast -O3 -acc -ta=tesla,cc60,managed
-#CFLAGS=-g -fast -O3 -acc -ta=multicore
-#CFLAGS=-g -fast -O3 -acc -ta=multicore -Minfo=accel
-#CFLAGS=-g -fast -O3
+CFLAGS=-fast -O3 -acc -ta=tesla,cc60,managed
+#CFLAGS=-fast -O3 -acc -ta=multicore
+#CFLAGS=-fast -O3 -acc -ta=multicore -Minfo=accel
+#CFLAGS=-fast -O3
 
 EXENAME = tHogbomCleanACC
 OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomACC.o

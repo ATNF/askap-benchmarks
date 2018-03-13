@@ -1,4 +1,4 @@
-/// @copyright (c) 2017 CSIRO
+/// @copyright (c) 2011 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -23,7 +23,6 @@
 /// @detail
 ///
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
-/// @author Daniel Mitchell <daniel.mitchell@csiro.au>
 
 // System includes
 #include <string>

@@ -26,7 +26,7 @@
 
 CXX=pgc++
 
-USE=cpu
+USE=gpu
 ifeq ($(USE),cpu)
     # Multicore CPU version
     CFLAGS=-fast -O3 -acc -ta=multicore

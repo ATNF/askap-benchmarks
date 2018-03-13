@@ -1,0 +1,5 @@
+ModuleCmd_Switch.c(172):ERROR:152: Module 'PrgEnv-cray' is currently not loaded
+ModuleCmd_Switch.c(172):ERROR:152: Module 'gcc/4.8.2' is currently not loaded
+python(4):ERROR:105: Unable to locate a modulefile for 'python/2.7.10'
+gcc(4):ERROR:105: Unable to locate a modulefile for 'gcc/4.9.0'
+/var/spool/slurm/job02757/slurm_script: line 10: tConvolveCuda: command not found
