@@ -1,8 +1,10 @@
-/// @copyright (c) 2009 CSIRO
+/// @copyright (c) 2007 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
+///
+/// This file is part of the ASKAP software distribution.
 ///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
@@ -27,17 +29,9 @@
 
 class Stopwatch {
     public:
-
-        /// Constructor
         Stopwatch();
-
-        /// Destructor
         ~Stopwatch();
-
-        // Start the stopwatch
         void start();
-        
-        // Returns the time in seconds since start() was called.
         double stop();
 
     private:

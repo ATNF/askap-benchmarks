@@ -4,6 +4,8 @@
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
 ///
+/// This file is part of the ASKAP software distribution.
+///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
 /// published by the Free Software Foundation; either version 2 of the License,
@@ -27,17 +29,10 @@
 
 class Stopwatch {
     public:
-
-        /// Constructor
         Stopwatch();
-
-        /// Destructor
         ~Stopwatch();
 
-        // Start the stopwatch
         void start();
-        
-        // Returns the time in seconds since start() was called.
         double stop();
 
     private:

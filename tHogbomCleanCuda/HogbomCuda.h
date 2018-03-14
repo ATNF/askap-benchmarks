@@ -4,6 +4,8 @@
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
 ///
+/// This file is part of the ASKAP software distribution.
+///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
 /// published by the Free Software Foundation; either version 2 of the License,
@@ -30,14 +32,9 @@
 // Cuda includes
 #include <cuda_runtime_api.h>
 
-struct Peak {
-    float val;
-    int pos;
-};
-
 class HogbomCuda {
     public:
-        HogbomCuda(size_t psfSize, size_t residualSize);
+        HogbomCuda();
         ~HogbomCuda();
 
         void deconvolve(const std::vector<float>& dirty,
@@ -50,10 +47,6 @@ class HogbomCuda {
     private:
 
         void reportDevice(void);
-
-        float* d_psf;
-        float* d_residual;
-        Peak*  d_peaks;     // temporary array for per-block peaks
 };
 
 #endif

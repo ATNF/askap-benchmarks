@@ -4,6 +4,8 @@
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
 ///
+/// This file is part of the ASKAP software distribution.
+///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
 /// published by the Free Software Foundation; either version 2 of the License,
@@ -29,52 +31,37 @@
 
 class HogbomOMP {
     public:
+        HogbomOMP();
+        ~HogbomOMP();
 
-        /// Executes the Hogbom Clean
-        ///
-        /// @param[in] dirty        a vector containing the dirty image to be cleaned
-        /// @param[in] dirtyWidth   the width of the dirty image in pixels (it has to be
-        ///                          square so this is also the height)
-        /// @param[in] psf          a vector containing the PSF
-        /// @param[in] psfWidth     the width of the PSF image in pixels (it has to be
-        ///                          square so this is also the height)
-        /// @param[inout]   model   the image to which model componenets will be added.
-        /// @param[out] residual    the residual image.
-        static void deconvolve(const std::vector<float>& dirty,
-                               const size_t dirtyWidth,
-                               const std::vector<float>& psf,
-                               const size_t psfWidth,
-                               std::vector<float>& model,
-                               std::vector<float>& residual);
+        void deconvolve(const std::vector<float>& dirty,
+                const size_t dirtyWidth,
+                const std::vector<float>& psf,
+                const size_t psfWidth,
+                std::vector<float>& model,
+                std::vector<float>& residual);
 
     private:
 
-        // Represents a pixel position as x and y coordinates
         struct Position {
             Position(int _x, int _y) : x(_x), y(_y) { };
             int x;
             int y;
         };
 
-        // Finds the peak position and the value at the peak position
-        // in an STL vector.
-        static void findPeak(const std::vector<float>& image,
-                             float& maxVal, size_t& maxPos);
+        void findPeak(const std::vector<float>& image,
+                float& maxVal, size_t& maxPos);
 
-        // Subtracts the PSF from the residual image with PSF pixel "psfPeakPos"
-        // aligned with residual pixel "peakPos"
-        static void subtractPSF(const std::vector<float>& psf,
-                                const size_t psfWidth,
-                                std::vector<float>& residual,
-                                const size_t residualWidth,
-                                const size_t peakPos, const size_t psfPeakPos,
-                                const float absPeakVal, const float gain);
+        void subtractPSF(const std::vector<float>& psf,
+                const size_t psfWidth,
+                std::vector<float>& residual,
+                const size_t residualWidth,
+                const size_t peakPos, const size_t psfPeakPos,
+                const float absPeakVal, const float gain);
 
-        // Converts a 1D array index to a 2D position.
-        static Position idxToPos(const int idx, const size_t width);
+        Position idxToPos(const int idx, const size_t width);
 
-        // Converts a 2D position to a 1D array index
-        static size_t posToIdx(const size_t width, const Position& pos);
+        size_t posToIdx(const size_t width, const Position& pos);
 };
 
 #endif

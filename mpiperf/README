@@ -1,0 +1,11 @@
+This is based on the work done by Ben Humpfreys on msperf expanded to deal with the MPI gather
+
+This is a simple test program to be used to measure the performance of a mpi gather. It uses a specific ASKAP workload and mimics the central processor frontend gather.
+
+A more complete test of ingest performance is tMSSink. This just tests the MPI Gather. msperf tests the measurement set write.
+
+There are 8 ingest nodes connected to correlator blocks. Each has some subset of the data. At the time of writing I am not clear whether this is a fraction of baselines or frequency or some fraction of both.
+
+I will assume some fraction of both. 
+
+IN order to maximise the performance of this it should probably be ran as a single process per node. Thereby distributing the work across multiple NICS.

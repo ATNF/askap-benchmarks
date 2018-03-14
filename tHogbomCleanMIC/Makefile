@@ -25,9 +25,9 @@
 #
 
 CXX=icpc
-CFLAGS=-O3 -openmp -vec-report
+CFLAGS=-O3 -offload-build -openmp -mmic
 
-EXENAME = tHogbomClean
+EXENAME = tHogbomCleanMIC
 OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomMIC.o
 
 all:		$(EXENAME)
@@ -39,4 +39,5 @@ $(EXENAME):	$(OBJS)
 		$(CXX) $(CFLAGS) -o $(EXENAME) $(OBJS)
 
 clean:
-		rm -f $(EXENAME) *.o model.img residual.img
+		rm -f $(EXENAME) *.o
+

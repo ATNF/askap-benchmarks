@@ -1,8 +1,10 @@
-# Copyright (c) 2009 CSIRO
+# Copyright (c) 2007 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
 # atnf-enquiries@csiro.au
+#
+# This file is part of the ASKAP software distribution.
 #
 # The ASKAP software distribution is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
@@ -18,8 +20,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
-CXX = mpicxx
-CFLAGS = -O3 -fstrict-aliasing -fcx-limited-range -Wall -Wextra
+CXX=mpicxx
+CFLAGS=-O3 -fstrict-aliasing -fcx-limited-range -Wall -Wextra
+LIBS=
 
 EXENAME = tConvolveMPI
 OBJS = tConvolveMPI.o Stopwatch.o Benchmark.o
@@ -30,7 +33,8 @@ all:		$(EXENAME)
 		$(CXX) $(CFLAGS) -c $<
 
 $(EXENAME):	$(OBJS)
-		$(CXX) -o $(EXENAME) $(OBJS)
+		$(CXX) -o $(EXENAME) $(OBJS) $(LIBS)
 
 clean:
 		rm -f $(EXENAME) *.o
+

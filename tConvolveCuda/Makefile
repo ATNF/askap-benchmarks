@@ -4,6 +4,8 @@
 # PO Box 76, Epping NSW 1710, Australia
 # atnf-enquiries@csiro.au
 #
+# This file is part of the ASKAP software distribution.
+#
 # The ASKAP software distribution is free software: you can redistribute it
 # and/or modify it under the terms of the GNU General Public License as
 # published by the Free Software Foundation; either version 2 of the License,
@@ -21,24 +23,30 @@
 
 CXX = g++
 CFLAGS = -Wall -Wextra -O2 -fstrict-aliasing -fcx-limited-range -fPIC
-INCLUDE = -I. -I/usr/local/cuda/include
 
+CUDA = $(CUDATOOLKIT_HOME)/include
 EXENAME = tConvolveCuda
-OBJS = $(EXENAME).o CudaGridder.o CudaGridKernel.o Stopwatch.o
+EXEOBJS = $(EXENAME).o
+EXELIBS = -lCudaGridder
 
-NVCC = nvcc
-NVCCFLAGS = -O3 --compiler-options -fPIC
+LIBNAME=libCudaGridder.so
+LIBOBJS=CudaGridder.o CudaGridKernel.o Stopwatch.o
 
-all:		$(EXENAME)
+NVCCFLAGS= --compiler-options -fPIC
 
-CudaGridKernel.o:	CudaGridKernel.cu CudaGridKernel.h
-			$(NVCC) $(NVCCFLAGS) -c $<
+all:		$(EXENAME) $(LIBNAME)
 
 %.o:		%.cc %.h
-		$(CXX) $(CFLAGS) $(INCLUDE) -c $<
+		$(CXX) $(CFLAGS) -I$(CUDA) -c $<
 
-$(EXENAME):	$(OBJS) 
-		$(NVCC) $(NVCCFLAGS) -o $(EXENAME) $(OBJS)
+$(LIBNAME):	CudaGridder.cc CudaGridder.h CudaGridKernel.cu Stopwatch.o
+		nvcc $(NVCCFLAGS) -I$(CUDA) -c CudaGridKernel.cu
+		$(CXX) $(CFLAGS) -I$(CUDA) -c CudaGridder.cc
+		nvcc $(NVCCFLAGS) -shared -o $(LIBNAME) $(LIBOBJS)
+
+$(EXENAME):	$(EXEOBJS) $(LIBNAME)
+		$(CXX) $(CFLAGS) -L. -L/usr/local/cuda -o $(EXENAME) $(EXEOBJS) $(EXELIBS)
 
 clean: 
-		rm -f $(EXENAME) *.o
+		rm -f $(EXENAME) $(LIBNAME) *.o
+

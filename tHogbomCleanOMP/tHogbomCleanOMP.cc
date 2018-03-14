@@ -4,6 +4,8 @@
 /// PO Box 76, Epping NSW 1710, Australia
 /// atnf-enquiries@csiro.au
 ///
+/// This file is part of the ASKAP software distribution.
+///
 /// The ASKAP software distribution is free software: you can redistribute it
 /// and/or modify it under the terms of the GNU General Public License as
 /// published by the Free Software Foundation; either version 2 of the License,
@@ -17,6 +19,8 @@
 /// You should have received a copy of the GNU General Public License
 /// along with this program; if not, write to the Free Software
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+///
+/// @detail
 ///
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 
@@ -41,7 +45,6 @@ using namespace std;
 vector<float> readImage(const string& filename)
 {
     struct stat results;
-
     if (stat(filename.c_str(), &results) != 0) {
         cerr << "Error: Could not stat " << filename << endl;
         exit(1);
@@ -49,10 +52,6 @@ vector<float> readImage(const string& filename)
 
     vector<float> image(results.st_size / sizeof(float));
     ifstream file(filename.c_str(), ios::in | ios::binary);
-    if (!file.good()) {
-        cerr << "Error: failed to open file " << filename << endl;
-        exit(1);
-    }
     file.read(reinterpret_cast<char *>(&image[0]), results.st_size);
     file.close();
     return image;
@@ -61,10 +60,6 @@ vector<float> readImage(const string& filename)
 void writeImage(const string& filename, vector<float>& image)
 {
     ofstream file(filename.c_str(), ios::out | ios::binary | ios::trunc);
-    if (!file.good()) {
-        cerr << "Error: failed to open file " << filename << endl;
-        exit(1);
-    }
     file.write(reinterpret_cast<char *>(&image[0]), image.size() * sizeof(float));
     file.close();
 }
@@ -73,7 +68,6 @@ size_t checkSquare(vector<float>& vec)
 {
     const size_t size = vec.size();
     const size_t singleDim = sqrt(size);
-
     if (singleDim * singleDim != size) {
         cerr << "Error: Image is not square" << endl;
         exit(1);
@@ -97,12 +91,10 @@ bool compare(const vector<float>& expected, const vector<float>& actual)
     }
 
     const size_t len = expected.size();
-
-    const float tolerance = 0.00001;
     for (size_t i = 0; i < len; ++i) {
-        if (fabs(expected[i] - actual[i]) > tolerance) {
+        if (fabs(expected[i] - actual[i]) > 0.00001) {
             cout << "Fail (Expected " << expected[i] << " got "
-                 << actual[i] << " at index " << i << ")" << endl;
+                << actual[i] << " at index " << i << ")" << endl;
             return false;
         }
     }
@@ -131,10 +123,11 @@ int main(int /*argc*/, char** /* argv*/)
     {
         // Now we can do the timing for the serial (Golden) CPU implementation
         cout << "+++++ Forward processing (CPU Golden) +++++" << endl;
+        HogbomGolden golden;
 
         Stopwatch sw;
         sw.start();
-        HogbomGolden::deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
+        golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
         const double time = sw.stop();
 
         // Report on timings
@@ -157,10 +150,11 @@ int main(int /*argc*/, char** /* argv*/)
     {
         // Now we can do the timing for the OpenMP CPU implementation
         cout << "+++++ Forward processing (OpenMP) +++++" << endl;
+        HogbomOMP omp;
 
         Stopwatch sw;
         sw.start();
-        HogbomOMP::deconvolve(dirty, dim, psf, psfDim, ompModel, ompResidual);
+        omp.deconvolve(dirty, dim, psf, psfDim, ompModel, ompResidual);
         const double time = sw.stop();
 
         // Report on timings
@@ -172,7 +166,6 @@ int main(int /*argc*/, char** /* argv*/)
 
     cout << "Verifying model...";
     const bool modelDiff = compare(goldenModel, ompModel);
-
     if (!modelDiff) {
         return 1;
     } else {
@@ -181,7 +174,6 @@ int main(int /*argc*/, char** /* argv*/)
 
     cout << "Verifying residual...";
     const bool residualDiff = compare(goldenResidual, ompResidual);
-
     if (!residualDiff) {
         return 1;
     } else {
