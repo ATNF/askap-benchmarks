@@ -24,7 +24,11 @@
 # module load intel-mkl
 # module load intel-cc
 CXX=icpc
-CFLAGS=-O3 -ipo -openmp -mkl=sequential -DUSEMKLLIB -DUSEBLAS
+ifeq ($(MKL),true)
+	CFLAGS=-O3 -ipo -qopenmp -g -mkl=sequential -DUSEMKLLIB -DUSEBLAS
+else ifeq ($(MKL),)
+	CFLAGS=-O3 -ipo -qopenmp -g
+endif
 
 all:		tConvolveOMP
 
@@ -36,4 +40,4 @@ tConvolveOMP:	tConvolveOMP.cc Stopwatch.o
 		$(CXX) $(CFLAGS) -o tConvolveOMP tConvolveOMP.o Stopwatch.o
 
 clean:
-		rm -f *.o tConvolveOMP
+		rm -f *.o tConvolveOMP 

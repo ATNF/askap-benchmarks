@@ -376,13 +376,28 @@ int randomInt()
 }
 
 // Main testing routine
-int main()
+int main(int argc, char* argv[])
 {
     // Change these if necessary to adjust run time
-    const int nSamples = 1600000; // Number of data samples
-    const int wSize = 33; // Number of lookup planes in w projection
-    const int nChan = 1; // Number of spectral channels
+    int nSamples = 1600000; // Number of data samples
+    int wSize = 33; // Number of lookup planes in w projection
+    int nChan = 1; // Number of spectral channels
 
+    if (argc > 1){
+	    for (int i=0; i < argc; i++){
+		if (argv[i][0] == '-') {
+			if (argv[i][1] == 'n'){
+				nSamples = atoi(argv[i+1]);
+			}
+			else if (argv[i][1] == 'w'){
+				wSize = atoi(argv[i+1]);
+			}
+			else if (argv[i][1] == 'c'){
+				nChan = atoi(argv[i+1]);
+			}
+		}
+	    }
+    }
     // Don't change any of these numbers unless you know what you are doing!
     const int gSize = 4096; // Size of output grid in pixels
     const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
