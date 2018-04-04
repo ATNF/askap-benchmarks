@@ -274,8 +274,18 @@ void initC(const std::vector<Coord>& freq, const Coord cellSize,
            Coord& wCellSize, std::vector<Value>& C)
 {
     cout << "Initializing W projection convolution function" << endl;
+    // DAM -- I don't really understand the following equation. baseline*freq is the array size in wavelengths,
+    // but I don't know why the sqrt is used and why there is a multiplication with cellSize rather than a division.
+    // In the paper referred to in ../README.md they suggest using rms(w)*FoV for the width (in wavelengths), which
+    // would lead to something more like:
+    // support = max( 3, ceil( 0.5 * scale*baseline*freq[0] / (cellSize*cellSize) ) )
+    // where "scale" reduces the maximum baseline length to the RMS (1/sqrt(3) for uniformaly distributed
+    // visibilities, 1/(2+log10(n)/2) or so for n baselines with a Gaussian radial profile).
     support = static_cast<int>(1.5 * sqrt(std::abs(baseline) * static_cast<Coord>(cellSize)
                                           * freq[0]) / cellSize);
+
+    cout << "FoV = " << 180./3.14159265/cellSize << " deg" << endl;
+
     overSample = 8;
     cout << "Support = " << support << " pixels" << endl;
     wCellSize = 2 * baseline * freq[0] / wSize;
@@ -403,6 +413,14 @@ int randomInt()
     return ((unsigned int)(next / 65536) % maxint);
 }
 
+void usage() {
+    cout << "usage: tConvolveOMP [-h] [option]" << endl;
+    cout << "-n num\t change the number of data samples to num." << endl;
+    cout << "-w num\t change the number of lookup planes in w projection to num." << endl;
+    cout << "-c num\t change the number of spectral channels to num." << endl;
+    cout << "-f val\t reduce the field of view by a factor of val (=> reduce the kernel size)." << endl;
+}
+
 // Main testing routine
 int main(int argc, char* argv[])
 {
@@ -410,33 +428,44 @@ int main(int argc, char* argv[])
     int nSamples = 160000; // Number of data samples
     int wSize = 33; // Number of lookup planes in w projection
     int nChan = 1; // Number of spectral channels
+    Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
 
-    if (argc > 1){
-	    for (int i=0; i < argc; i++){
-		if (argv[i][0] == '-') {
-			if (argv[i][1] == 'h'){
-				cout << "usage: tConvolveOMP [option]" << endl;
-				cout << "-h\t print this help message and exit" << endl;
-				cout << "-n num\t change the number of data samples to num. Default=" << nSamples << endl;
-				cout << "-w num\t change the number of lookup planes in w projection to num. Default=" << wSize << endl;
-				cout << "-c num\t change the number of spectral channels to num. Default=" << nChan << endl;
-				return 0;
-			}
-			else if (argv[i][1] == 'n'){
-				nSamples = atoi(argv[i+1]);
-			}
-			else if (argv[i][1] == 'w'){
-				wSize = atoi(argv[i+1]);
-			}
-			else if (argv[i][1] == 'c'){
-				nChan = atoi(argv[i+1]);
-			}
-		}
-	    }
+    if (argc > 1) {
+        for (int i=1; i < argc; i++) {
+            if (argv[i][0] == '-') {
+                if (argv[i][1] == 'h') {
+                    usage();
+                    return 0;
+                }
+                else if (argv[i][1] == 'n') {
+                    nSamples = atoi(argv[i+1]);
+                    i++;
+                }
+                else if (argv[i][1] == 'w') {
+                    wSize = atoi(argv[i+1]);
+                    i++;
+                }
+                else if (argv[i][1] == 'c') {
+                    nChan = atoi(argv[i+1]);
+                    i++;
+                }
+                else if (argv[i][1] == 'f') {
+                    cellSize *= atof(argv[i+1]);
+                    i++;
+                }
+                else {
+                    usage();
+                    return 1;
+                }
+            }
+            else {
+                usage();
+                return 1;
+            }
+        }
     }
     // Don't change any of these numbers unless you know what you are doing!
     const int gSize = 4096; // Size of output grid in pixels
-    const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
     const int baseline = 2000; // Maximum baseline in meters
 
     cout << "nSamples = " << nSamples <<endl;
