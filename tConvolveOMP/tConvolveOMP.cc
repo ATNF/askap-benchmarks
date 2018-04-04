@@ -414,7 +414,15 @@ int main(int argc, char* argv[])
     if (argc > 1){
 	    for (int i=0; i < argc; i++){
 		if (argv[i][0] == '-') {
-			if (argv[i][1] == 'n'){
+			if (argv[i][1] == 'h'){
+				cout << "usage: tConvolveOMP [option]" << endl;
+				cout << "-h\t print this help message and exit" << endl;
+				cout << "-n num\t change the number of data samples to num. Default=" << nSamples << endl;
+				cout << "-w num\t change the number of lookup planes in w projection to num. Default=" << wSize << endl;
+				cout << "-c num\t change the number of spectral channels to num. Default=" << nChan << endl;
+				return 0;
+			}
+			else if (argv[i][1] == 'n'){
 				nSamples = atoi(argv[i+1]);
 			}
 			else if (argv[i][1] == 'w'){
