@@ -49,6 +49,34 @@
 
 #endif
 
+#if defined(GRIDING)  
+	#define SERIAL_GRIDING 1
+	#define OMP_GRIDING 1
+	#define VERIFY_GRIDING 1
+#elif defined(SERIAL_GRIDING)
+	#define SERIAL_GRIDING 1
+#elif defined(OMP_GRIDING)
+	#define OMP_GRIDING 1
+
+
+#elif defined(DEGRIDING)
+	#define SERIAL_DEGRIDING 1
+	#define OMP_DEGRIDING 1
+	#define VERIFY_DEGRIDING 1
+#elif defined(SERIAL_DEGRIDING)
+	#define SERIAL_DEGRIDING 1
+#elif defined(OMP_DEGRIDING)
+	#define OMP_DEGRIDING 1
+#else
+	#define SERIAL_GRIDING 1
+	#define OMP_GRIDING 1
+	#define VERIFY_GRIDING 1
+
+	#define SERIAL_DEGRIDING 1
+	#define OMP_DEGRIDING 1
+	#define VERIFY_DEGRIDING 1
+#endif  
+
 using std::cout;
 using std::endl;
 using std::abs;
@@ -376,18 +404,34 @@ int randomInt()
 }
 
 // Main testing routine
-int main()
+int main(int argc, char* argv[])
 {
     // Change these if necessary to adjust run time
-    const int nSamples = 1600000; // Number of data samples
-    const int wSize = 33; // Number of lookup planes in w projection
-    const int nChan = 1; // Number of spectral channels
+    int nSamples = 160000; // Number of data samples
+    int wSize = 33; // Number of lookup planes in w projection
+    int nChan = 1; // Number of spectral channels
 
+    if (argc > 1){
+	    for (int i=0; i < argc; i++){
+		if (argv[i][0] == '-') {
+			if (argv[i][1] == 'n'){
+				nSamples = atoi(argv[i+1]);
+			}
+			else if (argv[i][1] == 'w'){
+				wSize = atoi(argv[i+1]);
+			}
+			else if (argv[i][1] == 'c'){
+				nChan = atoi(argv[i+1]);
+			}
+		}
+	    }
+    }
     // Don't change any of these numbers unless you know what you are doing!
     const int gSize = 4096; // Size of output grid in pixels
     const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
     const int baseline = 2000; // Maximum baseline in meters
 
+    cout << "nSamples = " << nSamples <<endl;
     // Initialize the data to be gridded
     std::vector<Coord> u(nSamples);
     std::vector<Coord> v(nSamples);
@@ -436,10 +480,12 @@ int main()
 
     const double griddings = (double(nSamples * nChan) * double((sSize) * (sSize)));
 
+
     ///////////////////////////////////////////////////////////////////////////
     // DO GRIDDING
     ///////////////////////////////////////////////////////////////////////////
     std::vector<Value> cpugrid(gSize*gSize);
+#ifdef SERIAL_GRIDING
     cpugrid.assign(cpugrid.size(), Value(0.0));
     {
         // Now we can do the timing for the CPU implementation
@@ -458,8 +504,10 @@ int main()
 
         cout << "Done" << endl;
     }
+#endif
 
     std::vector<Value> ompgrid(gSize*gSize);
+#ifdef OMP_GRIDING
     ompgrid.assign(ompgrid.size(), Value(0.0));
     {
         // Now we can do the timing for the GPU implementation
@@ -480,7 +528,9 @@ int main()
 
         cout << "Done" << endl;
     }
+#endif
 
+#ifdef VERIFY_GRIDING
     cout << "Verifying result...";
 
     if (cpugrid.size() != ompgrid.size()) {
@@ -498,10 +548,12 @@ int main()
     }
 
     cout << "Pass" << std::endl;
+#endif
 
     ///////////////////////////////////////////////////////////////////////////
     // DO DEGRIDDING
     ///////////////////////////////////////////////////////////////////////////
+#ifdef SERIAL_DEGRIDING
     {
         cpugrid.assign(cpugrid.size(), Value(1.0));
         // Now we can do the timing for the CPU implementation
@@ -520,7 +572,8 @@ int main()
 
         cout << "Done" << endl;
     }
-
+#endif
+#ifdef OMP_DEGRIDING
     {
         ompgrid.assign(ompgrid.size(), Value(1.0));
         // Now we can do the timing for the GPU implementation
@@ -541,7 +594,9 @@ int main()
 
         cout << "Done" << endl;
     }
+#endif
 
+#ifdef VERIFY_DEGRIDING
     // Verify degridding results
     cout << "Verifying result...";
 
@@ -562,4 +617,5 @@ int main()
     cout << "Pass" << std::endl;
 
     return 0;
+#endif
 }
