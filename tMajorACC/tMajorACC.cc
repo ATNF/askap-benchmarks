@@ -950,8 +950,6 @@ int main()
     int testUV = std::distance(truegrid.begin(), result);
     cout << "max uv val at: " << testUV << ", value = " << truegrid[testUV] << endl;
 
-// need to do this in a nChan loop?
-
     // degrid true visibiltiies
     //degridNN(truegrid, gSize, iu, iv, data);
     degridKernel(truegrid, gSize, support, C, cOffset, iu, iv, data);
@@ -971,6 +969,9 @@ int main()
     // CPU single core
     ///////////////////////////////////////////////////////////////////////////
     cout << endl << "+++++ CPU single core +++++" << endl << endl;
+
+    Stopwatch sw_cpu;
+    sw_cpu.start();
 
     //-----------------------------------------------------------------------//
     // DO GRIDDING
@@ -1054,7 +1055,6 @@ int main()
         cout << "    Time " << time << " (s) " << endl;
         cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
         cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
-        cout << "Done" << endl;
     }
 
     std::vector<std::complex<float> > cpulmres(cpuoutgrid);
@@ -1088,10 +1088,16 @@ int main()
         cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
     }
 
+    double cpu_time = sw_cpu.stop();
+    cout << "CPU single core took " << cpu_time << " (s)" << endl;
+
     ///////////////////////////////////////////////////////////////////////////
     // OpenACC
     ///////////////////////////////////////////////////////////////////////////
     cout << endl << "+++++ OpenACC +++++" << endl << endl;
+
+    Stopwatch sw_acc;
+    sw_acc.start();
 
     //-----------------------------------------------------------------------//
     // DO GRIDDING
@@ -1191,7 +1197,6 @@ int main()
         cout << "    Time " << time << " (s) " << endl;
         cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
         cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
-        cout << "Done" << endl;
     }
 
     #pragma acc update host(accoutgrid_d[0:gSize*gSize])
@@ -1233,15 +1238,15 @@ int main()
         cout << "    Time per visibility spectral sample " << 1e6*acctime / double(data.size()) << " (us) " << endl;
         cout << "    Time per degridding   " << 1e9*acctime / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
         cout << "    Degridding rate   " << (griddings / 1000000) / acctime << " (million grid points per second)" << endl;
-
-        cout << "Done" << endl;
     }
 
-    ///////////////////////////////////////////////////////////////////////////
+    //-----------------------------------------------------------------------//
     // Copy GPU data back to CPU
-    ///////////////////////////////////////////////////////////////////////////
 
     #pragma acc exit data copyout(accoutgrid_d[0:gSize*gSize],accoutdata_d[0:nSamples*nChan]) 
+
+    double acc_time = sw_acc.stop();
+    cout << "OpenACC took " << acc_time << " (s)" << endl;
 
     ///////////////////////////////////////////////////////////////////////////
     // Verify results
@@ -1271,7 +1276,7 @@ int main()
 
     cout << "Pass" << std::endl;
 
-cout << "psf max at (" << int(psfPixel/gSize)<<","<<int(psfPixel%gSize) << ") = " << cpulmpsf[psfPixel].real() << endl;
+    // cout << "psf max at (" << int(psfPixel/gSize)<<","<<int(psfPixel%gSize) << ") = " << cpulmpsf[psfPixel].real() << endl;
 
     cout << "Gridding data: ";
 
@@ -1329,31 +1334,42 @@ cout << "psf max at (" << int(psfPixel/gSize)<<","<<int(psfPixel%gSize) << ") = 
 
     cout << "Pass" << std::endl;
 
-cout << cpulmgrid[testPixel1].real() << "/psf = " << cpulmgrid[testPixel1].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << cpulmgrid[testPixel2].real() << "/psf = " << cpulmgrid[testPixel2].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
+    //cout << cpulmgrid[testPixel1].real() << "/psf = " << cpulmgrid[testPixel1].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
+    //cout << cpulmgrid[testPixel2].real() << "/psf = " << cpulmgrid[testPixel2].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
 
     //-----------------------------------------------------------------------//
     // Verify Hogbom clean results
     cout << "Hogbom clean: ";
-    cout << "???" << std::endl;
 
-cout << "dirty1: " << cpulmgrid[testPixel1].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << "dirty1: " << acclmgrid[testPixel1].real()/fabs(acclmpsf[psfPixel].real()) << endl;
-cout << "resid1: " << cpulmres[testPixel1].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << "resid1: " << acclmres[testPixel1].real()/fabs(acclmpsf[psfPixel].real()) << endl;
-cout << "model1: " << model[testPixel1].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << "model1: " << modelacc[testPixel1].real()/fabs(acclmpsf[psfPixel].real()) << endl;
+    if (cpulmres.size() != acclmres.size()) {
+        cout << "Fail (Grid sizes differ)" << std::endl;
+        return 1;
+    }
 
-cout << "dirty2: " << cpulmgrid[testPixel2].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << "dirty2: " << acclmgrid[testPixel2].real()/fabs(acclmpsf[psfPixel].real()) << endl;
-cout << "resid2: " << cpulmres[testPixel2].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << "resid2: " << acclmres[testPixel2].real()/fabs(acclmpsf[psfPixel].real()) << endl;
-cout << "model2: " << model[testPixel2].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-cout << "model2: " << modelacc[testPixel2].real()/fabs(acclmpsf[psfPixel].real()) << endl;
+    for (unsigned int i = 0; i < cpulmres.size(); ++i) {
+        if (fabs(cpulmres[i].real() - acclmres[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
+            cout << "Fail (Expected " << cpulmres[i].real() << " got "
+                     << acclmres[i].real() << " at index " << i << ")"
+                     << std::endl;
+            return 1;
+        }
+    }
 
-//result = std::max_element(cpulmpsf.begin(), cpulmpsf.end(), abs_compare);
-//int psfPixel = std::distance(cpulmpsf.begin(), result);
-//cout << "psf max at (" << int(psfPixel/gSize)<<","<<int(psfPixel%gSize) << ") = " << cpulmpsf[psfPixel].real() << endl;
+    if (model.size() != modelacc.size()) {
+        cout << "Fail (Grid sizes differ)" << std::endl;
+        return 1;
+    }
+
+    for (unsigned int i = 0; i < model.size(); ++i) {
+        if (fabs(model[i].real() - modelacc[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
+            cout << "Fail (Expected " << model[i].real() << " got "
+                     << modelacc[i].real() << " at index " << i << ")"
+                     << std::endl;
+            return 1;
+        }
+    }
+
+    cout << "Pass" << std::endl;
 
     //-----------------------------------------------------------------------//
     // Verify Forward FFT results
