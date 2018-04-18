@@ -33,7 +33,8 @@ ifeq ($(USE),cpu)
 else ifeq ($(USE),gpu)
     # GPU version
     #CFLAGS_EXTRA=-acc -ta=tesla,cc60,managed -DGPU
-    CFLAGS_EXTRA=-acc -ta=tesla,cc60 -DGPU
+    #CFLAGS_EXTRA=-acc -ta=tesla,cc60 -DGPU
+    CFLAGS_EXTRA=-acc -ta=tesla,cc60 -DGPU -DVERIFY
     LDFLAGS_EXTRA=-Mcudalib=cufft
 else
     # Multicore CPU version

@@ -49,6 +49,13 @@
 // Local includes
 #include "Stopwatch.h"
 
+#if defined(VERIFY)
+	#define RUN_CPU 1
+	#define RUN_VERIFY 1
+#elif defined(SINGLECPU)
+	#define RUN_CPU 1
+#endif
+
 using std::cout;
 using std::endl;
 using std::abs;
@@ -137,9 +144,11 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
     const int *d_iv = iv.data();
 
     float dre, dim;
+    //std::complex<float> dval;
     if ( isPSF ) {
         dre = 1.0;
         dim = 0.0;
+        //dval = 1.0;
     }
 
     //int dind;
@@ -152,8 +161,9 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
 
 #ifdef GPU
     // wait(1): wait until async(1) is finished...
-    #pragma acc parallel loop present(d_grid[0:gSize*gSize],d_data[0:d_size],d_C[0:c_size], \
-                                      d_cOffset[0:d_size],d_iu[0:d_size],d_iv[0:d_size]) wait(1)
+    #pragma acc parallel loop \
+            present(d_grid[0:gSize*gSize],d_data[0:d_size],d_C[0:c_size], \
+                    d_cOffset[0:d_size],d_iu[0:d_size],d_iv[0:d_size]) wait(1)
     for (int dind = 0; dind < d_size; ++dind) {
 
         int cind = d_cOffset[dind];
@@ -166,17 +176,18 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
         if ( !isPSF ) {
             dre = d_data[dind].real();
             dim = d_data[dind].imag();
+            //dval = d_data[dind];
         }
 
         #pragma acc loop collapse(2)
         for (int suppv = 0; suppv < sSize; suppv++) {
             for (int suppu = 0; suppu < sSize; suppu++) {
-
                 float *dref = (float *)&d_grid[gind+suppv*gSize+suppu];
                 const int supp = cind + suppv*sSize+suppu;
                 const float reval = dre * d_C[supp].real() - dim * d_C[supp].imag();
                 const float imval = dim * d_C[supp].real() + dre * d_C[supp].imag();
-                //const std::complex<float> cval = d_data[dind] * d_C[cind+suppv*sSize+suppu];
+                // note the real mults above are only really needed on the CPUs...
+                //const std::complex<float> cval = dval * d_C[cind+suppv*sSize+suppu];
                 #pragma acc atomic update
                 dref[0] = dref[0] + reval;
                 //dref[0] = dref[0] + cval.real();
@@ -849,6 +860,8 @@ int main()
     const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
     const int baseline = 2000; // Maximum baseline in meters
 
+    const int g_niters = 100; // Maximum number of minor cycle iterations
+
     const unsigned int maxint = std::numeric_limits<int>::max();
 
     // Initialize the data to be gridded
@@ -951,19 +964,32 @@ int main()
     cout << "max uv val at: " << testUV << ", value = " << truegrid[testUV] << endl;
 
     // degrid true visibiltiies
-    //degridNN(truegrid, gSize, iu, iv, data);
+/*
     degridKernel(truegrid, gSize, support, C, cOffset, iu, iv, data);
-
     // asynchronously copy data to the device while we are doing other initialisation
     std::complex<float> *data_d = data.data();
     std::complex<float> *accoutdata_d = accoutdata.data();
     #pragma acc enter data copyin(data_d[0:nSamples*nChan]) create(accoutdata_d[0:nSamples*nChan]) async(1)
+*/
+
+    // generate data on GPU. Note that we should copy off then on again if doing full timings
+
+    std::complex<float> *data_d = data.data();
+    std::complex<float> *accoutdata_d = accoutdata.data();
+    std::complex<float> *truegrid_d = truegrid.data();
+    #pragma acc enter data create(data_d[0:nSamples*nChan],accoutdata_d[0:nSamples*nChan]) \
+                           copyin(truegrid_d[0:gSize*gSize])
+    degridKernelACC(truegrid, gSize, support, C, cOffset, iu, iv, data);
+    #pragma acc exit data delete(truegrid_d[0:gSize*gSize]) async(1)
+    #pragma acc update host(data_d[0:nSamples*nChan])
 
     result = std::max_element(data.begin(), data.end(), abs_compare);
     int testVis = std::distance(data.begin(), result);
     cout << "max vis at: " << testVis << ", value = " << data[testVis] << endl;
 
     double time;
+
+#ifdef RUN_CPU
 
     ///////////////////////////////////////////////////////////////////////////
     // CPU single core
@@ -1038,8 +1064,6 @@ int main()
     //-------------------------------------------------------------------//
     // Do Hogbom CLEAN
 
-    const int g_niters = 100;
-
     std::vector<std::complex<float> > model(cpuoutgrid.size());
     model.assign(model.size(), std::complex<float>(0.0));
     {
@@ -1090,6 +1114,8 @@ int main()
 
     double cpu_time = sw_cpu.stop();
     cout << "CPU single core took " << cpu_time << " (s)" << endl;
+
+#endif
 
     ///////////////////////////////////////////////////////////////////////////
     // OpenACC
@@ -1145,9 +1171,11 @@ int main()
         cout << "    Gridding rate   " << (griddings / 1000000) / acctime << " (million grid points per second)" << endl;
     }
 
+#ifdef RUN_VERIFY
     #pragma acc update host(accpsfgrid_d[0:gSize*gSize], accoutgrid_d[0:gSize*gSize])
     std::vector<std::complex<float> > accuvpsf(accpsfgrid);
     std::vector<std::complex<float> > accuvgrid(accoutgrid);
+#endif
 
     //-----------------------------------------------------------------------//
     // Form dirty image and run the minor cycle
@@ -1174,14 +1202,16 @@ int main()
     }
     fftFixGPU(accoutgrid, 1.0/float(data.size()));
 
+#ifdef RUN_VERIFY
     #pragma acc update host(accpsfgrid_d[0:gSize*gSize], accoutgrid_d[0:gSize*gSize])
     std::vector<std::complex<float> > acclmpsf(accpsfgrid);
     std::vector<std::complex<float> > acclmgrid(accoutgrid);
+#endif
 
     //-------------------------------------------------------------------//
     // Do Hogbom CLEAN
 
-    std::vector<std::complex<float> > modelacc(cpuoutgrid.size());
+    std::vector<std::complex<float> > modelacc(accpsfgrid.size());
     modelacc.assign(modelacc.size(), std::complex<float>(0.0));
 
     {
@@ -1199,8 +1229,10 @@ int main()
         cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
     }
 
+#ifdef RUN_VERIFY
     #pragma acc update host(accoutgrid_d[0:gSize*gSize])
     std::vector<std::complex<float> > acclmres(accoutgrid);
+#endif
 
     accoutgrid = modelacc;
     #pragma acc update device(accoutgrid_d[0:gSize*gSize])
@@ -1247,6 +1279,8 @@ int main()
 
     double acc_time = sw_acc.stop();
     cout << "OpenACC took " << acc_time << " (s)" << endl;
+
+#ifdef RUN_VERIFY
 
     ///////////////////////////////////////////////////////////////////////////
     // Verify results
@@ -1413,6 +1447,7 @@ int main()
     }
 
     cout << "Pass" << std::endl;
+#endif
 
     return 0;
 }
