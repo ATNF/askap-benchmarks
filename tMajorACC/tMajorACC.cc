@@ -28,6 +28,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <math.h>
 #include <cmath>
 #include <ctime>
 #include <complex>
@@ -59,7 +60,7 @@
 using std::cout;
 using std::endl;
 // using std::abs;
-// #pragma acc routine(fabsf) seq
+#pragma acc routine(fmaxf) seq
 
 // Typedefs for easy testing
 // Cost of using double for Coord is low, cost for
@@ -684,7 +685,7 @@ void findPeakACC(const std::complex<float> *data,
 
     #pragma acc parallel loop reduction(max:threadAbsMaxVal) gang vector present(data[0:size])
     for (size_t i = 0; i < size; ++i) {
-        threadAbsMaxVal = fmax( threadAbsMaxVal, abs(data[i].real()) );
+        threadAbsMaxVal = fmaxf( threadAbsMaxVal, abs(data[i].real()) );
     }
     #pragma acc parallel loop gang vector present(data[0:size]) copyout(tmpPos)
     for (size_t i = 0; i < size; ++i) {
