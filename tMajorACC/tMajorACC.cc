@@ -867,12 +867,12 @@ int main()
 
     const unsigned int maxint = std::numeric_limits<int>::max();
 
-    // Initialize the data to be gridded
+    // Initialize the data to be gridded and the model data to be degridded
     std::vector<Coord> u(nSamples);
     std::vector<Coord> v(nSamples);
     std::vector<Coord> w(nSamples);
     std::vector<std::complex<float> > cpudata(nSamples*nChan);
-    std::vector<std::complex<float> > cpuoutdata(nSamples*nChan);
+    std::vector<std::complex<float> > cpumdldata(nSamples*nChan);
 
     for (int i = 0; i < nSamples; i++) {
         u[i] = baseline * Coord(randomInt()) / Coord(maxint) - baseline / 2;
@@ -880,7 +880,7 @@ int main()
         w[i] = baseline * Coord(randomInt()) / Coord(maxint) - baseline / 2;
 
         for (int chan = 0; chan < nChan; chan++) {
-            cpuoutdata[i*nChan+chan] = 0.0;
+            cpumdldata[i*nChan+chan] = 0.0;
         }
     }
 
@@ -978,12 +978,12 @@ int main()
     // make acc copies and send initial visibility data to the device
     std::vector<std::complex<float> > accdata(cpudata);
     std::complex<float> *accdata_d = accdata.data();
-    std::vector<std::complex<float> > accoutdata(nSamples*nChan);
-    std::complex<float> *accoutdata_d = accoutdata.data();
-    #pragma acc enter data create(accoutdata_d[0:nSamples*nChan])
-    #pragma acc parallel loop present(accoutdata_d[0:nSamples*nChan])
+    std::vector<std::complex<float> > accmdldata(nSamples*nChan);
+    std::complex<float> *accmdldata_d = accmdldata.data();
+    #pragma acc enter data create(accmdldata_d[0:nSamples*nChan])
+    #pragma acc parallel loop present(accmdldata_d[0:nSamples*nChan])
     for (int i = 0; i < nSamples*nChan; i++) {
-        accoutdata_d[i] = 0.0;
+        accmdldata_d[i] = 0.0;
     }
 
     // reset data_d to point to the acc version
@@ -1078,20 +1078,20 @@ int main()
         //-------------------------------------------------------------------//
         // Do Hogbom CLEAN
 
-        std::vector<std::complex<float> > model(cpuimggrid.size());
-        model.assign(model.size(), std::complex<float>(0.0));
+        std::vector<std::complex<float> > cpumdlgrid(cpuimggrid.size());
+        cpumdlgrid.assign(cpumdlgrid.size(), std::complex<float>(0.0));
         {
             // Now we can do the timing for the serial (Golden) CPU implementation
             cout << "Hogbom clean" << endl;
 
             Stopwatch sw;
             sw.start();
-            deconvolve(cpuimggrid, gSize, cpupsfgrid, gSize, model, nMinor);
+            deconvolve(cpuimggrid, gSize, cpupsfgrid, gSize, cpumdlgrid, nMinor);
             time = sw.stop();
 
             // Report on results
-            cout << "    pix 1: "<<cpulmgrid[tPix1]<<" -> "<<cpuimggrid[tPix1]<<", model = "<<model[tPix1]<< endl;
-            cout << "    pix 2: "<<cpulmgrid[tPix2]<<" -> "<<cpuimggrid[tPix2]<<", model = "<<model[tPix2]<< endl;
+            cout << "    pix 1: "<<cpulmgrid[tPix1]<<" -> "<<cpuimggrid[tPix1]<<", model = "<<cpumdlgrid[tPix1]<< endl;
+            cout << "    pix 2: "<<cpulmgrid[tPix2]<<" -> "<<cpuimggrid[tPix2]<<", model = "<<cpumdlgrid[tPix2]<< endl;
 
             // Report on timings
             cout << "    Time " << time << " (s) " << endl;
@@ -1101,7 +1101,7 @@ int main()
 
         std::vector<std::complex<float> > cpulmres(cpuimggrid);
 
-        cpuimggrid = model;
+        cpuimggrid = cpumdlgrid;
 
         //-------------------------------------------------------------------//
         // FFT deconvolved model image for degridding
@@ -1129,7 +1129,7 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            degridKernel(cpuimggrid, gSize, support, C, cOffset, iu, iv, cpuoutdata);
+            degridKernel(cpuimggrid, gSize, support, C, cOffset, iu, iv, cpumdldata);
             time = sw.stop();
 
             // Report on timings
@@ -1256,8 +1256,8 @@ int main()
         //-------------------------------------------------------------------//
         // Do Hogbom CLEAN
 
-        std::vector<std::complex<float> > modelacc(accpsfgrid.size());
-        modelacc.assign(modelacc.size(), std::complex<float>(0.0));
+        std::vector<std::complex<float> > accmdlgrid(accpsfgrid.size());
+        accmdlgrid.assign(accmdlgrid.size(), std::complex<float>(0.0));
 
         {
             // Now we can do the timing for the serial (Golden) CPU implementation
@@ -1265,14 +1265,14 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            deconvolveACC(accimggrid, gSize, accpsfgrid, gSize, modelacc, nMinor);
+            deconvolveACC(accimggrid, gSize, accpsfgrid, gSize, accmdlgrid, nMinor);
             time = sw.stop();
 
 #ifdef RUN_VERIFY
             // Report on results
             #pragma acc update host(accimggrid_d[0:gSize*gSize])
-            cout << "    pix 1: "<<acclmgrid[tPix1]<<" -> "<<accimggrid[tPix1]<<", model = "<<modelacc[tPix1]<< endl;
-            cout << "    pix 2: "<<acclmgrid[tPix2]<<" -> "<<accimggrid[tPix2]<<", model = "<<modelacc[tPix2]<< endl;
+            cout << "    pix 1: "<<acclmgrid[tPix1]<<" -> "<<accimggrid[tPix1]<<", model = "<<accmdlgrid[tPix1]<< endl;
+            cout << "    pix 2: "<<acclmgrid[tPix2]<<" -> "<<accimggrid[tPix2]<<", model = "<<accmdlgrid[tPix2]<< endl;
 #endif
 
             // Report on timings
@@ -1286,7 +1286,7 @@ int main()
         std::vector<std::complex<float> > acclmres(accimggrid);
 #endif
 
-        accimggrid = modelacc;
+        accimggrid = accmdlgrid;
         #pragma acc update device(accimggrid_d[0:gSize*gSize])
 
         //-------------------------------------------------------------------//
@@ -1323,7 +1323,7 @@ int main()
             // Time is measured inside this function call, unlike the CPU versions
             Stopwatch sw;
             sw.start();
-            degridKernelACC(accimggrid, gSize, support, C, cOffset, iu, iv, accoutdata);
+            degridKernelACC(accimggrid, gSize, support, C, cOffset, iu, iv, accmdldata);
             const double acctime = sw.stop();
 
             // Report on timings
@@ -1337,8 +1337,8 @@ int main()
         //-----------------------------------------------------------------------//
         // Copy GPU data back to CPU
 
-        //#pragma acc exit data copyout(accimggrid_d[0:gSize*gSize],accoutdata_d[0:nSamples*nChan]) 
-        #pragma acc update host(accimggrid_d[0:gSize*gSize],accoutdata_d[0:nSamples*nChan])
+        //#pragma acc exit data copyout(accimggrid_d[0:gSize*gSize],accmdldata_d[0:nSamples*nChan]) 
+        #pragma acc update host(accimggrid_d[0:gSize*gSize],accmdldata_d[0:nSamples*nChan])
 
         double acc_time = sw_acc.stop();
         cout << "OpenACC took " << acc_time << " (s)" << endl;
@@ -1452,15 +1452,15 @@ int main()
             }
         }
 
-        if (model.size() != modelacc.size()) {
+        if (cpumdlgrid.size() != accmdlgrid.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < model.size(); ++i) {
-            if (fabs(model[i].real() - modelacc[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
-                cout << "Fail (Expected " << model[i].real() << " got "
-                         << modelacc[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpumdlgrid.size(); ++i) {
+            if (fabs(cpumdlgrid[i].real() - accmdlgrid[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpumdlgrid[i].real() << " got "
+                         << accmdlgrid[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1495,15 +1495,15 @@ int main()
         // degridding results
         cout << "Reverse processing: ";
 
-        if (cpuoutdata.size() != accoutdata.size()) {
+        if (cpumdldata.size() != accmdldata.size()) {
             cout << "Fail (Data vector sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpuoutdata.size(); ++i) {
-            if (fabs(cpuoutdata[i].real() - accoutdata[i].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpuoutdata[i].real() << " got "
-                         << accoutdata[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpumdldata.size(); ++i) {
+            if (fabs(cpumdldata[i].real() - accmdldata[i].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpumdldata[i].real() << " got "
+                         << accmdldata[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1514,12 +1514,12 @@ int main()
 
         // subtract the model vis and cycle back
         for (unsigned int i = 0; i < nSamples*nChan; ++i) {
-            cpudata[i] = cpudata[i] - cpuoutdata[i];
+            cpudata[i] = cpudata[i] - cpumdldata[i];
         }
 
-        #pragma acc parallel loop present(accdata_d[0:nSamples*nChan],accoutdata_d[0:nSamples*nChan])
+        #pragma acc parallel loop present(accdata_d[0:nSamples*nChan],accmdldata_d[0:nSamples*nChan])
         for (unsigned int i = 0; i < nSamples*nChan; ++i) {
-            accdata_d[i] = accdata_d[i] - accoutdata_d[i];
+            accdata_d[i] = accdata_d[i] - accmdldata_d[i];
         }
 
     } // it_major
