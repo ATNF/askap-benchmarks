@@ -143,14 +143,6 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
     const int *d_iu = iu.data();
     const int *d_iv = iv.data();
 
-    float dre, dim;
-    //std::complex<float> dval;
-    if ( isPSF ) {
-        dre = 1.0;
-        dim = 0.0;
-        //dval = 1.0;
-    }
-
     //int dind;
     // Both of the following approaches are the same when running on multicore CPUs.
     // Using "gang vector" here without the inner pragma below sets 1 vis per vector element (c.f. CUDA thread)
@@ -160,6 +152,15 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
         //int suppu, suppv;
 
 #ifdef GPU
+
+    float dre, dim;
+    //std::complex<float> dval;
+    if ( isPSF ) {
+        dre = 1.0;
+        dim = 0.0;
+        //dval = 1.0;
+    }
+
     // wait(1): wait until async(1) is finished...
     #pragma acc parallel loop tile(77,6,3) \
             present(d_grid[0:gSize*gSize],d_data[0:d_size],d_C[0:c_size], \
@@ -200,7 +201,7 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
         }
     }
 #else
-    for (dind = 0; dind < d_size; ++dind) {
+    for (int dind = 0; dind < d_size; ++dind) {
         int cind = d_cOffset[dind];
         //const float *c_C = (float *)&d_C[cind];
         //#pragma acc cache(c_C[0:2*sSize*sSize])
@@ -531,6 +532,7 @@ int fftExec(std::vector<std::complex<float> >& grid, const int gSize, const bool
 // Generate and execute a CUFFT plan.
 int fftExecGPU(std::vector<std::complex<float> >& grid, const int gSize, const bool forward)
 {
+    #ifdef GPU
     const size_t nPixels = grid.size();
     if (nPixels != gSize*gSize) {
         cout << "bad vector size" << endl;
@@ -593,6 +595,7 @@ int fftExecGPU(std::vector<std::complex<float> >& grid, const int gSize, const b
 
     // Delete the plan
     cufftDestroy(plan);
+    #endif
 
     return 0;
 
@@ -610,12 +613,14 @@ void fftFix(std::vector<std::complex<float> >& grid, const float scale)
 // Generate and execute an FFTW plan.
 void fftFixGPU(std::vector<std::complex<float> >& grid, const float scale)
 {
+    #ifdef GPU
     const size_t nPixels = grid.size();
     std::complex<float> *dataPtr = grid.data();
     #pragma acc parallel loop present(dataPtr[0:nPixels])
     for (size_t i = 0; i < nPixels; i++) {
         dataPtr[i] = dataPtr[i].real() * scale;
     }
+    #endif
 }
 
 static bool abs_compare(std::complex<float> a, std::complex<float> b)
@@ -1217,8 +1222,6 @@ int main()
 
         std::complex<float> testvalue = accimggrid.data()[tPix1];
 
-        #ifdef GPU
-
         // use cufft
 
         testvalue *= (float)(gSize*gSize);
@@ -1229,6 +1232,7 @@ int main()
 
             Stopwatch sw;
             sw.start();
+            #ifdef GPU
             if ( fftExecGPU(accpsfgrid, gSize, false) != 0 ) {
                 cout << "inverse fftExecGPU error" << endl;
                 return -1;
@@ -1240,6 +1244,20 @@ int main()
                 return -1;
             }
             fftFixGPU(accimggrid, 1.0/float(accdata.size()));
+            #else
+            // note that we should really enable multithreaded FFTW in this situation
+            if ( fftExec(accpsfgrid, gSize, false) != 0 ) {
+                cout << "inverse fftExec error" << endl;
+                return -1;
+            }
+            fftFix(accpsfgrid, 1.0/float(cpudata.size()));
+ 
+            if ( fftExec(accimggrid, gSize, false) != 0 ) {
+                cout << "inverse fftExec error" << endl;
+                return -1;
+            }
+            fftFix(accimggrid, 1.0/float(cpudata.size()));
+            #endif
             const double acctime = sw.stop();
 
             // Report on timings
@@ -1296,23 +1314,24 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            // this should be the model, not accimggrid
+            #ifdef GPU
             if ( fftExecGPU(accimggrid, gSize, true) != 0 ) {
                 cout << "forward fftExecGPU error" << endl;
                 return -1;
             }
+            #else
+            // note that we should really enable multithreaded FFTW in this situation
+            if ( fftExec(accimggrid, gSize, true) != 0 ) {
+                cout << "forward fftExec error" << endl;
+                return -1;
+            }
+            #endif
             const double acctime = sw.stop();
 
             // Report on timings
             cout << "    Time " << acctime << " (s)" << endl;
 
         }
-
-        #else
-
-        // use fftw
-
-        #endif
 
         //-----------------------------------------------------------------------//
         // DO DEGRIDDING
