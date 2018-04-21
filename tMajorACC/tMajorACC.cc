@@ -936,71 +936,71 @@ int main()
 
     // make an image of point sources (the true sky)
     const int nSources = 100;
-    std::vector<std::complex<float> > truegrid(gSize*gSize);
-    truegrid.assign(truegrid.size(), std::complex<float>(0.0));
+    std::vector<std::complex<float> > trueGrid(gSize*gSize);
+    trueGrid.assign(trueGrid.size(), std::complex<float>(0.0));
     // record a few test positions for later
     float max1=-1.0, max2=-1.0;
     int tPix1, tPix2;
     for (int i = 0; i < nSources; i++) {
         int l = gSize * Coord(randomInt()) / Coord(maxint);
         int m = gSize * Coord(randomInt()) / Coord(maxint);
-        truegrid[m*gSize+l] += std::complex<float>(randomInt()) / std::complex<float>(maxint);
-        if ( truegrid[m*gSize+l].real() > max1 ) {
+        trueGrid[m*gSize+l] += std::complex<float>(randomInt()) / std::complex<float>(maxint);
+        if ( trueGrid[m*gSize+l].real() > max1 ) {
             tPix1 = m*gSize+l;
-            max1 = truegrid[tPix1].real();
+            max1 = trueGrid[tPix1].real();
         }
-        if ( truegrid[m*gSize+l].real() > max2 && truegrid[m*gSize+l].real() < 0.5 ) {
+        if ( trueGrid[m*gSize+l].real() > max2 && trueGrid[m*gSize+l].real() < 0.5 ) {
             tPix2 = m*gSize+l;
-            max2 = truegrid[tPix2].real();
+            max2 = trueGrid[tPix2].real();
         }
     }
 
     // store the location and value of the maximum pixel
     std::vector<std::complex<float> >::iterator result;
-    //result = std::max_element(truegrid.begin(), truegrid.end(), abs_compare);
-    //tPix1 = std::distance(truegrid.begin(), result);
-    cout << "test val 1 at: " << tPix1 << ", value = " << truegrid[tPix1] << endl;
-    cout << "test val 2 at: " << tPix2 << ", value = " << truegrid[tPix2] << endl;
+    //result = std::max_element(trueGrid.begin(), trueGrid.end(), abs_compare);
+    //tPix1 = std::distance(trueGrid.begin(), result);
+    cout << "test val 1 at: " << tPix1 << ", value = " << trueGrid[tPix1] << endl;
+    cout << "test val 2 at: " << tPix2 << ", value = " << trueGrid[tPix2] << endl;
 
     // FFT to the true uv grid
-    if ( fftExec(truegrid, gSize, true) != 0 ) {
+    if ( fftExec(trueGrid, gSize, true) != 0 ) {
         cout << "fftExec error" << endl;
         return -1;
     }
 
-    result = std::max_element(truegrid.begin(), truegrid.end(), abs_compare);
-    int testUV = std::distance(truegrid.begin(), result);
-    cout << "max uv val at: " << testUV << ", value = " << truegrid[testUV] << endl;
+    result = std::max_element(trueGrid.begin(), trueGrid.end(), abs_compare);
+    int testUV = std::distance(trueGrid.begin(), result);
+    cout << "max uv val at: " << testUV << ", value = " << trueGrid[testUV] << endl;
 
     // degrid true visibiltiies from sky true model
 
     // generate data on GPU, but in the CPU object so that we have to send it to the GPU for profiling
-    std::vector<std::complex<float> > visdata(nSamples*nChan);
-    std::complex<float> *visdata_d = visdata.data();
-    std::complex<float> *truegrid_d = truegrid.data();
-    #pragma acc enter data create(visdata_d[0:nSamples*nChan]) copyin(truegrid_d[0:gSize*gSize])
-    degridKernelACC(truegrid, gSize, support, C, cOffset, iu, iv, visdata);
-    #pragma acc exit data delete(truegrid_d[0:gSize*gSize]) async(2)
+    std::vector<std::complex<float> > visData(nSamples*nChan);
+    std::complex<float> *visData_d = visData.data();
+    std::complex<float> *trueGrid_d = trueGrid.data();
+    #pragma acc enter data create(visData_d[0:nSamples*nChan]) copyin(trueGrid_d[0:gSize*gSize])
+    degridKernelACC(trueGrid, gSize, support, C, cOffset, iu, iv, visData);
+    #pragma acc exit data delete(trueGrid_d[0:gSize*gSize]) async(2)
     // pull the data back to the CPU and delete/deallocate the GPU copy
-    #pragma acc exit data copyout(visdata_d[0:nSamples*nChan])
+    #pragma acc exit data copyout(visData_d[0:nSamples*nChan])
 
     // make a single-core cpu copy
-    std::vector<std::complex<float> > cpudata(visdata);
-    std::vector<std::complex<float> > cpumdldata(nSamples*nChan);
+    std::vector<std::complex<float> > cpuData(visData);
+    std::vector<std::complex<float> > cpuModel(nSamples*nChan);
     for (int i = 0; i < nSamples*nChan; i++) {
-        cpumdldata[i] = 0.0;
+        cpuModel[i] = 0.0;
     }
 
     // make an acc copy and send initial visibility data to the device
-    std::vector<std::complex<float> > accdata(visdata);
-    std::vector<std::complex<float> > accmdldata(nSamples*nChan);
-    std::complex<float> *accdata_d = accdata.data();
-    #pragma acc enter data copyin(accdata_d[0:nSamples*nChan]) async(1)
-    std::complex<float> *accmdldata_d = accmdldata.data();
-    #pragma acc enter data create(accmdldata_d[0:nSamples*nChan])
-    #pragma acc parallel loop present(accmdldata_d[0:nSamples*nChan])
+    std::vector<std::complex<float> > accData(visData);
+    std::vector<std::complex<float> > accModel(nSamples*nChan);
+    std::complex<float> *accData_d = accData.data();
+    #pragma acc enter data copyin(accData_d[0:nSamples*nChan]) async(1)
+    std::complex<float> *accModel_d = accModel.data();
+    #pragma acc enter data create(accModel_d[0:nSamples*nChan])
+    #pragma acc parallel loop present(accModel_d[0:nSamples*nChan])
     for (int i = 0; i < nSamples*nChan; i++) {
-        accmdldata_d[i] = 0.0;
+        accModel_d[i] = 0.0;
     }
 
     double time;
@@ -1021,21 +1021,21 @@ int main()
         // DO GRIDDING
         std::vector<std::complex<float> > cpupsfgrid(gSize*gSize);
         cpupsfgrid.assign(cpupsfgrid.size(), std::complex<float>(0.0));
-        std::vector<std::complex<float> > cpuimggrid(gSize*gSize);
-        cpuimggrid.assign(cpuimggrid.size(), std::complex<float>(0.0));
+        std::vector<std::complex<float> > cpuImgGrid(gSize*gSize);
+        cpuImgGrid.assign(cpuImgGrid.size(), std::complex<float>(0.0));
         {
             // Now we can do the timing for the CPU implementation
             cout << "Gridding PSF" << endl;
 
             Stopwatch sw;
             sw.start();
-            gridKernel(cpudata, support, C, cOffset, iu, iv, cpupsfgrid, gSize, true);
+            gridKernel(cpuData, support, C, cOffset, iu, iv, cpupsfgrid, gSize, true);
             time = sw.stop();
 
             // Report on timings
             cout << "    Time " << time << " (s) " << endl;
-            cout << "    Time per visibility sample " << 1e6*time / double(cpudata.size()) << " (us) " << endl;
-            cout << "    Time per gridding   " << 1e9*time / double(cpudata.size()*sSize*sSize) << " (ns) " << endl;
+            cout << "    Time per visibility sample " << 1e6*time / double(cpuData.size()) << " (us) " << endl;
+            cout << "    Time per gridding   " << 1e9*time / double(cpuData.size()*sSize*sSize) << " (ns) " << endl;
             cout << "    Gridding rate   " << griddings/1e6/time << " (million grid points per second)" << endl;
         }
         {
@@ -1043,21 +1043,21 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            gridKernel(cpudata, support, C, cOffset, iu, iv, cpuimggrid, gSize, false);
+            gridKernel(cpuData, support, C, cOffset, iu, iv, cpuImgGrid, gSize, false);
             time = sw.stop();
 
             // Report on timings
             cout << "    Time " << time << " (s) " << endl;
-            cout << "    Time per visibility sample " << 1e6*time / double(cpudata.size()) << " (us) " << endl;
-            cout << "    Time per gridding   " << 1e9*time / double(cpudata.size()*sSize*sSize) << " (ns) " << endl;
+            cout << "    Time per visibility sample " << 1e6*time / double(cpuData.size()) << " (us) " << endl;
+            cout << "    Time per gridding   " << 1e9*time / double(cpuData.size()*sSize*sSize) << " (ns) " << endl;
             cout << "    Gridding rate   " << griddings/1e6/time << " (million grid points per second)" << endl;
         }
 
-        std::vector<std::complex<float> > cpuuvpsf(cpupsfgrid);
-        std::vector<std::complex<float> > cpuuvgrid(cpuimggrid);
+        std::vector<std::complex<float> > cpuuvPsf(cpupsfgrid);
+        std::vector<std::complex<float> > cpuuvGrid(cpuImgGrid);
 
         writeImage("dirty_cpu.img", cpupsfgrid);
-        writeImage("psf_cpu.img", cpuimggrid);
+        writeImage("psf_cpu.img", cpuImgGrid);
 
         //-----------------------------------------------------------------------//
         // Form dirty image and run the minor cycle
@@ -1072,39 +1072,39 @@ int main()
                 cout << "inverse fftExec error" << endl;
                 return -1;
             }
-            fftFix(cpupsfgrid, 1.0/float(cpudata.size()));
+            fftFix(cpupsfgrid, 1.0/float(cpuData.size()));
  
-            if ( fftExec(cpuimggrid, gSize, false) != 0 ) {
+            if ( fftExec(cpuImgGrid, gSize, false) != 0 ) {
                 cout << "inverse fftExec error" << endl;
                 return -1;
             }
-            fftFix(cpuimggrid, 1.0/float(cpudata.size()));
+            fftFix(cpuImgGrid, 1.0/float(cpuData.size()));
             time = sw.stop();
 
             // Report on timings
             cout << "    Time " << time << " (s) " << endl;
         }
 
-        std::vector<std::complex<float> > cpulmpsf(cpupsfgrid);
-        std::vector<std::complex<float> > cpulmgrid(cpuimggrid);
+        std::vector<std::complex<float> > cpulmPsf(cpupsfgrid);
+        std::vector<std::complex<float> > cpulmgrid(cpuImgGrid);
 
         //-------------------------------------------------------------------//
         // Do Hogbom CLEAN
 
-        std::vector<std::complex<float> > cpumdlgrid(cpuimggrid.size());
-        cpumdlgrid.assign(cpumdlgrid.size(), std::complex<float>(0.0));
+        std::vector<std::complex<float> > cpuModelGrid(cpuImgGrid.size());
+        cpuModelGrid.assign(cpuModelGrid.size(), std::complex<float>(0.0));
         {
             // Now we can do the timing for the serial (Golden) CPU implementation
             cout << "Hogbom clean" << endl;
 
             Stopwatch sw;
             sw.start();
-            deconvolve(cpuimggrid, gSize, cpupsfgrid, gSize, cpumdlgrid, nMinor);
+            deconvolve(cpuImgGrid, gSize, cpupsfgrid, gSize, cpuModelGrid, nMinor);
             time = sw.stop();
 
             // Report on results
-            cout << "    pix 1: "<<cpulmgrid[tPix1]<<" -> "<<cpuimggrid[tPix1]<<", model = "<<cpumdlgrid[tPix1]<< endl;
-            cout << "    pix 2: "<<cpulmgrid[tPix2]<<" -> "<<cpuimggrid[tPix2]<<", model = "<<cpumdlgrid[tPix2]<< endl;
+            cout << "    pix 1: "<<cpulmgrid[tPix1]<<" -> "<<cpuImgGrid[tPix1]<<", model = "<<cpuModelGrid[tPix1]<< endl;
+            cout << "    pix 2: "<<cpulmgrid[tPix2]<<" -> "<<cpuImgGrid[tPix2]<<", model = "<<cpuModelGrid[tPix2]<< endl;
 
             // Report on timings
             cout << "    Time " << time << " (s) " << endl;
@@ -1112,9 +1112,9 @@ int main()
             cout << "    Cleaning rate  " << nMinor / time << " (iterations per second)" << endl;
         }
 
-        std::vector<std::complex<float> > cpulmres(cpuimggrid);
+        std::vector<std::complex<float> > cpulmRes(cpuImgGrid);
 
-        cpuimggrid = cpumdlgrid;
+        cpuImgGrid = cpuModelGrid;
 
         //-------------------------------------------------------------------//
         // FFT deconvolved model image for degridding
@@ -1123,8 +1123,8 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            // this should be the model, not cpuimggrid
-            if ( fftExec(cpuimggrid, gSize, true) != 0 ) {
+            // this should be the model, not cpuImgGrid
+            if ( fftExec(cpuImgGrid, gSize, true) != 0 ) {
                 cout << "forward fftExec error" << endl;
                 return -1;
             }
@@ -1142,13 +1142,13 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            degridKernel(cpuimggrid, gSize, support, C, cOffset, iu, iv, cpumdldata);
+            degridKernel(cpuImgGrid, gSize, support, C, cOffset, iu, iv, cpuModel);
             time = sw.stop();
 
             // Report on timings
             cout << "    Time " << time << " (s) " << endl;
-            cout << "    Time per visibility sample " << 1e6*time / double(cpudata.size()) << " (us) " << endl;
-            cout << "    Time per degridding   " << 1e9*time / double(cpudata.size()*sSize*sSize) << " (ns) " << endl;
+            cout << "    Time per visibility sample " << 1e6*time / double(cpuData.size()) << " (us) " << endl;
+            cout << "    Time per degridding   " << 1e9*time / double(cpuData.size()*sSize*sSize) << " (ns) " << endl;
             cout << "    Degridding rate   " << griddings/1e6/time << " (million grid points per second)" << endl;
         }
 
@@ -1168,21 +1168,21 @@ int main()
         //-----------------------------------------------------------------------//
         // DO GRIDDING
         std::vector<std::complex<float> > accpsfgrid(gSize*gSize);
-        std::vector<std::complex<float> > accimggrid(gSize*gSize);
+        std::vector<std::complex<float> > accImgGrid(gSize*gSize);
         //accpsfgrid.assign(accpsfgrid.size(), std::complex<float>(0.0));
-        //accimggrid.assign(accimggrid.size(), std::complex<float>(0.0));
+        //accImgGrid.assign(accImgGrid.size(), std::complex<float>(0.0));
 
         // later: do this in a parallel loop...
         std::complex<float> *accpsfgrid_d = accpsfgrid.data();
-        std::complex<float> *accimggrid_d = accimggrid.data();
+        std::complex<float> *accImgGrid_d = accImgGrid.data();
         if (it_major==0) {
-            //#pragma acc enter data copyin(accpsfgrid_d[0:gSize*gSize], accimggrid_d[0:gSize*gSize]) async(1)
-            #pragma acc enter data create(accpsfgrid_d[0:gSize*gSize], accimggrid_d[0:gSize*gSize])
+            //#pragma acc enter data copyin(accpsfgrid_d[0:gSize*gSize], accImgGrid_d[0:gSize*gSize]) async(1)
+            #pragma acc enter data create(accpsfgrid_d[0:gSize*gSize], accImgGrid_d[0:gSize*gSize])
         }
-        #pragma acc parallel loop present(accpsfgrid_d[0:gSize*gSize], accimggrid_d[0:gSize*gSize])
+        #pragma acc parallel loop present(accpsfgrid_d[0:gSize*gSize], accImgGrid_d[0:gSize*gSize])
         for (unsigned int i = 0; i < gSize*gSize; ++i) {
             accpsfgrid_d[i] = 0.0;
-            accimggrid_d[i] = 0.0;
+            accImgGrid_d[i] = 0.0;
         }
 
         {
@@ -1192,14 +1192,14 @@ int main()
             // Time is measured inside this function call, unlike the CPU versions
             Stopwatch sw;
             sw.start();
-            gridKernelACC(accdata, support, C, cOffset, iu, iv, accpsfgrid, gSize, true);
+            gridKernelACC(accData, support, C, cOffset, iu, iv, accpsfgrid, gSize, true);
             const double acctime = sw.stop();
 
             // Report on timings
             //cout << "    Time " << acctime << " (s) = serial version / " << time/acctime << endl;
             cout << "    Time " << acctime << " (s)" << endl;
-            cout << "    Time per visibility sample " << 1e6*acctime / double(accdata.size()) << " (us) " << endl;
-            cout << "    Time per gridding   " << 1e9*acctime / double(accdata.size()*sSize*sSize) << " (ns) " << endl;
+            cout << "    Time per visibility sample " << 1e6*acctime / double(accData.size()) << " (us) " << endl;
+            cout << "    Time per gridding   " << 1e9*acctime / double(accData.size()*sSize*sSize) << " (ns) " << endl;
             cout << "    Gridding rate   " << griddings/1e6/acctime << " (million grid points per second)" << endl;
         }
         {
@@ -1208,27 +1208,27 @@ int main()
             // Time is measured inside this function call, unlike the CPU versions
             Stopwatch sw;
             sw.start();
-            gridKernelACC(accdata, support, C, cOffset, iu, iv, accimggrid, gSize, false);
+            gridKernelACC(accData, support, C, cOffset, iu, iv, accImgGrid, gSize, false);
             const double acctime = sw.stop();
 
             // Report on timings
             //cout << "    Time " << acctime << " (s) = serial version / " << time/acctime << endl;
             cout << "    Time " << acctime << " (s)" << endl;
-            cout << "    Time per visibility sample " << 1e6*acctime / double(accdata.size()) << " (us) " << endl;
-            cout << "    Time per gridding   " << 1e9*acctime / double(accdata.size()*sSize*sSize) << " (ns) " << endl;
+            cout << "    Time per visibility sample " << 1e6*acctime / double(accData.size()) << " (us) " << endl;
+            cout << "    Time per gridding   " << 1e9*acctime / double(accData.size()*sSize*sSize) << " (ns) " << endl;
             cout << "    Gridding rate   " << griddings/1e6/acctime << " (million grid points per second)" << endl;
         }
 
 #ifdef RUN_VERIFY
-        #pragma acc update host(accpsfgrid_d[0:gSize*gSize], accimggrid_d[0:gSize*gSize])
-        std::vector<std::complex<float> > accuvpsf(accpsfgrid);
-        std::vector<std::complex<float> > accuvgrid(accimggrid);
+        #pragma acc update host(accpsfgrid_d[0:gSize*gSize], accImgGrid_d[0:gSize*gSize])
+        std::vector<std::complex<float> > accuvPsf(accpsfgrid);
+        std::vector<std::complex<float> > accuvGrid(accImgGrid);
 #endif
 
         //-----------------------------------------------------------------------//
         // Form dirty image and run the minor cycle
 
-        std::complex<float> testvalue = accimggrid.data()[tPix1];
+        std::complex<float> testvalue = accImgGrid.data()[tPix1];
 
         // use cufft
 
@@ -1245,26 +1245,26 @@ int main()
                 cout << "inverse fftExecGPU error" << endl;
                 return -1;
             }
-            fftFixGPU(accpsfgrid, 1.0/float(accdata.size()));
+            fftFixGPU(accpsfgrid, 1.0/float(accData.size()));
  
-            if ( fftExecGPU(accimggrid, gSize, false) != 0 ) {
+            if ( fftExecGPU(accImgGrid, gSize, false) != 0 ) {
                 cout << "inverse fftExecGPU error" << endl;
                 return -1;
             }
-            fftFixGPU(accimggrid, 1.0/float(accdata.size()));
+            fftFixGPU(accImgGrid, 1.0/float(accData.size()));
             #else
             // note that we should really enable multithreaded FFTW in this situation
             if ( fftExec(accpsfgrid, gSize, false) != 0 ) {
                 cout << "inverse fftExec error" << endl;
                 return -1;
             }
-            fftFix(accpsfgrid, 1.0/float(cpudata.size()));
+            fftFix(accpsfgrid, 1.0/float(cpuData.size()));
  
-            if ( fftExec(accimggrid, gSize, false) != 0 ) {
+            if ( fftExec(accImgGrid, gSize, false) != 0 ) {
                 cout << "inverse fftExec error" << endl;
                 return -1;
             }
-            fftFix(accimggrid, 1.0/float(cpudata.size()));
+            fftFix(accImgGrid, 1.0/float(cpuData.size()));
             #endif
             const double acctime = sw.stop();
 
@@ -1274,16 +1274,16 @@ int main()
         }
 
 #ifdef RUN_VERIFY
-        #pragma acc update host(accpsfgrid_d[0:gSize*gSize], accimggrid_d[0:gSize*gSize])
-        std::vector<std::complex<float> > acclmpsf(accpsfgrid);
-        std::vector<std::complex<float> > acclmgrid(accimggrid);
+        #pragma acc update host(accpsfgrid_d[0:gSize*gSize], accImgGrid_d[0:gSize*gSize])
+        std::vector<std::complex<float> > acclmPsf(accpsfgrid);
+        std::vector<std::complex<float> > acclmgrid(accImgGrid);
 #endif
 
         //-------------------------------------------------------------------//
         // Do Hogbom CLEAN
 
-        std::vector<std::complex<float> > accmdlgrid(accpsfgrid.size());
-        accmdlgrid.assign(accmdlgrid.size(), std::complex<float>(0.0));
+        std::vector<std::complex<float> > accModelGrid(accpsfgrid.size());
+        accModelGrid.assign(accModelGrid.size(), std::complex<float>(0.0));
 
         {
             // Now we can do the timing for the serial (Golden) CPU implementation
@@ -1291,14 +1291,14 @@ int main()
 
             Stopwatch sw;
             sw.start();
-            deconvolveACC(accimggrid, gSize, accpsfgrid, gSize, accmdlgrid, nMinor);
+            deconvolveACC(accImgGrid, gSize, accpsfgrid, gSize, accModelGrid, nMinor);
             time = sw.stop();
 
 #ifdef RUN_VERIFY
             // Report on results
-            #pragma acc update host(accimggrid_d[0:gSize*gSize])
-            cout << "    pix 1: "<<acclmgrid[tPix1]<<" -> "<<accimggrid[tPix1]<<", model = "<<accmdlgrid[tPix1]<< endl;
-            cout << "    pix 2: "<<acclmgrid[tPix2]<<" -> "<<accimggrid[tPix2]<<", model = "<<accmdlgrid[tPix2]<< endl;
+            #pragma acc update host(accImgGrid_d[0:gSize*gSize])
+            cout << "    pix 1: "<<acclmgrid[tPix1]<<" -> "<<accImgGrid[tPix1]<<", model = "<<accModelGrid[tPix1]<< endl;
+            cout << "    pix 2: "<<acclmgrid[tPix2]<<" -> "<<accImgGrid[tPix2]<<", model = "<<accModelGrid[tPix2]<< endl;
 #endif
 
             // Report on timings
@@ -1308,12 +1308,12 @@ int main()
         }
 
 #ifdef RUN_VERIFY
-        #pragma acc update host(accimggrid_d[0:gSize*gSize])
-        std::vector<std::complex<float> > acclmres(accimggrid);
+        #pragma acc update host(accImgGrid_d[0:gSize*gSize])
+        std::vector<std::complex<float> > acclmRes(accImgGrid);
 #endif
 
-        accimggrid = accmdlgrid;
-        #pragma acc update device(accimggrid_d[0:gSize*gSize])
+        accImgGrid = accModelGrid;
+        #pragma acc update device(accImgGrid_d[0:gSize*gSize])
 
         //-------------------------------------------------------------------//
         // FFT deconvolved model image for degridding
@@ -1323,13 +1323,13 @@ int main()
             Stopwatch sw;
             sw.start();
             #ifdef GPU
-            if ( fftExecGPU(accimggrid, gSize, true) != 0 ) {
+            if ( fftExecGPU(accImgGrid, gSize, true) != 0 ) {
                 cout << "forward fftExecGPU error" << endl;
                 return -1;
             }
             #else
             // note that we should really enable multithreaded FFTW in this situation
-            if ( fftExec(accimggrid, gSize, true) != 0 ) {
+            if ( fftExec(accImgGrid, gSize, true) != 0 ) {
                 cout << "forward fftExec error" << endl;
                 return -1;
             }
@@ -1350,22 +1350,22 @@ int main()
             // Time is measured inside this function call, unlike the CPU versions
             Stopwatch sw;
             sw.start();
-            degridKernelACC(accimggrid, gSize, support, C, cOffset, iu, iv, accmdldata);
+            degridKernelACC(accImgGrid, gSize, support, C, cOffset, iu, iv, accModel);
             const double acctime = sw.stop();
 
             // Report on timings
             //cout << "    Time " << acctime << " (s) = serial version / " << time/acctime << endl;
             cout << "    Time " << acctime << " (s)" << endl;
-            cout << "    Time per visibility sample " << 1e6*acctime / double(accdata.size()) << " (us) " << endl;
-            cout << "    Time per degridding   " << 1e9*acctime / double(accdata.size()*sSize*sSize) << " (ns) " << endl;
+            cout << "    Time per visibility sample " << 1e6*acctime / double(accData.size()) << " (us) " << endl;
+            cout << "    Time per degridding   " << 1e9*acctime / double(accData.size()*sSize*sSize) << " (ns) " << endl;
             cout << "    Degridding rate   " << griddings/1e6/time << " (million grid points per second)" << endl;
         }
 
         //-----------------------------------------------------------------------//
         // Copy GPU data back to CPU
 
-        //#pragma acc exit data copyout(accimggrid_d[0:gSize*gSize],accmdldata_d[0:nSamples*nChan]) 
-        #pragma acc update host(accimggrid_d[0:gSize*gSize],accmdldata_d[0:nSamples*nChan])
+        //#pragma acc exit data copyout(accImgGrid_d[0:gSize*gSize],accModel_d[0:nSamples*nChan]) 
+        #pragma acc update host(accImgGrid_d[0:gSize*gSize],accModel_d[0:nSamples*nChan])
 
         double acc_time = sw_acc.stop();
         cout << "OpenACC took " << acc_time << " (s)" << endl;
@@ -1381,38 +1381,36 @@ int main()
         // Verify gridding results
         cout << "Gridding PSF: ";
 
-        if (cpuuvpsf.size() != accuvpsf.size()) {
+        if (cpuuvPsf.size() != accuvPsf.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpuuvpsf.size(); ++i) {
-            if (fabs(cpuuvpsf[i].real() - accuvpsf[i].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpuuvpsf[i].real() << " got "
-                         << accuvpsf[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpuuvPsf.size(); ++i) {
+            if (fabs(cpuuvPsf[i].real() - accuvPsf[i].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpuuvPsf[i].real() << " got "
+                         << accuvPsf[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
         }
 
-        result = std::max_element(cpulmpsf.begin(), cpulmpsf.end(), abs_compare);
-        int psfPixel = std::distance(cpulmpsf.begin(), result);
+        result = std::max_element(cpulmPsf.begin(), cpulmPsf.end(), abs_compare);
+        int psfPixel = std::distance(cpulmPsf.begin(), result);
 
         cout << "Pass" << std::endl;
 
-        // cout << "psf max at (" << int(psfPixel/gSize)<<","<<int(psfPixel%gSize) << ") = " << cpulmpsf[psfPixel].real() << endl;
-
         cout << "Gridding data: ";
 
-        if (cpuuvgrid.size() != accuvgrid.size()) {
+        if (cpuuvGrid.size() != accuvGrid.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpuuvgrid.size(); ++i) {
-            if (fabs(cpuuvgrid[i].real() - accuvgrid[i].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpuuvgrid[i].real() << " got "
-                         << accuvgrid[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpuuvGrid.size(); ++i) {
+            if (fabs(cpuuvGrid[i].real() - accuvGrid[i].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpuuvGrid[i].real() << " got "
+                         << accuvGrid[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1424,15 +1422,15 @@ int main()
         // Verify Inverse FFT results
         cout << "Inverse FFT (PSF): ";
 
-        if (cpulmpsf.size() != acclmpsf.size()) {
+        if (cpulmPsf.size() != acclmPsf.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpulmpsf.size(); ++i) {
-            if (fabs(cpulmpsf[i].real() - acclmpsf[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpulmpsf[i].real() << " got "
-                         << acclmpsf[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpulmPsf.size(); ++i) {
+            if (fabs(cpulmPsf[i].real() - acclmPsf[i].real()) / fabs(cpulmPsf[psfPixel].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpulmPsf[i].real() << " got "
+                         << acclmPsf[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1448,7 +1446,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpulmgrid.size(); ++i) {
-            if (fabs(cpulmgrid[i].real() - acclmgrid[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
+            if (fabs(cpulmgrid[i].real() - acclmgrid[i].real()) / fabs(cpulmPsf[psfPixel].real()) > 0.00001) {
                 cout << "Fail (Expected " << cpulmgrid[i].real() << " got "
                          << acclmgrid[i].real() << " at index " << i << ")"
                          << std::endl;
@@ -1458,36 +1456,36 @@ int main()
 
         cout << "Pass" << std::endl;
 
-        //cout << cpulmgrid[tPix1].real() << "/psf = " << cpulmgrid[tPix1].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
-        //cout << cpulmgrid[tPix2].real() << "/psf = " << cpulmgrid[tPix2].real()/fabs(cpulmpsf[psfPixel].real()) << endl;
+        //cout << cpulmgrid[tPix1].real() << "/psf = " << cpulmgrid[tPix1].real()/fabs(cpulmPsf[psfPixel].real()) << endl;
+        //cout << cpulmgrid[tPix2].real() << "/psf = " << cpulmgrid[tPix2].real()/fabs(cpulmPsf[psfPixel].real()) << endl;
 
         //-----------------------------------------------------------------------//
         // Verify Hogbom clean results
         cout << "Hogbom clean: ";
 
-        if (cpulmres.size() != acclmres.size()) {
+        if (cpulmRes.size() != acclmRes.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpulmres.size(); ++i) {
-            if (fabs(cpulmres[i].real() - acclmres[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpulmres[i].real() << " got "
-                         << acclmres[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpulmRes.size(); ++i) {
+            if (fabs(cpulmRes[i].real() - acclmRes[i].real()) / fabs(cpulmPsf[psfPixel].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpulmRes[i].real() << " got "
+                         << acclmRes[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
         }
 
-        if (cpumdlgrid.size() != accmdlgrid.size()) {
+        if (cpuModelGrid.size() != accModelGrid.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpumdlgrid.size(); ++i) {
-            if (fabs(cpumdlgrid[i].real() - accmdlgrid[i].real()) / fabs(cpulmpsf[psfPixel].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpumdlgrid[i].real() << " got "
-                         << accmdlgrid[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpuModelGrid.size(); ++i) {
+            if (fabs(cpuModelGrid[i].real() - accModelGrid[i].real()) / fabs(cpulmPsf[psfPixel].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpuModelGrid[i].real() << " got "
+                         << accModelGrid[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1499,18 +1497,18 @@ int main()
         // Verify Forward FFT results
         cout << "Forward FFT: ";
 
-        if (cpuimggrid.size() != accimggrid.size()) {
+        if (cpuImgGrid.size() != accImgGrid.size()) {
             cout << "Fail (Grid sizes differ)" << std::endl;
             return 1;
         }
 
-        result = std::max_element(cpuimggrid.begin(), cpuimggrid.end(), abs_compare);
-        int cpuPixel = std::distance(cpuimggrid.begin(), result);
+        result = std::max_element(cpuImgGrid.begin(), cpuImgGrid.end(), abs_compare);
+        int cpuPixel = std::distance(cpuImgGrid.begin(), result);
 
-        for (unsigned int i = 0; i < cpuimggrid.size(); ++i) {
-            if (fabs(cpuimggrid[i].real() - accimggrid[i].real()) / fabs(cpuimggrid[cpuPixel].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpuimggrid[i].real() << " got "
-                         << accimggrid[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpuImgGrid.size(); ++i) {
+            if (fabs(cpuImgGrid[i].real() - accImgGrid[i].real()) / fabs(cpuImgGrid[cpuPixel].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpuImgGrid[i].real() << " got "
+                         << accImgGrid[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1522,15 +1520,15 @@ int main()
         // degridding results
         cout << "Reverse processing: ";
 
-        if (cpumdldata.size() != accmdldata.size()) {
+        if (cpuModel.size() != accModel.size()) {
             cout << "Fail (Data vector sizes differ)" << std::endl;
             return 1;
         }
 
-        for (unsigned int i = 0; i < cpumdldata.size(); ++i) {
-            if (fabs(cpumdldata[i].real() - accmdldata[i].real()) > 0.00001) {
-                cout << "Fail (Expected " << cpumdldata[i].real() << " got "
-                         << accmdldata[i].real() << " at index " << i << ")"
+        for (unsigned int i = 0; i < cpuModel.size(); ++i) {
+            if (fabs(cpuModel[i].real() - accModel[i].real()) > 0.00001) {
+                cout << "Fail (Expected " << cpuModel[i].real() << " got "
+                         << accModel[i].real() << " at index " << i << ")"
                          << std::endl;
                 return 1;
             }
@@ -1541,12 +1539,12 @@ int main()
 
         // subtract the model vis and cycle back
         for (unsigned int i = 0; i < nSamples*nChan; ++i) {
-            cpudata[i] = cpudata[i] - cpumdldata[i];
+            cpuData[i] = cpuData[i] - cpuModel[i];
         }
 
-        #pragma acc parallel loop present(accdata_d[0:nSamples*nChan],accmdldata_d[0:nSamples*nChan])
+        #pragma acc parallel loop present(accData_d[0:nSamples*nChan],accModel_d[0:nSamples*nChan])
         for (unsigned int i = 0; i < nSamples*nChan; ++i) {
-            accdata_d[i] = accdata_d[i] - accmdldata_d[i];
+            accData_d[i] = accData_d[i] - accModel_d[i];
         }
 
     } // it_major
