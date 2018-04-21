@@ -151,8 +151,6 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
 
         //int suppu, suppv;
 
-#ifdef GPU
-
     float dre, dim;
     //std::complex<float> dval;
     if ( isPSF ) {
@@ -161,10 +159,20 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
         //dval = 1.0;
     }
 
+#ifdef GPU
+
+    // tile is giving an ~25% improvement over the collapse(2) loop version on initial P100 tests, but is fragile.
+    //  - if the total number of cores is above 1386 or so our of 2048 in our P100 tests, verification fails.
+    //  - letting the compiler choose using tile(*,*,*) should work but isn't. Will be fixed in the PGI release after
+    //    next (currently using pgc++ 18.3-0).
     // wait(1): wait until async(1) is finished...
+    #ifdef GPU
     #pragma acc parallel loop tile(77,6,3) \
             present(d_grid[0:gSize*gSize],d_data[0:d_size],d_C[0:c_size], \
                     d_cOffset[0:d_size],d_iu[0:d_size],d_iv[0:d_size]) wait(1)
+    #else
+    #pragma acc parallel loop
+    #endif
     for (int dind = 0; dind < d_size; ++dind) {
         for (int suppv = 0; suppv < sSize; suppv++) {
             for (int suppu = 0; suppu < sSize; suppu++) {
@@ -210,8 +218,10 @@ void gridKernelACC(const std::vector<std::complex<float> >& data, const int supp
         int gind = d_iu[dind] + gSize * d_iv[dind] - support;
         // The Convoluton function point from which we offset
         int suppu, suppv;
-        const float dre = d_data[dind].real();
-        const float dim = d_data[dind].imag();
+        if ( !isPSF ) {
+            dre = d_data[dind].real();
+            dim = d_data[dind].imag();
+        }
 
         #pragma acc parallel loop gang vector collapse(2)
         for (suppv = 0; suppv < sSize; suppv++) {
@@ -872,21 +882,14 @@ int main()
 
     const unsigned int maxint = std::numeric_limits<int>::max();
 
-    // Initialize the data to be gridded and the model data to be degridded
+    // Initialize the uvw data 
     std::vector<Coord> u(nSamples);
     std::vector<Coord> v(nSamples);
     std::vector<Coord> w(nSamples);
-    std::vector<std::complex<float> > cpudata(nSamples*nChan);
-    std::vector<std::complex<float> > cpumdldata(nSamples*nChan);
-
     for (int i = 0; i < nSamples; i++) {
         u[i] = baseline * Coord(randomInt()) / Coord(maxint) - baseline / 2;
         v[i] = baseline * Coord(randomInt()) / Coord(maxint) - baseline / 2;
         w[i] = baseline * Coord(randomInt()) / Coord(maxint) - baseline / 2;
-
-        for (int chan = 0; chan < nChan; chan++) {
-            cpumdldata[i*nChan+chan] = 0.0;
-        }
     }
 
     std::vector<std::complex<float> > grid(gSize*gSize);
@@ -972,28 +975,33 @@ int main()
     // degrid true visibiltiies from sky true model
 
     // generate data on GPU, but in the CPU object so that we have to send it to the GPU for profiling
-    std::complex<float> *cpudata_d = cpudata.data();
+    std::vector<std::complex<float> > visdata(nSamples*nChan);
+    std::complex<float> *visdata_d = visdata.data();
     std::complex<float> *truegrid_d = truegrid.data();
-    #pragma acc enter data create(cpudata_d[0:nSamples*nChan]) copyin(truegrid_d[0:gSize*gSize])
-    degridKernelACC(truegrid, gSize, support, C, cOffset, iu, iv, cpudata);
+    #pragma acc enter data create(visdata_d[0:nSamples*nChan]) copyin(truegrid_d[0:gSize*gSize])
+    degridKernelACC(truegrid, gSize, support, C, cOffset, iu, iv, visdata);
     #pragma acc exit data delete(truegrid_d[0:gSize*gSize]) async(2)
     // pull the data back to the CPU and delete/deallocate the GPU copy
-    #pragma acc exit data copyout(cpudata_d[0:nSamples*nChan])
+    #pragma acc exit data copyout(visdata_d[0:nSamples*nChan])
 
-    // make acc copies and send initial visibility data to the device
-    std::vector<std::complex<float> > accdata(cpudata);
-    std::complex<float> *accdata_d = accdata.data();
+    // make a single-core cpu copy
+    std::vector<std::complex<float> > cpudata(visdata);
+    std::vector<std::complex<float> > cpumdldata(nSamples*nChan);
+    for (int i = 0; i < nSamples*nChan; i++) {
+        cpumdldata[i] = 0.0;
+    }
+
+    // make an acc copy and send initial visibility data to the device
+    std::vector<std::complex<float> > accdata(visdata);
     std::vector<std::complex<float> > accmdldata(nSamples*nChan);
+    std::complex<float> *accdata_d = accdata.data();
+    #pragma acc enter data copyin(accdata_d[0:nSamples*nChan]) async(1)
     std::complex<float> *accmdldata_d = accmdldata.data();
     #pragma acc enter data create(accmdldata_d[0:nSamples*nChan])
     #pragma acc parallel loop present(accmdldata_d[0:nSamples*nChan])
     for (int i = 0; i < nSamples*nChan; i++) {
         accmdldata_d[i] = 0.0;
     }
-
-    // reset data_d to point to the acc version
-    accdata_d = accdata.data();
-    #pragma acc enter data copyin(accdata_d[0:nSamples*nChan])
 
     double time;
 
@@ -1160,8 +1168,8 @@ int main()
         //-----------------------------------------------------------------------//
         // DO GRIDDING
         std::vector<std::complex<float> > accpsfgrid(gSize*gSize);
-        //accpsfgrid.assign(accpsfgrid.size(), std::complex<float>(0.0));
         std::vector<std::complex<float> > accimggrid(gSize*gSize);
+        //accpsfgrid.assign(accpsfgrid.size(), std::complex<float>(0.0));
         //accimggrid.assign(accimggrid.size(), std::complex<float>(0.0));
 
         // later: do this in a parallel loop...

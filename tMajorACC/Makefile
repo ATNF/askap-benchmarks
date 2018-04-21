@@ -29,7 +29,7 @@ CXX=pgc++
 USE=gpu
 ifeq ($(USE),cpu)
     # Multicore CPU version
-    CFLAGS_EXTRA=-acc -ta=multicore
+    CFLAGS_EXTRA=-acc -ta=multicore -DVERIFY
 else ifeq ($(USE),gpu)
     # GPU version
     #CFLAGS_EXTRA=-acc -ta=tesla,cc60,managed -DGPU
