@@ -352,9 +352,18 @@ void initC(const std::vector<Coord>& freq, const Coord cellSize,
            Coord& wCellSize, std::vector<std::complex<float> >& C)
 {
     cout << "Initializing W projection convolution function" << endl;
-    // changed 1.5x to 0.9x to reduce kernel memory below 48 KB.
+    // DAM -- I don't really understand the following equation. baseline*freq is the array size in wavelengths,
+    // but I don't know why the sqrt is used and why there is a multiplication with cellSize rather than a division.
+    // In the paper referred to in ../README.md they suggest using rms(w)*FoV for the width (in wavelengths), which
+    // would lead to something more like:
+    // support = max( 3, ceil( 0.5 * scale*baseline*freq[0] / (cellSize*cellSize) ) )
+    // where "scale" reduces the maximum baseline length to the RMS (1/sqrt(3) for uniformaly distributed
+    // visibilities, 1/(2+log10(n)/2) or so for n baselines with a Gaussian radial profile).
     support = static_cast<int>(1.5 * sqrt(std::abs(baseline) * static_cast<Coord>(cellSize)
                                           * freq[0]) / cellSize);
+
+    cout << "FoV = " << 180./3.14159265/cellSize << " deg" << endl;
+
     overSample = 8;
     cout << "Support = " << support << " pixels" << endl;
     wCellSize = 2 * baseline * freq[0] / wSize;
@@ -867,18 +876,54 @@ void deconvolveACC(std::vector<std::complex<float> >& residual,
     }
 }
 
+void usage() {
+    cout << "usage: tMajorACC [-h] [option]" << endl;
+    cout << "-n num\t change the number of data samples to num." << endl;
+    cout << "-w num\t change the number of lookup planes in w projection to num." << endl;
+    cout << "-c num\t change the number of spectral channels to num." << endl;
+    cout << "-f val\t reduce the field of view by a factor of val (=> reduce the kernel size)." << endl;
+}
+
 // ------------------------------------------------------------------------- //
 // Main testing routine
-int main()
+int main(int argc, char* argv[])
 {
     // Change these if necessary to adjust run time
-    const int nSamples = 160000; // Number of data samples
-    const int wSize = 33; // Number of lookup planes in w projection
-    const int nChan = 1; // Number of spectral channels
+    int nSamples = 160000; // Number of data samples
+    int wSize = 33; // Number of lookup planes in w projection
+    int nChan = 1; // Number of spectral channels
+    Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
+
+    if (argc > 1){
+        for (int i=0; i < argc; i++){
+            if (argv[i][0] == '-') {
+                if (argv[i][1] == 'n'){
+                    nSamples = atoi(argv[i+1]);
+                }
+                else if (argv[i][1] == 'w'){
+                    wSize = atoi(argv[i+1]);
+                }
+                else if (argv[i][1] == 'c'){
+                    nChan = atoi(argv[i+1]);
+                }
+                else if (argv[i][1] == 'f') {
+                    cellSize *= atof(argv[i+1]);
+                    i++;
+                }
+                else {
+                    usage();
+                    return 1;
+                }
+            }
+        }
+    }
+    cout << "nSamples = " << nSamples <<endl;
+    cout << "nChan = " << nChan <<endl;
+    cout << "wSize = " << wSize <<endl;
+    cout << "cellSize = " << cellSize <<endl;
 
     // Don't change any of these numbers unless you know what you are doing!
     const int gSize = 4096; // Size of output grid in pixels
-    const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
     const int baseline = 2000; // Maximum baseline in meters
 
     const int nMajor = 5; // Number of major cycle iterations
@@ -1317,28 +1362,35 @@ int main()
         cout << "    verifying:";
 
         // store the location and value of the maximum PSF pixel to normalise everything by
+        std::vector<std::complex<float> >::iterator maxLoc;
+        int maxPixel;
         if (it_major == 0)
         {
-            std::vector<std::complex<float> >::iterator result;
-            result = std::max_element(cpulmPsf.begin(), cpulmPsf.end(), abs_compare);
-            const int psfPixel = std::distance(cpulmPsf.begin(), result);
-            psfScale = 1.0 / fabs(cpulmPsf[psfPixel].real());
+            maxLoc = std::max_element(cpulmPsf.begin(), cpulmPsf.end(), abs_compare);
+            maxPixel = std::distance(cpulmPsf.begin(), maxLoc);
+            psfScale = 1.0 / fabs(cpulmPsf[maxPixel].real());
         }
+
+        // set a threshold factor
+        const float thresh = 1e-5;
 
         //-------------------------------------------------------------------//
         // Verify gridding results
         if (it_major == 0)
         {
-            cout << " psf";
+            cout << " psfgrid";
          
             if (cpuuvPsf.size() != accuvPsf.size()) {
                 cout << endl;
                 cout << "Fail (PSF grid sizes differ)" << endl;
                 return 1;
             }
-         
+
+            maxLoc = std::max_element(cpuuvPsf.begin(), cpuuvPsf.end(), abs_compare);
+            maxPixel = std::distance(cpuuvPsf.begin(), maxLoc);
+
             for (unsigned int i = 0; i < cpuuvPsf.size(); ++i) {
-                if (fabs(cpuuvPsf[i].real() - accuvPsf[i].real()) > 0.00001) {
+                if (fabs(cpuuvPsf[i].real() - accuvPsf[i].real()) / fabs(cpuuvPsf[maxPixel].real()) > thresh) {
                     cout << "Fail (Expected " << cpuuvPsf[i].real() << " got "
                              << accuvPsf[i].real() << " at index " << i << ")"
                              << endl;
@@ -1347,7 +1399,7 @@ int main()
             }
         }
 
-        cout << " dirty";
+        cout << " grid";
 
         if (cpuuvGrid.size() != accuvGrid.size()) {
             cout << endl;
@@ -1355,8 +1407,11 @@ int main()
             return 1;
         }
 
+        maxLoc = std::max_element(cpuuvGrid.begin(), cpuuvGrid.end(), abs_compare);
+        maxPixel = std::distance(cpuuvGrid.begin(), maxLoc);
+
         for (unsigned int i = 0; i < cpuuvGrid.size(); ++i) {
-            if (fabs(cpuuvGrid[i].real() - accuvGrid[i].real()) > 0.00001) {
+            if (fabs(cpuuvGrid[i].real() - accuvGrid[i].real()) / fabs(cpuuvGrid[maxPixel].real()) > thresh) {
                 cout << endl;
                 cout << "Fail (Expected " << cpuuvGrid[i].real() << " got "
                          << accuvGrid[i].real() << " at index " << i << ")"
@@ -1376,7 +1431,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpulmPsf.size(); ++i) {
-            if (fabs(cpulmPsf[i].real() - acclmPsf[i].real()) * psfScale > 0.00001) {
+            if (fabs(cpulmPsf[i].real() - acclmPsf[i].real()) * psfScale > thresh) {
                 cout << endl;
                 cout << "Fail for PSF (Expected " << cpulmPsf[i].real() << " got "
                          << acclmPsf[i].real() << " at index " << i << ")"
@@ -1392,7 +1447,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpulmGrid.size(); ++i) {
-            if (fabs(cpulmGrid[i].real() - acclmGrid[i].real()) * psfScale > 0.00001) {
+            if (fabs(cpulmGrid[i].real() - acclmGrid[i].real()) * psfScale > thresh) {
                 cout << endl;
                 cout << "Fail for dirty image (Expected " << cpulmGrid[i].real() << " got "
                          << acclmGrid[i].real() << " at index " << i << ")"
@@ -1412,7 +1467,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpulmRes.size(); ++i) {
-            if (fabs(cpulmRes[i].real() - acclmRes[i].real()) * psfScale > 0.00001) {
+            if (fabs(cpulmRes[i].real() - acclmRes[i].real()) * psfScale > thresh) {
                 cout << endl;
                 cout << "Fail for residual (Expected " << cpulmRes[i].real() << " got "
                          << acclmRes[i].real() << " at index " << i << ")"
@@ -1428,7 +1483,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpuModelGrid.size(); ++i) {
-            if (fabs(cpuModelGrid[i].real() - accModelGrid[i].real()) * psfScale > 0.00001) {
+            if (fabs(cpuModelGrid[i].real() - accModelGrid[i].real()) * psfScale > thresh) {
                 cout << endl;
                 cout << "Fail for model (Expected " << cpuModelGrid[i].real() << " got "
                          << accModelGrid[i].real() << " at index " << i << ")"
@@ -1448,7 +1503,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpuImgGrid.size(); ++i) {
-            if (fabs(cpuImgGrid[i].real() - accImgGrid[i].real()) * psfScale > 0.00001) {
+            if (fabs(cpuImgGrid[i].real() - accImgGrid[i].real()) * psfScale > thresh) {
                 cout << endl;
                 cout << "Fail (Expected " << cpuImgGrid[i].real() << " got "
                          << accImgGrid[i].real() << " at index " << i << ")"
@@ -1468,7 +1523,7 @@ int main()
         }
 
         for (unsigned int i = 0; i < cpuModel.size(); ++i) {
-            if (fabs(cpuModel[i].real() - accModel[i].real()) * psfScale > 0.00001) {
+            if (fabs(cpuModel[i].real() - accModel[i].real()) * psfScale > thresh) {
                 cout << endl;
                 cout << "Fail (Expected " << cpuModel[i].real() << " got "
                          << accModel[i].real() << " at index " << i << ")"
