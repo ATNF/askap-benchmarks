@@ -76,49 +76,80 @@ int main(int argc, char *argv[])
 
     // Setup the benchmark class
     Benchmark bmark;
-    bmark.init();
 
-    // Determine how much work will be done across all ranks
-    const int sSize = 2 * bmark.getSupport() + 1;
-    const double griddings = (double(nSamples * nChan) * double((sSize) * (sSize))) * double(numtasks);
+    for (int run=0; run<5; ++run) {
 
-    if (rank == 0) {
-        std::cout << "+++++ Forward processing (MPI) +++++" << std::endl;
-    }
+        bmark.setMPIrank(rank);
+        bmark.setRunType(run);
 
-    Stopwatch sw;
-    MPI_Barrier(MPI_COMM_WORLD);
-    sw.start();
-    bmark.runGrid();
-    MPI_Barrier(MPI_COMM_WORLD);
-    double time = sw.stop();
+        if (rank == 0) {
+            std::cout << "+++++ Test "<<bmark.getRunType()<<" +++++" << std::endl;
+        }
 
-    // Report on timings (master reports only)
-    if (rank == 0) {
-        std::cout << "    Number of processes: " << numtasks << std::endl;
-        std::cout << "    Time " << time << " (s) " << std::endl;
-        std::cout << "    Time per visibility spectral sample " << 1e6*time / double(nSamples*nChan) << " (us) " << std::endl;
-        std::cout << "    Time per gridding   " << 1e9*time / (double(nSamples*nChan)* double((sSize)*(sSize))) << " (ns) " << std::endl;
-        std::cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << std::endl;
+        bmark.init();
 
-        std::cout << "+++++ Reverse processing (MPI) +++++" << std::endl;
-    }
+        Stopwatch sw;
+        double time;
+ 
+        // Determine how much work will be done across all ranks
+        const double ngridvis = double(bmark.nVisibilitiesGridded());
+        const double ngridpix = double(bmark.nPixelsGridded());
+        const double tgridpix = ngridpix * double(numtasks);
+ 
+        MPI_Barrier(MPI_COMM_WORLD);
+        sw.start();
+        bmark.runGrid();
+        MPI_Barrier(MPI_COMM_WORLD);
+        time = sw.stop();
+ 
+        // Report on timings (master reports only)
+        if (rank == 0) {
+            std::cout << "  Forward processing" << std::endl;
+            std::cout << "    Number of processes: " << numtasks << std::endl;
+            std::cout << "    Time " << time << " (s) " << std::endl;
+            std::cout << "    Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
+            std::cout << "    Time per gridding   " << 1e9*time / ngridpix << " (ns) " << std::endl;
+            std::cout << "    Gridding rate (per node)   " << (ngridvis/1e6)/time << " (million vis/sec)" << std::endl;
+            std::cout << "    Gridding rate (per node)   " << (ngridpix/1e6)/time << " (million pix/sec)" << std::endl;
+            std::cout << "    Gridding rate (total)      " << (tgridpix/1e6)/time << " (million pix/sec)" << std::endl;
+        }
+ 
+        // Report on accuracy
+        // could use MPI here, but for now just do it all on 0
+        //if (rank == 0) {
+        //    std::cout << "  Verifying results..." << std::endl;
+        //    bmark.runGridCheck();
+        //}
+ 
+        MPI_Barrier(MPI_COMM_WORLD);
+        sw.start();
+        bmark.runDegrid();
+        MPI_Barrier(MPI_COMM_WORLD);
+        time = sw.stop();
+ 
+        // Report on timings (master reports only)
+        if (rank == 0) {
+            std::cout << "  Reverse processing" << std::endl;
+            std::cout << "    Number of processes: " << numtasks << std::endl;
+            std::cout << "    Time " << time << " (s) " << std::endl;
+            std::cout << "    Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
+            std::cout << "    Time per degridding " << 1e9*time / ngridpix << " (ns) " << std::endl;
+            std::cout << "    Degridding rate (per node) " << (ngridvis/1e6)/time << " (million vis/sec)" << std::endl;
+            std::cout << "    Degridding rate (per node) " << (ngridpix/1e6)/time << " (million pix/sec)" << std::endl;
+            std::cout << "    Degridding rate (total)    " << (tgridpix/1e6)/time << " (million pix/sec)" << std::endl;
+        }
+ 
+        // Report on accuracy
+        // could use MPI here, but for now just do it all on 0
+        //if (rank == 0) {
+        //    std::cout << "  Verifying results..." << std::endl;
+        //    bmark.runDegridCheck();
+        //}
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    sw.start();
-    bmark.runDegrid();
-    MPI_Barrier(MPI_COMM_WORLD);
-    time = sw.stop();
+        if (rank == 0) {
+            std::cout << "Done" << std::endl;
+        }
 
-    // Report on timings (master reports only)
-    if (rank == 0) {
-        std::cout << "    Number of processes: " << numtasks << std::endl;
-        std::cout << "    Time " << time << " (s) " << std::endl;
-        std::cout << "    Time per visibility spectral sample " << 1e6*time / double(nSamples*nChan) << " (us) " << std::endl;
-        std::cout << "    Time per degridding " << 1e9*time / (double(nSamples*nChan)* double((sSize)*(sSize))) << " (ns) " << std::endl;
-        std::cout << "    Degridding rate " << (griddings / 1000000) / time << " (million grid points per second)" << std::endl;
-
-        std::cout << "Done" << std::endl;
     }
 
     MPI_Finalize();

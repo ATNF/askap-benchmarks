@@ -35,23 +35,6 @@ typedef double Coord;
 typedef float Real;
 typedef std::complex<Real> Value;
 
-// Change these if necessary to adjust run time
-const int nSamples = 160000; // Number of data samples
-const int wSize = 33; // Number of lookup planes in w projection
-const int nChan = 1; // Number of spectral channels
-
-// Don't change any of these numbers unless you know what you are doing!
-const int gSize = 4096; // Size of output grid in pixels
-const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
-const int baseline = 2000; // Maximum baseline in meters
-
-struct Sample {
-    Value data;
-    int iu;
-    int iv;
-    int cOffset;
-};
-
 class Benchmark {
     public:
         Benchmark();
@@ -60,39 +43,67 @@ class Benchmark {
         void init();
         void runGrid();
         void runDegrid();
+        void runGridCheck();
+        void runDegridCheck();
 
-        void gridKernel(const int support,
-                        const std::vector<Value>& C,
+        void gridKernel(const std::vector<Value>& C,
                         std::vector<Value>& grid, const int gSize);
 
-        void degridKernel(const std::vector<Value>& grid, const int gSize, const int support,
+        void degridKernel(const std::vector<Value>& grid, const int gSize,
                           const std::vector<Value>&C, std::vector<Value>& data);
 
-        void initC(const std::vector<Coord>& freq,
-                   const Coord cellSize, const int wSize,
+        void initC(const Coord uvCellSize, const int wSize,
                    int& support, int& overSample,
                    Coord& wCellSize, std::vector<Value>& C);
 
         void initCOffset(const std::vector<Coord>& u, const std::vector<Coord>& v,
                          const std::vector<Coord>& w, const std::vector<Coord>& freq,
-                         const Coord cellSize, const Coord wCellSize, const int wSize,
-                         const int gSize, const int support, const int overSample);
+                         const Coord uvCellSize, const Coord wCellSize, const int wSize,
+                         const int gSize, const int overSample);
 
-        int getSupport();
+        int getSupport() {return m_support;}
+        long nVisibilitiesGridded() {return nSamples * nChan;}
+        long nPixelsGridded();
+
+        void setMPIrank(const int rank) {mpirank = rank;}
+        void setRunType(const int type) {runtype = type;}
+        int getRunType() {return runtype;}
 
     private:
-        std::vector<Value> grid;
-        std::vector<Coord> u;
-        std::vector<Coord> v;
-        std::vector<Coord> w;
-        std::vector<Sample> samples;
-        std::vector<Value> outdata;
 
-        std::vector< Value > C;
+        int mpirank;
+        int runtype;
+
+        int nSamples; // Number of data samples
+        int wSize; // Number of lookup planes in w projection
+        int nChan; // Number of spectral channels
+        int gSize; // Size of output grid in pixels
+        Coord uvCellSize; // Cellsize of output grid in wavelengths
+        Real baseline; // Maximum baseline in meters
+
+        std::vector<Value> grid1;
+        std::vector<Value> grid2;
+        std::vector<Coord> u;           // [nSamples]
+        std::vector<Coord> v;           // [nSamples]
+        std::vector<Coord> w;           // [nSamples*nChan]
+        std::vector<Value> outdata1;    // [nSamples*nChan]
+        std::vector<Value> outdata2;    // [nSamples*nChan]
+
+        std::vector<Value> data;        // [nSamples*nChan]
+        std::vector<int> iu;            // [nSamples*nChan]
+        std::vector<int> iv;            // [nSamples*nChan]
+        std::vector<int> wPlane;        // [nSamples*nChan]
+        std::vector<int> cOffset;       // [nSamples*nChan]
+
+        std::vector<Value> C;           // [sum_w(sSize**2)*overSample**2]
+        std::vector<int> cOffset0;      // [wSize]
+        std::vector<int> sSize;         // [wSize]
+        std::vector<int> numPerPlane;   // [wSize]
+
         int m_support;
         int overSample;
 
-        Coord wCellSize;
+        Coord wCellSize; // Cellsize in the w direction (separation of w-planes) in wavelengths
 
         // For random number generator
         unsigned long next;
