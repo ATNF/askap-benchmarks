@@ -1,0 +1,22 @@
+#!/bin/bash -l
+#PBS -P q25
+#PBS -q normal 
+#PBS -l walltime=01:00:00
+#PBS -l vmem=32GB
+#PBS -l ncpus=16
+#PBS -l jobfs=10MB
+#PBS -l other=iobound
+#PBS -M ben.humphreys@csiro.au
+#PBS -N msperf
+#PBS -m a
+#PBS -j oe
+#PBS -wd
+#PBS -r n
+
+cd $PBS_O_WORKDIR
+
+source ../../init_package_env.sh
+
+rm -rf *.ms
+
+mpirun -mca mpi_paffinity_alone 1 -np 16 msperf.sh -c config.in | tee output.$PBS_JOBID.out

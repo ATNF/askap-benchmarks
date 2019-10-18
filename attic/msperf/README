@@ -1,0 +1,40 @@
+This is a simple test program to be used to measure the performance of a filesystem. It uses a specific ASKAP workload and mimics the central processor frontend writing out a measurement set.
+
+It is run like so:
+
+mpirun -np 2 $ASKAP_ROOT/Code/Components/CP/benchmarks/current/msperf/apps/msperf -inputs config.in
+
+This will start two writer processes, each executing per the configuration file passed to them. An example configuration file is provided below, which simulates the I/O from a 1 hour BETA (6 antenna) observation:
+
+# Filename for the output files
+msperf.filename         = testdata_%w.ms
+
+# Storage manager configuration
+msperf.stman.bucketsize = 2097152
+msperf.stman.tilencorr  = 4
+msperf.stman.tilenchan  = 32
+
+# Integration time in seconds
+msperf.integrationTime  = 5
+
+# Number of channels per task
+msperf.nChan            = 8192
+
+msperf.nIntegrations    = 720
+msperf.nAntenna         = 6
+msperf.nFeeds           = 36
+msperf.nPol             = 4
+msperf.nFields          = 1
+
+
+
+This will then run like so:
+
+Creating dataset testdata_0.ms
+Creating dataset testdata_1.ms
+Wrote integration 0 in 1.03 seconds (4.85437x requirement)
+Wrote integration 1 in 0.21 seconds (23.8095x requirement)
+Wrote integration 2 in 2.23 seconds (2.24215x requirement)
+Wrote integration 3 in 0.22 seconds (22.7273x requirement)
+..
+..

@@ -1,0 +1,12 @@
+# @file SConstruct
+# SConstruct build script for this module.
+#
+
+# Always import this
+from askapenv import env
+
+# create build object with library name
+pkg = env.AskapPackage("mpiperf")
+
+# run the build process
+pkg()
