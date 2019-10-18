@@ -1,4 +1,4 @@
-# Copyright (c) 2017 CSIRO
+# Copyright (c) 2019 CSIRO
 # Australia Telescope National Facility (ATNF)
 # Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 # PO Box 76, Epping NSW 1710, Australia
@@ -19,10 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
-#
 
-#CXX=g++
-#CFLAGS=-O3 -fstrict-aliasing -fcx-limited-range -Wall -Wextra -fopenmp
 
 CXX=pgc++
 
@@ -34,35 +31,30 @@ ifeq ($(USE),cpu)
 else ifeq ($(USE),gpu)
     # GPU version
     ifneq ("$(wildcard /opt/pgi)","")
-        CFLAGS=-fast -O3 -acc -ta=nvidia,managed -DGPU
-        LDFLAGS=-Mcudalib=cufft
+        #CFLAGS=-fast -O3 -acc -ta=nvidia,cc60,managed
+        CFLAGS=-O1 -acc -ta=nvidia,cc60,managed
+        #LDFLAGS=-Mcudalib=cufft
     else
-        CFLAGS=-fast -O3 -acc -ta=tesla,cc60,managed -DGPU
-        LDFLAGS=-Mcudalib=cufft
+        CFLAGS=-fast -O3 -acc -ta=tesla,cc60,managed
+        #LDFLAGS=-Mcudalib=cufft
     endif
 else
-    # Multicore CPU version
+    # Serial CPU version
     CFLAGS=-fast -O3
     LDFLAGS=
 endif
 
-all:		tConvolveACC tConvolveDegrid tConvolveCmplxMult
+EXENAME = tConvolveACC
+OBJS = tConvolveACC.o Stopwatch.o Benchmark.o
 
-Stopwatch.o:	Stopwatch.cc Stopwatch.h
-		$(CXX) $(CFLAGS) -c Stopwatch.cc
+all:		$(EXENAME)
 
-tConvolveACC:	tConvolveACC.cc Stopwatch.o
-		$(CXX) $(CFLAGS) -c tConvolveACC.cc
-		$(CXX) $(CFLAGS) $(LDFLAGS) -o tConvolveACC tConvolveACC.o Stopwatch.o
+%.o:		%.cc %.h Benchmark.h
+		$(CXX) $(CFLAGS) -c $<
 
-tConvolveCmplxMult:	tConvolveCmplxMult.cc Stopwatch.o
-		$(CXX) $(CFLAGS) -c tConvolveCmplxMult.cc
-		$(CXX) $(CFLAGS) $(LDFLAGS) -o tConvolveCmplxMult tConvolveCmplxMult.o Stopwatch.o
-
-tConvolveDegrid:	tConvolveDegrid.cc Stopwatch.o
-		$(CXX) $(CFLAGS) -c tConvolveDegrid.cc
-		$(CXX) $(CFLAGS) $(LDFLAGS) -o tConvolveDegrid tConvolveDegrid.o Stopwatch.o
+$(EXENAME):	$(OBJS)
+		$(CXX) -o $(EXENAME) $(OBJS) $(CFLAGS) $(LDFLAGS)
 
 clean:
-		rm -f *.o tConvolveACC tConvolveDegrid
+		rm -f $(EXENAME) *.o
 

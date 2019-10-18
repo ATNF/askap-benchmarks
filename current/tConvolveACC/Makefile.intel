@@ -20,20 +20,20 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #
-# Need the run the following to setup the environment on xe or vu:
-# module load intel-mkl
-# module load intel-cc
-CXX=icpc
-CFLAGS=-O3 -ipo -openmp -mkl=sequential -DUSEMKLLIB -DUSEBLAS
+#
+CXX=OMPI_CXX=icpc mpicxx
+CFLAGS=-O3 -ipo -mkl=sequential -DUSEMKLLIB -DUSEBLAS
 
-all:		tConvolveACC
+EXENAME = tConvolveACC
+OBJS = tConvolveACC.o Stopwatch.o Benchmark.o
 
-Stopwatch.o:	Stopwatch.cc Stopwatch.h
-		$(CXX) $(CFLAGS) -c Stopwatch.cc
+all:		$(EXENAME)
 
-tConvolveACC:	tConvolveACC.cc Stopwatch.o
-		$(CXX) $(CFLAGS) -c tConvolveACC.cc
-		$(CXX) $(CFLAGS) -o tConvolveACC tConvolveACC.o Stopwatch.o
+%.o:		%.cc %.h
+		$(CXX) $(CFLAGS) -c $<
+
+$(EXENAME):	$(OBJS)
+		$(CXX) $(CFLAGS) -o $(EXENAME) $(OBJS)
 
 clean:
-		rm -f *.o tConvolveACC
+		rm -f $(EXENAME) *.o
