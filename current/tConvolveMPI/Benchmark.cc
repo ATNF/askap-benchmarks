@@ -384,7 +384,6 @@ npix++;
             cind += sSize[wind];
         }
     }
-std::cout << "gridKernel: gridded " << nvis << " visibilities using a total of " << npix << " kernel pixels." << std::endl;
 }
 
 // Perform degridding
@@ -437,7 +436,6 @@ npix++;
         data[dind] = Value(re,im);
 
     }
-std::cout << "degridKernel: degridded " << nvis << " visibilities using a total of " << npix << " kernel pixels." << std::endl;
 }
 
 /////////////////////////////////////////////////////////////////////////////////
