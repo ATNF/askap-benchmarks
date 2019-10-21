@@ -94,7 +94,7 @@ void Benchmark::init()
         m_support = 0;
         wSize = 1;
         wCellSize = 0.0;
-    if (runType == 0) {
+    } else if (runType == 1) {
         // grid with small kernels (7x7)
         imgOS = 4.0;
         imgExt = 1.923;
