@@ -84,3 +84,37 @@ Benchmark to measure the performance of a filesystem.
 ### mpiperf
 Benchmark to measure the performance of a mpi gather.
 
+Instructions
+------------
+
+```text
+$ srun -N 1 -n  1 ./tConvolveMPI > tConvolveMPI_np01.out
+$ srun -N 1 -n  2 ./tConvolveMPI > tConvolveMPI_np02.out
+$ srun -N 1 -n  4 ./tConvolveMPI > tConvolveMPI_np04.out
+$ srun -N 1 -n  8 ./tConvolveMPI > tConvolveMPI_np08.out
+$ srun -N 1 -n 12 ./tConvolveMPI > tConvolveMPI_np12.out
+$ srun -N 1 -n 16 ./tConvolveMPI > tConvolveMPI_np16.out
+$ srun -N 1 -n 20 ./tConvolveMPI > tConvolveMPI_np20.out
+$ srun -N 1 -n 24 ./tConvolveMPI > tConvolveMPI_np24.out
+```
+
+```text
+$ grep 't2   Gridding rate (per node)' tConvolveMPI_np??.out | grep 'Mpix/sec'
+tConvolveMPI_np01.out: t2   Gridding rate (per node)   254.954 (Mpix/sec)
+tConvolveMPI_np02.out: t2   Gridding rate (per node)   255.748 (Mpix/sec)
+tConvolveMPI_np04.out: t2   Gridding rate (per node)   204.217 (Mpix/sec)
+tConvolveMPI_np08.out: t2   Gridding rate (per node)   171.032 (Mpix/sec)
+tConvolveMPI_np12.out: t2   Gridding rate (per node)   157.875 (Mpix/sec)
+tConvolveMPI_np16.out: t2   Gridding rate (per node)   145.817 (Mpix/sec)
+```
+
+```text
+$ grep 't2   Degridding rate (per node)' tConvolveMPI_np??.out | grep 'Mpix/sec'
+tConvolveMPI_np01.out: t2   Degridding rate (per node) 177.311 (Mpix/sec)
+tConvolveMPI_np02.out: t2   Degridding rate (per node) 177.311 (Mpix/sec)
+tConvolveMPI_np04.out: t2   Degridding rate (per node) 148.723 (Mpix/sec)
+tConvolveMPI_np08.out: t2   Degridding rate (per node) 123.266 (Mpix/sec)
+tConvolveMPI_np12.out: t2   Degridding rate (per node) 113.863 (Mpix/sec)
+tConvolveMPI_np16.out: t2   Degridding rate (per node) 107.454 (Mpix/sec)
+```
+
