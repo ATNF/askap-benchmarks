@@ -1,4 +1,4 @@
-/// @copyright (c) 2007 CSIRO
+/// @copyright (c) 2007, 2019 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 /// PO Box 76, Epping NSW 1710, Australia
@@ -36,6 +36,7 @@
 ///
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
+/// @author Daneil Mitchell <daniel.mitchell@csiro.au>
 
 // Include own header file first
 #include "tConvolveMPI.h"
@@ -77,7 +78,10 @@ int main(int argc, char *argv[])
     // Setup the benchmark class
     Benchmark bmark;
 
-    for (int run=0; run<5; ++run) {
+    // whether or not to sort visibilities. 0 = no sorting, 1 = sort by w-plane
+    bmark.setSort(0);
+
+    for (int run=0; run<4; ++run) {
 
         bmark.setMPIrank(rank);
         bmark.setRunType(run);
@@ -116,10 +120,10 @@ int main(int argc, char *argv[])
  
         // Report on accuracy
         // could use MPI here, but for now just do it all on 0
-        //if (rank == 0) {
-        //    std::cout << "  Verifying results..." << std::endl;
-        //    bmark.runGridCheck();
-        //}
+        if (rank == 0) {
+            std::cout << "  Verifying results..." << std::endl;
+            bmark.runGridCheck();
+        }
  
         MPI_Barrier(MPI_COMM_WORLD);
         sw.start();
@@ -141,10 +145,10 @@ int main(int argc, char *argv[])
  
         // Report on accuracy
         // could use MPI here, but for now just do it all on 0
-        //if (rank == 0) {
-        //    std::cout << "  Verifying results..." << std::endl;
-        //    bmark.runDegridCheck();
-        //}
+        if (rank == 0) {
+            std::cout << "  Verifying results..." << std::endl;
+            bmark.runDegridCheck();
+        }
 
         if (rank == 0) {
             std::cout << "Done" << std::endl;

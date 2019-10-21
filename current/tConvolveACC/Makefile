@@ -23,26 +23,18 @@
 
 CXX=pgc++
 
-USE=gpu
-ifeq ($(USE),cpu)
-    # Multicore CPU version
-    CFLAGS=-fast -O3 -acc -ta=multicore
-    LDFLAGS=
-else ifeq ($(USE),gpu)
-    # GPU version
-    ifneq ("$(wildcard /opt/pgi)","")
-        #CFLAGS=-fast -O3 -acc -ta=nvidia,cc60,managed
-        CFLAGS=-O1 -acc -ta=nvidia,cc60,managed
-        #LDFLAGS=-Mcudalib=cufft
-    else
-        CFLAGS=-fast -O3 -acc -ta=tesla,cc60,managed
-        #LDFLAGS=-Mcudalib=cufft
-    endif
-else
-    # Serial CPU version
-    CFLAGS=-fast -O3
-    LDFLAGS=
-endif
+# Serial CPU version
+#CFLAGS=-fast -O3
+
+# Multicore CPU version
+#CFLAGS=-fast -O3 -acc -ta=multicore
+
+# GPU version
+#CFLAGS=-fast -O3 -acc -ta=nvidia,cc60,managed
+#CFLAGS=-fast -O3 -acc -ta=tesla,cc60,managed
+CFLAGS=-O1 -acc -ta=nvidia,cc60,managed
+
+LDFLAGS=
 
 EXENAME = tConvolveACC
 OBJS = tConvolveACC.o Stopwatch.o Benchmark.o

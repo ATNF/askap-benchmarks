@@ -92,58 +92,24 @@ void Benchmark::init()
     //       = 2/FoV / os / FoV
     //       = du_os * 2 / FoV
 
-    if (runtype == 0) {
+    if (runType == 0) {
+        // nearest-neighbour gridding
         imgOS = 2.0;
         imgExt = 1.0;
         overSample = 1;
         m_support = 0;
         wSize = 1;
         wCellSize = 0.0;
-    } else if (runtype == 1) {
+    } else if (runType == 1) {
+        // grid with small kernels (7x7)
         imgOS = 4.0;
         imgExt = 1.923;
         overSample = 128;
         m_support = 3;
         wSize = 1;
         wCellSize = 0.0;
-    //    } else if (runtype == 2) {
-//        wkernel = 1;
-//        imgOS = 4.0;
-//        //imgExt = 3;
-//        imgExt = 1;
-//        overSample = 8;
-//        // use a reduced obslen to set a single kernel with approx average kernel width for of a full 12 hour track
-//        //  - 2029 meters is the RMS of the absolute baseline length used below
-//        //  - leave it at 12 hours for higher memory bandwidth tests
-//        obslen *= asin(2029./6440.);
-//        wmax = baseline/lambda;
-//        fov = lambda/apertureDiam * imgExt;
-//        const Real wPart = wmax*fov*fov;
-//        const Real aPart = 7.;
-//        m_support = int(ceil(sqrt( aPart*aPart + wPart*wPart )))/2;
-//        wSize = 1;
-//        wCellSize = 0.0;
-//    } else if (runtype == 2) {
-//        wkernel = 1;
-//        imgOS = 4.0;
-//        imgExt = 3;
-//        overSample = 8;
-//        m_support = 7;
-//        wSize = 1;
-//        wCellSize = 0.0;
-    } else if (runtype == 2) {
-        wkernel = 1;
-        imgOS = 4.0;
-        imgExt = 3;
-        overSample = 8;
-        wmax = baseline/lambda;
-        fov = lambda/apertureDiam * imgExt;
-        const Real wPart = wmax*fov*fov;
-        m_support = 7;
-        wSize = ceil(overSample * wPart);
-        wSize += (wSize+1)%2; // make odd
-        wCellSize = 2*wmax / (wSize-1);
-} else if (runtype == 3) {
+    } else if (runType == 2) {
+        // grid with variable kernel sizes
         wkernel = 1;
         imgOS = 4.0;
         imgExt = 3;
@@ -156,7 +122,8 @@ void Benchmark::init()
         wSize = ceil(overSample * wPart);
         wSize += (wSize+1)%2; // make odd
         wCellSize = 2*wmax / (wSize-1);
-    } else if (runtype == 4) {
+    } else if (runType == 3) {
+        // grid with large kernels (87x87)
         imgOS = 4.0;
         imgExt = 1.923;
         overSample = 8;
@@ -280,14 +247,7 @@ void Benchmark::init()
     initC(uvCellSize, wSize, m_support, overSample, wCellSize, C);
     initCOffset(u, v, w, wavenumber, uvCellSize, wCellSize, wSize, gSize, overSample);
 
-std::cout << "before sort:" << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[0+i] << " ";
-std::cout << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[data.size()-10+i] << " ";
-std::cout << std::endl;
-
-    int doSort = 1;
-    if (doSort && wSize > 1) {
+    if ( (doSort==1) && (wSize>1) ) {
         // sort based on w-plane but without consideration of order within
         //  - want threads to have equal kernel size
         //  - also align by uv offset?
@@ -309,12 +269,6 @@ std::cout << std::endl;
             cOffset[j] = cOffset_tmp[i];
         }
     }
-
-std::cout << "after sort:" << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[0+i] << " ";
-std::cout << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[data.size()-10+i] << " ";
-std::cout << std::endl;
 
 }
 
@@ -642,7 +596,6 @@ void Benchmark::initC(const Coord uvCellSize, const int wSize,
             sSize[k] = ceil( sqrt( aPart*aPart + wPart*wPart ) );
             sSize[k] += (sSize[k]+1)%2; // make it odd
         }
-if (runtype == 2) sSize[k] = 15;
 
         if (sSize[k] < sSizeMin) sSizeMin = sSize[k];
 
@@ -789,6 +742,9 @@ void Benchmark::initCOffset(const std::vector<Coord>& u, const std::vector<Coord
         std::cout << "   - average width = " << ceil(sqrt(double(numGriddedPixels)/double(numGriddedVis))) <<
                      ": sqrt( sum(Nkernelpix/wplane x Nvis/wplane) / Nvis )" << std::endl;
     }
+
+    std::cout << "  number of gridded visibilities: "<<numGriddedVis<<
+                 ", number of gridded pixels: "<<numGriddedPixels << std::endl;
 
     wave /= double(nSamples*nChan);
     wrms = sqrt( wrms / double(nSamples*nChan) );

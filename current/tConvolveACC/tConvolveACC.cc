@@ -22,20 +22,11 @@
 ///
 /// @detail
 /// This C++ program has been written to demonstrate the convolutional resampling
-/// algorithm used in radio interferometry. It should compile with:
-/// pgc++ -O3 -fstrict-aliasing -fcx-limited-range -Wall -c tConvolveACC.cc
-/// pgc++ -O3 -fstrict-aliasing -fcx-limited-range -Wall -c Stopwatch.cc
-/// pgc++ -O3 -fstrict-aliasing -fcx-limited-range -Wall -c Benchmark.cc
-/// pgc++ -o tConvolveACC tConvolveACC.o Stopwatch.o Benchmark.o 
-///
-/// -fstrict-aliasing - tells the compiler that there are no memory locations
-///                     accessed through aliases.
-/// -fcx-limited-range - states that a range reduction step is not needed when
-///                      performing complex division. This is an acceptable
-///                      optimization.
+/// algorithm used in radio interferometry. See Makefile for compilation options 
 ///
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
+/// @author Daneil Mitchell <daniel.mitchell@csiro.au>
 
 // Include own header file first
 #include "tConvolveACC.h"
@@ -65,7 +56,10 @@ int main(int argc, char *argv[])
     // Setup the benchmark class
     Benchmark bmark;
 
-    for (int run=0; run<5; ++run) {
+    // whether or not to sort visibilities. 0 = no sorting, 1 = sort by w-plane
+    bmark.setSort(0);
+
+    for (int run=0; run<4; ++run) {
 
         bmark.setRunType(run);
 

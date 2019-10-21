@@ -66,13 +66,15 @@ class Benchmark {
         long nPixelsGridded();
 
         void setMPIrank(const int rank) {mpirank = rank;}
-        void setRunType(const int type) {runtype = type;}
-        int getRunType() {return runtype;}
+        void setSort(const int type) {doSort = type;}
+        void setRunType(const int type) {runType = type;}
+        int getRunType() {return runType;}
 
     private:
 
         int mpirank;
-        int runtype;
+        int doSort;
+        int runType;
 
         int nSamples; // Number of data samples
         int wSize; // Number of lookup planes in w projection

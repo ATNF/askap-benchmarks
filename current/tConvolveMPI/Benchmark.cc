@@ -86,71 +86,24 @@ void Benchmark::init()
     //       = 2/FoV / os / FoV
     //       = du_os * 2 / FoV
 
-    //if (runtype == 0) {
-    //    imgOS = 2.0;
-    //    imgExt = 1.0;
-    //    overSample = 1;
-    //    m_support = 0;
-    //    wSize = 1;
-    //    wCellSize = 0.0;
-    if (runtype == 0) {
+    if (runType == 0) {
+        // nearest-neighbour gridding
+        imgOS = 2.0;
+        imgExt = 1.0;
+        overSample = 1;
+        m_support = 0;
+        wSize = 1;
+        wCellSize = 0.0;
+    if (runType == 0) {
+        // grid with small kernels (7x7)
         imgOS = 4.0;
         imgExt = 1.923;
         overSample = 128;
         m_support = 3;
         wSize = 1;
         wCellSize = 0.0;
-    } else if (runtype == 1) {
-        wkernel = 1;
-        imgOS = 4.0;
-        imgExt = 2;
-        overSample = 8;
-        wmax = baseline/lambda;
-        fov = lambda/apertureDiam * imgExt;
-        const float wPart = wmax*fov*fov;
-        const float aPart = 7.;
-        m_support = int(ceil(sqrt( aPart*aPart + wPart*wPart )))/2;
-        wSize = ceil(overSample * wPart);
-        wSize += (wSize+1)%2; // make odd
-        wCellSize = 2*wmax / (wSize-1);
-//    } else if (runtype == 2) {
-//        wkernel = 1;
-//        imgOS = 4.0;
-//        //imgExt = 3;
-//        imgExt = 1;
-//        overSample = 8;
-//        // use a reduced obslen to set a single kernel with approx average kernel width for of a full 12 hour track
-//        //  - 2029 meters is the RMS of the absolute baseline length used below
-//        //  - leave it at 12 hours for higher memory bandwidth tests
-//        obslen *= asin(2029./6440.);
-//        wmax = baseline/lambda;
-//        fov = lambda/apertureDiam * imgExt;
-//        const Real wPart = wmax*fov*fov;
-//        const Real aPart = 7.;
-//        m_support = int(ceil(sqrt( aPart*aPart + wPart*wPart )))/2;
-//        wSize = 1;
-//        wCellSize = 0.0;
-//    } else if (runtype == 2) {
-//        wkernel = 1;
-//        imgOS = 4.0;
-//        imgExt = 3;
-//        overSample = 8;
-//        m_support = 7;
-//        wSize = 1;
-//        wCellSize = 0.0;
-    } else if (runtype == 2) {
-        wkernel = 1;
-        imgOS = 4.0;
-        imgExt = 3;
-        overSample = 8;
-        wmax = baseline/lambda;
-        fov = lambda/apertureDiam * imgExt;
-        const Real wPart = wmax*fov*fov;
-        m_support = 7;
-        wSize = ceil(overSample * wPart);
-        wSize += (wSize+1)%2; // make odd
-        wCellSize = 2*wmax / (wSize-1);
-    } else if (runtype == 3) {
+    } else if (runType == 2) {
+        // grid with variable kernel sizes
         wkernel = 1;
         imgOS = 4.0;
         imgExt = 3;
@@ -163,7 +116,8 @@ void Benchmark::init()
         wSize = ceil(overSample * wPart);
         wSize += (wSize+1)%2; // make odd
         wCellSize = 2*wmax / (wSize-1);
-    } else if (runtype == 4) {
+    } else if (runType == 3) {
+        // grid with large kernels (87x87)
         imgOS = 4.0;
         imgExt = 1.923;
         overSample = 8;
@@ -289,15 +243,7 @@ void Benchmark::init()
     initC(uvCellSize, wSize, m_support, overSample, wCellSize, C);
     initCOffset(u, v, w, wavenumber, uvCellSize, wCellSize, wSize, gSize, overSample);
 
-
-std::cout << "before sort:" << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[0+i] << " ";
-std::cout << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[data.size()-10+i] << " ";
-std::cout << std::endl;
-
-    int doSort = 1;
-    if (doSort && wSize > 1) {
+    if ( (doSort==1) && (wSize>1) ) {
         // sort based on w-plane but without consideration of order within
         //  - want threads to have equal kernel size
         //  - also align by uv offset?
@@ -319,83 +265,8 @@ std::cout << std::endl;
             wPlane[j] = wPlane_tmp[i];
             cOffset[j] = cOffset_tmp[i];
         }
-/*
-// what if the sort is done by uv region rather than w?
-const int iu_min = *std::min_element(iu.begin(), iu.end());
-const int iu_max = *std::max_element(iu.begin(), iu.end());
-const int iv_min = *std::min_element(iv.begin(), iv.end());
-const int iv_max = *std::max_element(iv.begin(), iv.end());
-std::cout << "iu = [" << iu_min << "," << iu_max << "]" << std::endl;
-std::cout << "iv = [" << iv_min << "," << iv_max << "]" << std::endl;
-const int blocksPerSide = 30;
-const int nBlocks = blocksPerSide * blocksPerSide;
-std::vector<int> visPerBlock(nBlocks,0);
-std::vector<int> sortedIndex(nBlocks,0);
-std::vector<int> blockID(data.size());
-std::vector<int> blockID_tmp(data.size());
-const int uBlockSize = ceil(float(iu_max-iu_min)/blocksPerSide);
-const int vBlockSize = ceil(float(iv_max-iv_min)/blocksPerSide);
-for (int i = 0; i < int(data.size()); i++) {
-    const int block = ((iu[i]-iu_min)/uBlockSize)*blocksPerSide + ((iv[i]-iv_min)/vBlockSize);
-    blockID_tmp[i] = block;
-    visPerBlock[block]++;
-}
-for (int block = 1; block < nBlocks; block++) {
-    sortedIndex[block] = sortedIndex[block-1] + visPerBlock[block-1];
-}
-for (int i = 0; i < int(data.size()); i++) {
-    const int j = sortedIndex[blockID_tmp[i]];
-    sortedIndex[blockID_tmp[i]]++;
-    blockID[j] = blockID_tmp[i];
-    iu[j] = iu_tmp[i];
-    iv[j] = iv_tmp[i];
-    wPlane[j] = wPlane_tmp[i];
-    cOffset[j] = cOffset_tmp[i];
-}
-*/
-
-/*
-int tag = -1;
-for (int i = 0; i < int(data.size()); i++) {
-if (blockID[i] < tag) {
-    std::cout << std::endl << "block and tag error" << std::endl;
-    std::exit(1);
-}
-    if (blockID[i] > tag) {
-        tag = blockID[i];
-        std::cout << "]" << std::endl << "iu"<<tag<<" = [";
-    }
-    std::cout << "," << iu[i];
-}
-std::cout << "]" << std::endl;
-tag = -1;
-for (int i = 0; i < int(data.size()); i++) {
-    if (blockID[i] > tag) {
-        tag = blockID[i];
-        std::cout << "]" << std::endl << "iv"<<tag<<" = [";
-    }
-    std::cout << "," << iv[i];
-}
-std::cout << "]" << std::endl;
-tag = -1;
-for (int i = 0; i < int(data.size()); i++) {
-    if (blockID[i] > tag) {
-        tag = blockID[i];
-        std::cout << "]" << std::endl << "iw"<<tag<<" = [";
-    }
-    std::cout << "," << wPlane[i];
-}
-std::cout << "]" << std::endl;
-*/
 
     }
-
-std::cout << "after sort:" << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[0+i] << " ";
-std::cout << std::endl;
-for (int i = 0; i < 10; i++) std::cout << wPlane[data.size()-10+i] << " ";
-std::cout << std::endl;
-
 
 }
 
@@ -623,7 +494,6 @@ void Benchmark::initC(const Coord uvCellSize, const int wSize,
             sSize[k] = ceil( sqrt( aPart*aPart + wPart*wPart ) );
             sSize[k] += (sSize[k]+1)%2; // make it odd
         }
-if (runtype == 2) sSize[k] = 15;
 
         if (sSize[k] < sSizeMin) sSizeMin = sSize[k];
 
@@ -775,7 +645,8 @@ void Benchmark::initCOffset(const std::vector<Coord>& u, const std::vector<Coord
                          ": sqrt( sum(Nkernelpix/wplane x Nvis/wplane) / Nvis )" << std::endl;
         }
 
-        std::cout << "  number of gridded visibilities: "<<numGriddedVis<<", number of gridded pixels: "<<numGriddedPixels << std::endl;
+        std::cout << "  number of gridded visibilities: "<<numGriddedVis<<
+                     ", number of gridded pixels: "<<numGriddedPixels << std::endl;
 
         wave /= double(nSamples*nChan);
         wrms = sqrt( wrms / double(nSamples*nChan) );
@@ -799,8 +670,6 @@ long Benchmark::nPixelsGridded()
         numGriddedVis += numPerPlane[woff];
         numGriddedPixels += long(numPerPlane[woff]) * long(sSize[woff]*sSize[woff]);
     }
-
-    std::cout << "  number of gridded visibilities: "<<numGriddedVis<<", number of gridded pixels: "<<numGriddedPixels << std::endl;
 
     if (numGriddedVis != nVisibilitiesGridded()) {
         std::cout << "Visibility count error: "<<numGriddedVis<<" != "<<nVisibilitiesGridded() << std::endl;

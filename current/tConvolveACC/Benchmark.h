@@ -73,12 +73,14 @@ class Benchmark {
         long nVisibilitiesGridded() {return nSamples * nChan;}
         long nPixelsGridded();
 
-        void setRunType(const int type) {runtype = type;}
-        int getRunType() {return runtype;}
+        void setSort(const int type) {doSort = type;}
+        void setRunType(const int type) {runType = type;}
+        int getRunType() {return runType;}
 
     private:
 
-        int runtype;
+        int doSort;
+        int runType;
 
         int nSamples; // Number of data samples
         int wSize; // Number of lookup planes in w projection
