@@ -119,12 +119,14 @@ int main(int argc, char *argv[])
         }
  
         // Report on accuracy
-        // could use MPI here, but for now just do it all on 0
+        // note relevant here, unless we add a non-MPI call as well
+        /*
         if (rank == 0) {
             std::cout << "  Verifying results..." << std::endl;
             bmark.runGridCheck();
         }
- 
+        */
+
         MPI_Barrier(MPI_COMM_WORLD);
         sw.start();
         bmark.runDegrid();
@@ -144,11 +146,13 @@ int main(int argc, char *argv[])
         }
  
         // Report on accuracy
-        // could use MPI here, but for now just do it all on 0
+        // note relevant here, unless we add a non-MPI call as well
+        /*
         if (rank == 0) {
             std::cout << "  Verifying results..." << std::endl;
             bmark.runDegridCheck();
         }
+        */
 
         if (rank == 0) {
             std::cout << "Done" << std::endl;
