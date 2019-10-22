@@ -24,7 +24,9 @@ Execution of the tHogbomClean benchmarks will require the existence of the
 point spread function (PSF) image and the dirty image (the image to be cleaned)
 in the working directory. These are available in the _data_ directory.
 
-The following tHogbomClean benchmarks are available in the _current_ directory
+The following tHogbomClean benchmarks are available in the _current_ directory.
+Cleaning generally takes place on a single process, and as such multi-threading
+is a natural approach to parallelism.
 
 ### tHogbomCleanOMP
 This implementation uses OpenMP to utilize multiple cores in a single
@@ -49,7 +51,9 @@ Square Kilometer Array Pathfinder (ASKAP) Science Data Processor. A more
 detailed description and some analysis of this algorithm is found in
 [SKA Memo 132](http://www.skatelescope.org/uploaded/59116_132_Memo_Humphreys.pdf).
 
-The following tHogbomClean benchmarks are available in the _current_ directory
+The following tConvolve benchmarks are available in the _current_ directory.
+As gridding is independent for each frequency, Taylor term, etc., data-parallelism
+is a natural approach.
 
 ### tConvolveMPI
 The implementation distributes work to multiple CPU cores or multiple nodes via
@@ -87,9 +91,50 @@ Benchmark to measure the performance of a mpi gather.
 Instructions
 ------------
 
+The following examples were generated on a single node of Magnus at the Pawsey
+Supercomputing Centre. 
+
+### tHogbomCleanOMP
+
+```text
+$ cd current/tHogbomCleanOMP
+$ cp ../../data/*.img .
+$ export OMP_NUM_THREADS=1
+$ srun -N 1 -n  1 -c 1 ./tHogbomCleanOMP > tHogbomCleanOMP_nt01.out
+$ export OMP_NUM_THREADS=4
+$ srun -N 1 -n  1 -c 4 ./tHogbomCleanOMP > tHogbomCleanOMP_nt04.out
+$ export OMP_NUM_THREADS=8
+$ srun -N 1 -n  1 -c 8 ./tHogbomCleanOMP > tHogbomCleanOMP_nt08.out
+$ export OMP_NUM_THREADS=12
+$ srun -N 1 -n  1 -c 12 ./tHogbomCleanOMP > tHogbomCleanOMP_nt12.out
+$ export OMP_NUM_THREADS=16
+$ srun -N 1 -n  1 -c 16 ./tHogbomCleanOMP > tHogbomCleanOMP_nt16.out
+$ export OMP_NUM_THREADS=20
+$ srun -N 1 -n  1 -c 20 ./tHogbomCleanOMP > tHogbomCleanOMP_nt20.out
+$ export OMP_NUM_THREADS=24
+$ srun -N 1 -n  1 -c 24 ./tHogbomCleanOMP > tHogbomCleanOMP_nt24.out
+```
+
+Note that when the number of threads is greater than 12, the OpenMP cleaning
+rate can vary significantly. This is presumably due to NUMA issues (Magnus
+nodes have two 12-core sockets). The speedups shown below are the maximum
+values achieved in across several repeated runs.
+
+```text
+$ grep speedup tHogbomCleanOMP_nt??.out
+tHogbomCleanOMP_nt01.out:    Number of threads =  1, speedup = 0.958801
+tHogbomCleanOMP_nt04.out:    Number of threads =  4, speedup = 3.36842
+tHogbomCleanOMP_nt08.out:    Number of threads =  8, speedup = 6.375
+tHogbomCleanOMP_nt12.out:    Number of threads = 12, speedup = 8.93103
+tHogbomCleanOMP_nt16.out:    Number of threads = 16, speedup = 10.24
+tHogbomCleanOMP_nt20.out:    Number of threads = 20, speedup = 10.7083
+tHogbomCleanOMP_nt24.out:    Number of threads = 24, speedup = 12.1905
+```
+
 ### tConvolveMPI
 
 ```text
+$ cd current/tConvolveMPI
 $ srun -N 1 -n  1 ./tConvolveMPI > tConvolveMPI_np01.out
 $ srun -N 1 -n  2 ./tConvolveMPI > tConvolveMPI_np02.out
 $ srun -N 1 -n  4 ./tConvolveMPI > tConvolveMPI_np04.out
@@ -122,40 +167,5 @@ tConvolveMPI_np12.out: t2   Degridding rate (per node) 113.863 (Mpix/sec)
 tConvolveMPI_np16.out: t2   Degridding rate (per node) 107.454 (Mpix/sec)
 tConvolveMPI_np20.out: t2   Degridding rate (per node) 103.525 (Mpix/sec)
 tConvolveMPI_np24.out: t2   Degridding rate (per node) 97.8489 (Mpix/sec)
-```
-
-### tHogbomCleanOMP
-
-```text
-$ cp ../../data/*.img .
-$ export OMP_NUM_THREADS=1
-$ srun -N 1 -n  1 -c 1 ./tHogbomCleanOMP > tHogbomCleanOMP_nt01.out
-$ export OMP_NUM_THREADS=4
-$ srun -N 1 -n  1 -c 4 ./tHogbomCleanOMP > tHogbomCleanOMP_nt04.out
-$ export OMP_NUM_THREADS=8
-$ srun -N 1 -n  1 -c 8 ./tHogbomCleanOMP > tHogbomCleanOMP_nt08.out
-$ export OMP_NUM_THREADS=12
-$ srun -N 1 -n  1 -c 12 ./tHogbomCleanOMP > tHogbomCleanOMP_nt12.out
-$ export OMP_NUM_THREADS=16
-$ srun -N 1 -n  1 -c 16 ./tHogbomCleanOMP > tHogbomCleanOMP_nt16.out
-$ export OMP_NUM_THREADS=20
-$ srun -N 1 -n  1 -c 20 ./tHogbomCleanOMP > tHogbomCleanOMP_nt20.out
-$ export OMP_NUM_THREADS=24
-$ srun -N 1 -n  1 -c 24 ./tHogbomCleanOMP > tHogbomCleanOMP_nt24.out
-```
-
-Note that when the number of threads is greater than 12, the OpenMP cleaning
-rate can vary significantly. This is presumably due to NUMA issues. The speedups
-shown below are the maximum values achieved in across several repeated runs.
-
-```text
-$ grep speedup tHogbomCleanOMP_nt??.out
-tHogbomCleanOMP_nt01.out:    Number of threads =  1, speedup = 0.958801
-tHogbomCleanOMP_nt04.out:    Number of threads =  4, speedup = 3.36842
-tHogbomCleanOMP_nt08.out:    Number of threads =  8, speedup = 6.375
-tHogbomCleanOMP_nt12.out:    Number of threads = 12, speedup = 8.93103
-tHogbomCleanOMP_nt16.out:    Number of threads = 16, speedup = 10.24
-tHogbomCleanOMP_nt20.out:    Number of threads = 20, speedup = 10.7083
-tHogbomCleanOMP_nt24.out:    Number of threads = 24, speedup = 12.1905
 ```
 
