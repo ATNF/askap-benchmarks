@@ -144,3 +144,18 @@ $ export OMP_NUM_THREADS=24
 $ srun -N 1 -n  1 -c 24 ./tHogbomCleanOMP > tHogbomCleanOMP_nt24.out
 ```
 
+Note that when the number of threads is greater than 12, the OpenMP cleaning
+rate can vary significantly. This is presumably due to NUMA issues. The speedups
+shown below are the maximum values achieved in across several repeated runs.
+
+```text
+$ grep speedup tHogbomCleanOMP_nt??.out
+tHogbomCleanOMP_nt01.out:    Number of threads =  1, speedup = 0.958801
+tHogbomCleanOMP_nt04.out:    Number of threads =  4, speedup = 3.36842
+tHogbomCleanOMP_nt08.out:    Number of threads =  8, speedup = 6.375
+tHogbomCleanOMP_nt12.out:    Number of threads = 12, speedup = 8.93103
+tHogbomCleanOMP_nt16.out:    Number of threads = 16, speedup = 10.24
+tHogbomCleanOMP_nt20.out:    Number of threads = 20, speedup = 10.7083
+tHogbomCleanOMP_nt24.out:    Number of threads = 24, speedup = 12.1905
+```
+
