@@ -87,6 +87,8 @@ Benchmark to measure the performance of a mpi gather.
 Instructions
 ------------
 
+### tConvolveMPI
+
 ```text
 $ srun -N 1 -n  1 ./tConvolveMPI > tConvolveMPI_np01.out
 $ srun -N 1 -n  2 ./tConvolveMPI > tConvolveMPI_np02.out
@@ -106,6 +108,8 @@ tConvolveMPI_np04.out: t2   Gridding rate (per node)   204.217 (Mpix/sec)
 tConvolveMPI_np08.out: t2   Gridding rate (per node)   171.032 (Mpix/sec)
 tConvolveMPI_np12.out: t2   Gridding rate (per node)   157.875 (Mpix/sec)
 tConvolveMPI_np16.out: t2   Gridding rate (per node)   145.817 (Mpix/sec)
+tConvolveMPI_np20.out: t2   Gridding rate (per node)   129.284 (Mpix/sec)
+tConvolveMPI_np24.out: t2   Gridding rate (per node)   113.235 (Mpix/sec)
 ```
 
 ```text
@@ -116,5 +120,27 @@ tConvolveMPI_np04.out: t2   Degridding rate (per node) 148.723 (Mpix/sec)
 tConvolveMPI_np08.out: t2   Degridding rate (per node) 123.266 (Mpix/sec)
 tConvolveMPI_np12.out: t2   Degridding rate (per node) 113.863 (Mpix/sec)
 tConvolveMPI_np16.out: t2   Degridding rate (per node) 107.454 (Mpix/sec)
+tConvolveMPI_np20.out: t2   Degridding rate (per node) 103.525 (Mpix/sec)
+tConvolveMPI_np24.out: t2   Degridding rate (per node) 97.8489 (Mpix/sec)
+```
+
+### tHogbomCleanOMP
+
+```text
+$ cp ../../data/*.img .
+$ export OMP_NUM_THREADS=1
+$ srun -N 1 -n  1 -c 1 ./tHogbomCleanOMP > tHogbomCleanOMP_nt01.out
+$ export OMP_NUM_THREADS=4
+$ srun -N 1 -n  1 -c 4 ./tHogbomCleanOMP > tHogbomCleanOMP_nt04.out
+$ export OMP_NUM_THREADS=8
+$ srun -N 1 -n  1 -c 8 ./tHogbomCleanOMP > tHogbomCleanOMP_nt08.out
+$ export OMP_NUM_THREADS=12
+$ srun -N 1 -n  1 -c 12 ./tHogbomCleanOMP > tHogbomCleanOMP_nt12.out
+$ export OMP_NUM_THREADS=16
+$ srun -N 1 -n  1 -c 16 ./tHogbomCleanOMP > tHogbomCleanOMP_nt16.out
+$ export OMP_NUM_THREADS=20
+$ srun -N 1 -n  1 -c 20 ./tHogbomCleanOMP > tHogbomCleanOMP_nt20.out
+$ export OMP_NUM_THREADS=24
+$ srun -N 1 -n  1 -c 24 ./tHogbomCleanOMP > tHogbomCleanOMP_nt24.out
 ```
 
