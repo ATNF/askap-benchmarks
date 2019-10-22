@@ -117,6 +117,7 @@ int main(int /*argc*/, char** /* argv*/)
     //
     // Run the golden version of the code
     //
+    double time0;
     vector<float> goldenResidual;
     vector<float> goldenModel(dirty.size());
     zeroInit(goldenModel);
@@ -128,12 +129,12 @@ int main(int /*argc*/, char** /* argv*/)
         Stopwatch sw;
         sw.start();
         golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
-        const double time = sw.stop();
+        time0 = sw.stop();
 
         // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
-        cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
+        cout << "    Time " << time0 << " (s) " << endl;
+        cout << "    Time per cycle " << time0 / g_niters * 1000 << " (ms)" << endl;
+        cout << "    Cleaning rate  " << g_niters / time0 << " (iterations per second)" << endl;
         cout << "Done" << endl;
     }
 
@@ -161,6 +162,7 @@ int main(int /*argc*/, char** /* argv*/)
         cout << "    Time " << time << " (s) " << endl;
         cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
         cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
+        cout << "    Number of threads = " << omp.num_threads() << ", speedup = " << time0/time << endl;
         cout << "Done" << endl;
     }
 

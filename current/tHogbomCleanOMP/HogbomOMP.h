@@ -41,6 +41,8 @@ class HogbomOMP {
                 std::vector<float>& model,
                 std::vector<float>& residual);
 
+        int num_threads();
+
     private:
 
         struct Position {

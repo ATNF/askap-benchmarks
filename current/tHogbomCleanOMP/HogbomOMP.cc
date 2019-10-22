@@ -30,6 +30,7 @@
 #include <iostream>
 #include <cstddef>
 #include <cmath>
+#include <omp.h>
 
 // Local includes
 #include "Parameters.h"
@@ -42,6 +43,11 @@ HogbomOMP::HogbomOMP()
 
 HogbomOMP::~HogbomOMP()
 {
+}
+
+int HogbomOMP::num_threads()
+{
+    return omp_get_max_threads();
 }
 
 void HogbomOMP::deconvolve(const vector<float>& dirty,
