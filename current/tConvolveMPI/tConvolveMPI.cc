@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     // whether or not to sort visibilities. 0 = no sorting, 1 = sort by w-plane
     bmark.setSort(0);
 
-    for (int run=0; run<4; ++run) {
+    for (int run=0; run<2; ++run) {
 
         bmark.setMPIrank(rank);
         bmark.setRunType(run);
@@ -108,14 +108,14 @@ int main(int argc, char *argv[])
  
         // Report on timings (master reports only)
         if (rank == 0) {
-            std::cout << " t"<<run<<" Forward processing" << std::endl;
-            std::cout << " t"<<run<<"   Number of processes: " << numtasks << std::endl;
-            std::cout << " t"<<run<<"   Time " << time << " (s) " << std::endl;
-            std::cout << " t"<<run<<"   Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
-            std::cout << " t"<<run<<"   Time per gridding   " << 1e9*time / ngridpix << " (ns) " << std::endl;
-            std::cout << " t"<<run<<"   Gridding rate (per node)   "<<(ngridvis/1e6)/time<<" (Mvis/sec)" << std::endl;
-            std::cout << " t"<<run<<"   Gridding rate (per node)   "<<(ngridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
-            std::cout << " t"<<run<<"   Gridding rate (total)      "<<(tgridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
+            std::cout << "  Forward processing" << std::endl;
+            std::cout << "    Number of processes: " << numtasks << std::endl;
+            std::cout << "    Time " << time << " (s) " << std::endl;
+            std::cout << "    Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
+            std::cout << "    Time per gridding   " << 1e9*time / ngridpix << " (ns) " << std::endl;
+            std::cout << "    Gridding rate (per node)   "<<(ngridvis/1e6)/time<<" (Mvis/sec)" << std::endl;
+            std::cout << "    Gridding rate (per node)   "<<(ngridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
+            std::cout << "    Gridding rate (total)      "<<(tgridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
         }
  
         // Report on accuracy
@@ -135,14 +135,14 @@ int main(int argc, char *argv[])
  
         // Report on timings (master reports only)
         if (rank == 0) {
-            std::cout << " t"<<run<<" Reverse processing" << std::endl;
-            std::cout << " t"<<run<<"   Number of processes: " << numtasks << std::endl;
-            std::cout << " t"<<run<<"   Time " << time << " (s) " << std::endl;
-            std::cout << " t"<<run<<"   Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
-            std::cout << " t"<<run<<"   Time per degridding " << 1e9*time / ngridpix << " (ns) " << std::endl;
-            std::cout << " t"<<run<<"   Degridding rate (per node) "<<(ngridvis/1e6)/time<<" (Mvis/sec)" << std::endl;
-            std::cout << " t"<<run<<"   Degridding rate (per node) "<<(ngridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
-            std::cout << " t"<<run<<"   Degridding rate (total)    "<<(tgridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
+            std::cout << "  Reverse processing" << std::endl;
+            std::cout << "    Number of processes: " << numtasks << std::endl;
+            std::cout << "    Time " << time << " (s) " << std::endl;
+            std::cout << "    Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
+            std::cout << "    Time per degridding " << 1e9*time / ngridpix << " (ns) " << std::endl;
+            std::cout << "    Degridding rate (per node) "<<(ngridvis/1e6)/time<<" (Mvis/sec)" << std::endl;
+            std::cout << "    Degridding rate (per node) "<<(ngridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
+            std::cout << "    Degridding rate (total)    "<<(tgridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
         }
  
         // Report on accuracy

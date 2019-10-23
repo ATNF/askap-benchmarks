@@ -68,13 +68,15 @@ void Benchmark::init()
 {
 
     // Initialize constants
-    nSamples = 3628800;                     // Number of data samples
+    const Coord obslen = 12.;               // Observation length in hours
+    const Coord scanlen = 5.;               // Observation scan length in seconds
+    const int nScans = obslen*3600./scanlen;
+
     nChan = 1;                              // Number of spectral channels
-    baseline = 6440.;                       // Maximum baseline in meters
-    Coord obslen = 12.;                     // Observation length in hours
+    //baseline = set this later;            // Maximum baseline in meters
 
     const int apertureDiam = 12.;           // diameter of aperture (dish or station) in meters
-    const Real maxFreqHz = 1.420e9;         // maximum frequency in Hz
+    const Real maxFreqHz = 1.0e9;           // maximum frequency in Hz
     const Real lambda = 2.998e8/maxFreqHz;  // minimum wavelength in meters
 
     Real imgOS;                             // synthesised beam oversampling factor
@@ -93,23 +95,8 @@ void Benchmark::init()
     //       = du_os * 2 / FoV
 
     if (runType == 0) {
-        // nearest-neighbour gridding
-        imgOS = 2.0;
-        imgExt = 1.0;
-        overSample = 1;
-        m_support = 0;
-        wSize = 1;
-        wCellSize = 0.0;
-    } else if (runType == 1) {
-        // grid with small kernels (7x7)
-        imgOS = 4.0;
-        imgExt = 1.923;
-        overSample = 128;
-        m_support = 3;
-        wSize = 1;
-        wCellSize = 0.0;
-    } else if (runType == 2) {
-        // grid with variable kernel sizes
+        // grid with variable kernel sizes (continuum imaging)
+        baseline = 6440.;
         wkernel = 1;
         imgOS = 4.0;
         imgExt = 3;
@@ -122,8 +109,42 @@ void Benchmark::init()
         wSize = ceil(overSample * wPart);
         wSize += (wSize+1)%2; // make odd
         wCellSize = 2*wmax / (wSize-1);
+    } else if (runType == 1) {
+        // grid with variable kernel sizes (spectral line imaging)
+        baseline = 2000.;
+        wkernel = 1;
+        imgOS = 3.1;
+        imgExt = 2;
+        overSample = 8;
+        wmax = baseline/lambda;
+        fov = lambda/apertureDiam * imgExt;
+        const Real wPart = wmax*fov*fov;
+        const Real aPart = 7.;
+        m_support = int(ceil(sqrt( aPart*aPart + wPart*wPart )))/2;
+        wSize = ceil(overSample * wPart);
+        wSize += (wSize+1)%2; // make odd
+        wCellSize = 2*wmax / (wSize-1);
+    } else if (runType == 2) {
+        // nearest-neighbour gridding
+        baseline = 6440.;
+        imgOS = 2.0;
+        imgExt = 1.0;
+        overSample = 1;
+        m_support = 0;
+        wSize = 1;
+        wCellSize = 0.0;
     } else if (runType == 3) {
+        // grid with small kernels (7x7)
+        baseline = 6440.;
+        imgOS = 4.0;
+        imgExt = 1.923;
+        overSample = 128;
+        m_support = 3;
+        wSize = 1;
+        wCellSize = 0.0;
+    } else if (runType == 4) {
         // grid with large kernels (87x87)
+        baseline = 6440.;
         imgOS = 4.0;
         imgExt = 1.923;
         overSample = 8;
@@ -148,25 +169,6 @@ void Benchmark::init()
                      ". num planes = os.w.theta^2 = "<< overSample*m_support << std::endl;
     }
 
-    // Initialize the data to be gridded
-    u.resize(nSamples);
-    v.resize(nSamples);
-    w.resize(nSamples);
-    iu.resize(nSamples*nChan);
-    iv.resize(nSamples*nChan);
-    wPlane.resize(nSamples*nChan);
-    cOffset.resize(nSamples*nChan);
-    data.resize(nSamples*nChan);
-    outdata1.resize(nSamples*nChan);
-    outdata2.resize(nSamples*nChan);
-
-    cOffset0.resize(wSize);
-    sSize.resize(wSize);
-    numPerPlane.resize(wSize);
-    for (int woff = 0; woff < wSize; woff++) {
-        numPerPlane[woff] = 0;
-    }
-
     const unsigned int maxint = std::numeric_limits<int>::max();
 
     // observation coordinates (26.6970° S, 116.6311° E)
@@ -175,6 +177,9 @@ void Benchmark::init()
     Coord dec = lat;
     const Coord cdec = cos(dec);
     const Coord sdec = sin(dec);
+
+    const int nAntennas = 36;
+    const int nBaselinesMax = (nAntennas*(nAntennas-1))/2;
 
     static const Coord east[]  = {  -42.43847222,   -15.46047222,    -6.48847222,   -51.41747222,
                                    -116.43047222,    93.22152778,   200.42152778,   -80.24847222,
@@ -196,8 +201,6 @@ void Benchmark::init()
                                   -2916.19433333, -2112.20733333,   887.76166667,  3084.83866667};
     std::vector<Coord> E (east, east + sizeof(east) / sizeof(east[0]) );
     std::vector<Coord> N (north, north + sizeof(north) / sizeof(north[0]) );
-    const int nAntennas = 36;
-    const int nBaselines = (nAntennas*(nAntennas-1))/2;
     std::vector<Coord> X(nAntennas), Y(nAntennas), Z(nAntennas);
     std::vector<Coord> BX(nBaselines), BY(nBaselines), BZ(nBaselines);
 
@@ -209,11 +212,37 @@ void Benchmark::init()
     int bl = 0;
     for (int i = 0; i < nAntennas-1; i++) {
         for (int j = i+1; j < nAntennas; j++) {
-            BX[bl] = X[i] - X[j];
-            BY[bl] = Y[i] - Y[j];
-            BZ[bl] = Z[i] - Z[j];
+            Coord dX = X[i] - X[j];
+            Coord dY = Y[i] - Y[j];
+            Coord dZ = Z[i] - Z[j];
+            if (dX*dX + dY*dY + dZ*dZ > baseline*baseline) continue;
+            BX[bl] = dX;
+            BY[bl] = dY;
+            BZ[bl] = dZ;
             bl++;
         }
+    }
+
+    const int nBaselines = bl;
+    nSamples = nScans*nBaselines;           // Number of data samples per channel, polarisation & beam
+
+    // Initialize the data to be gridded
+    u.resize(nSamples);
+    v.resize(nSamples);
+    w.resize(nSamples);
+    iu.resize(nSamples*nChan);
+    iv.resize(nSamples*nChan);
+    wPlane.resize(nSamples*nChan);
+    cOffset.resize(nSamples*nChan);
+    data.resize(nSamples*nChan);
+    outdata1.resize(nSamples*nChan);
+    outdata2.resize(nSamples*nChan);
+
+    cOffset0.resize(wSize);
+    sSize.resize(wSize);
+    numPerPlane.resize(wSize);
+    for (int woff = 0; woff < wSize; woff++) {
+        numPerPlane[woff] = 0;
     }
 
     for (int i = 0; i < nSamples; i++) {
