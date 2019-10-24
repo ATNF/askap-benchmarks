@@ -161,3 +161,12 @@ $ grep 'Spectral gridding performance' tConvolveMPI_np??.out
 $ grep 'Spectral degridding performance' tConvolveMPI_np??.out
 ```
 
+### tConvolveACC
+
+Note that the performance numbers quoted here are the same as those quoted in
+tConvolveMPI. That is, assuming ~ 12,000 and 15,000 separate processing units
+for continuum and spectral line observing respectively. If GPUs were used for
+gridding instead of multi-core CPUs, the reduction in processing units would
+need to be accounted for in the performance numbers (where here it is assumed
+that each GPU is a single processing unit or MPI process).
+
