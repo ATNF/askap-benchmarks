@@ -106,11 +106,11 @@ int main(int argc, char *argv[])
         std::cout << "    Gridding rate   "<<(ngridpix/1e6)/time2<<" (Mpix/sec)" << std::endl;
         if (run==0) {
             std::cout << "    Continuum gridding performance:   " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
-                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[0]<<"x CPU requirement" << std::endl;
+                      << rates[0]/1e6 << " (Mvis/sec) = " << ngridvis/time2/rates[0]<<"x CPU requirement" << std::endl;
         }
         if (run==1) {
             std::cout << "    Spectral gridding performance:    " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
-                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[1]<<"x CPU requirement" << std::endl;
+                      << rates[1]/1e6 << " (Mvis/sec) = " << ngridvis/time2/rates[1]<<"x CPU requirement" << std::endl;
         }
  
         // Report on accuracy
@@ -142,11 +142,11 @@ int main(int argc, char *argv[])
         std::cout << "    Degridding rate "<<(ngridpix/1e6)/time2<<" (Mpix/sec)" << std::endl;
         if (run==0) {
             std::cout << "    Continuum degridding performance:   " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
-                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[0]<<"x CPU requirement" << std::endl;
+                      << rates[0]/1e6 << " (Mvis/sec) = " << ngridvis/time2/rates[0]<<"x CPU requirement" << std::endl;
         }
         if (run==1) {
             std::cout << "    Spectral degridding performance:    " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
-                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[1]<<"x CPU requirement" << std::endl;
+                      << rates[1]/1e6 << " (Mvis/sec) = " << ngridvis/time2/rates[1]<<"x CPU requirement" << std::endl;
         }
  
         // Report on accuracy
