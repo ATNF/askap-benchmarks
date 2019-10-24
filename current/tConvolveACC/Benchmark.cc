@@ -202,7 +202,7 @@ void Benchmark::init()
     std::vector<Coord> E (east, east + sizeof(east) / sizeof(east[0]) );
     std::vector<Coord> N (north, north + sizeof(north) / sizeof(north[0]) );
     std::vector<Coord> X(nAntennas), Y(nAntennas), Z(nAntennas);
-    std::vector<Coord> BX(nBaselines), BY(nBaselines), BZ(nBaselines);
+    std::vector<Coord> BX(nBaselinesMax), BY(nBaselinesMax), BZ(nBaselinesMax);
 
     for (int i = 0; i < nAntennas; i++) {
         X[i] = -N[i]*sin(lat);
