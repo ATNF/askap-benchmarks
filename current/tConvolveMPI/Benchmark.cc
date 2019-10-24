@@ -234,9 +234,6 @@ void Benchmark::init()
     outdata1.resize(nSamples*nChan);
     outdata2.resize(nSamples*nChan);
 
-std::cout <<"size of vectors (GB): "<<nSamples*(3*sizeof(Coord)+(3*sizeof(Value)+4*sizeof(int))*nChan)/1e9<<std::endl;
-std::cout <<"size of grids (GB): " << (1*sizeof(Value)*gSize*gSize)/1e9 << std::endl;
-
     cOffset0.resize(wSize);
     sSize.resize(wSize);
     numPerPlane.resize(wSize);
