@@ -118,7 +118,7 @@ $ srun -N 1 -n  1 -c 24 ./tHogbomCleanOMP > tHogbomCleanOMP_nt24.out
 ```
 
 Note that when the number of threads is greater than 12, the OpenMP cleaning
-rate can vary significantly unless ```text OMP_PROC_BIND``` is set.
+rate can vary significantly unless text OMP_PROC_BIND is set.
 
 ```text
 $ grep speedup tHogbomCleanOMP_nt??.out
