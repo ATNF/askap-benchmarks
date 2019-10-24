@@ -59,6 +59,9 @@ int main(int argc, char *argv[])
     // whether or not to sort visibilities. 0 = no sorting, 1 = sort by w-plane
     bmark.setSort(0);
 
+    // get required gridding rates
+    std::vector<float> rates = bmark.requiredRate();
+
     for (int run=0; run<2; ++run) {
 
         bmark.setRunType(run);
@@ -82,7 +85,7 @@ int main(int argc, char *argv[])
         bmark.runGrid();
         time1 = sw.stop();
 
-        // Report on timings (master reports only)
+        // Report on timings
         std::cout << "  Forward processing (CPU)" << std::endl;
         std::cout << "    Time " << time1 << " (s) " << std::endl;
         std::cout << "    Time per visibility spectral sample " << 1e6*time1 / ngridvis << " (us) " << std::endl;
@@ -94,13 +97,21 @@ int main(int argc, char *argv[])
         bmark.runGridACC();
         time2 = sw.stop();
   
-        // Report on timings (master reports only)
+        // Report on timings
         std::cout << "  Forward processing (OpenACC)" << std::endl;
         std::cout << "    Time " << time2 << " (s) = CPU / " << time1/time2 << std::endl;
         std::cout << "    Time per visibility spectral sample " << 1e6*time2 / ngridvis << " (us) " << std::endl;
         std::cout << "    Time per gridding   " << 1e9*time2 / ngridpix << " (ns) " << std::endl;
         std::cout << "    Gridding rate   "<<(ngridvis/1e6)/time2<<" (Mvis/sec)" << std::endl;
         std::cout << "    Gridding rate   "<<(ngridpix/1e6)/time2<<" (Mpix/sec)" << std::endl;
+        if (run==0) {
+            std::cout << "    Continuum gridding performance:   " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
+                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[0] << "x requirement" << std::endl;
+        }
+        if (run==1) {
+            std::cout << "    Spectral gridding performance:    " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
+                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[1] << "x requirement" << std::endl;
+        }
  
         // Report on accuracy
         std::cout << " t"<<run<<" Verifying results..." << std::endl;
@@ -110,7 +121,7 @@ int main(int argc, char *argv[])
         bmark.runDegrid();
         time1 = sw.stop();
  
-        // Report on timings (master reports only)
+        // Report on timings
         std::cout << "  Reverse processing (CPU)" << std::endl;
         std::cout << "    Time " << time1 << " (s) " << std::endl;
         std::cout << "    Time per visibility spectral sample " << 1e6*time1 / ngridvis << " (us) " << std::endl;
@@ -122,13 +133,21 @@ int main(int argc, char *argv[])
         bmark.runDegridACC();
         time2 = sw.stop();
  
-        // Report on timings (master reports only)
+        // Report on timings
         std::cout << "  Reverse processing (OpenACC)" << std::endl;
         std::cout << "    Time " << time2 << " (s) = CPU / " << time1/time2 << std::endl;
         std::cout << "    Time per visibility spectral sample " << 1e6*time2 / ngridvis << " (us) " << std::endl;
         std::cout << "    Time per degridding " << 1e9*time2 / ngridpix << " (ns) " << std::endl;
         std::cout << "    Degridding rate "<<(ngridvis/1e6)/time2<<" (Mvis/sec)" << std::endl;
         std::cout << "    Degridding rate "<<(ngridpix/1e6)/time2<<" (Mpix/sec)" << std::endl;
+        if (run==0) {
+            std::cout << "    Continuum degridding performance:   " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
+                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[0] << "x requirement" << std::endl;
+        }
+        if (run==1) {
+            std::cout << "    Spectral degridding performance:    " << (ngridvis/1e6)/time2 << " (Mvis/sec) / "
+                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridvis/time2/rates[1] << "x requirement" << std::endl;
+        }
  
         // Report on accuracy
         std::cout << " t"<<run<<" Verifying results..." << std::endl;

@@ -64,6 +64,7 @@ class Benchmark {
         int getSupport() {return m_support;}
         long nVisibilitiesGridded() {return nSamples * nChan;}
         long nPixelsGridded();
+        std::vector<float> requiredRate();
 
         void setMPIrank(const int rank) {mpirank = rank;}
         void setSort(const int type) {doSort = type;}

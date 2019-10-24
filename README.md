@@ -98,7 +98,8 @@ Supercomputing Centre.
 
 ```text
 $ cd current/tHogbomCleanOMP
-$ cp ../../data/*.img .
+$ cp ../../data/dirty_1024.img dirty.img
+$ cp ../../data/psf_1024.img psf.img
 $ export OMP_NUM_THREADS=1
 $ srun -N 1 -n  1 -c 1 ./tHogbomCleanOMP > tHogbomCleanOMP_nt01.out
 $ export OMP_NUM_THREADS=4
@@ -136,7 +137,6 @@ tHogbomCleanOMP_nt24.out:    Number of threads = 24, speedup = 12.1905
 ```text
 $ cd current/tConvolveMPI
 $ srun -N 1 -n  1 ./tConvolveMPI > tConvolveMPI_np01.out
-$ srun -N 1 -n  2 ./tConvolveMPI > tConvolveMPI_np02.out
 $ srun -N 1 -n  4 ./tConvolveMPI > tConvolveMPI_np04.out
 $ srun -N 1 -n  8 ./tConvolveMPI > tConvolveMPI_np08.out
 $ srun -N 1 -n 12 ./tConvolveMPI > tConvolveMPI_np12.out
@@ -146,26 +146,18 @@ $ srun -N 1 -n 24 ./tConvolveMPI > tConvolveMPI_np24.out
 ```
 
 ```text
-$ grep 't2   Gridding rate (per node)' tConvolveMPI_np??.out | grep 'Mpix/sec'
-tConvolveMPI_np01.out: t2   Gridding rate (per node)   254.954 (Mpix/sec)
-tConvolveMPI_np02.out: t2   Gridding rate (per node)   255.748 (Mpix/sec)
-tConvolveMPI_np04.out: t2   Gridding rate (per node)   204.217 (Mpix/sec)
-tConvolveMPI_np08.out: t2   Gridding rate (per node)   171.032 (Mpix/sec)
-tConvolveMPI_np12.out: t2   Gridding rate (per node)   157.875 (Mpix/sec)
-tConvolveMPI_np16.out: t2   Gridding rate (per node)   145.817 (Mpix/sec)
-tConvolveMPI_np20.out: t2   Gridding rate (per node)   129.284 (Mpix/sec)
-tConvolveMPI_np24.out: t2   Gridding rate (per node)   113.235 (Mpix/sec)
+$ grep 'Continuum gridding performance' tConvolveMPI_np??.out
 ```
 
 ```text
-$ grep 't2   Degridding rate (per node)' tConvolveMPI_np??.out | grep 'Mpix/sec'
-tConvolveMPI_np01.out: t2   Degridding rate (per node) 177.311 (Mpix/sec)
-tConvolveMPI_np02.out: t2   Degridding rate (per node) 177.311 (Mpix/sec)
-tConvolveMPI_np04.out: t2   Degridding rate (per node) 148.723 (Mpix/sec)
-tConvolveMPI_np08.out: t2   Degridding rate (per node) 123.266 (Mpix/sec)
-tConvolveMPI_np12.out: t2   Degridding rate (per node) 113.863 (Mpix/sec)
-tConvolveMPI_np16.out: t2   Degridding rate (per node) 107.454 (Mpix/sec)
-tConvolveMPI_np20.out: t2   Degridding rate (per node) 103.525 (Mpix/sec)
-tConvolveMPI_np24.out: t2   Degridding rate (per node) 97.8489 (Mpix/sec)
+$ grep 'Continuum degridding performance' tConvolveMPI_np??.out
+```
+
+```text
+$ grep 'Spectral gridding performance' tConvolveMPI_np??.out
+```
+
+```text
+$ grep 'Spectral degridding performance' tConvolveMPI_np??.out
 ```
 
