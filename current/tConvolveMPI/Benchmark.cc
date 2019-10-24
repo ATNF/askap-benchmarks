@@ -94,7 +94,7 @@ void Benchmark::init()
         wkernel = 1;
         imgOS = 4.0;
         imgExt = 3;
-        overSample = 8;
+        overSample = 4;
         wmax = baseline/lambda;
         fov = lambda/apertureDiam * imgExt;
         const Real wPart = wmax*fov*fov;
