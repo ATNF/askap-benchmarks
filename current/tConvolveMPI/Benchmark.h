@@ -43,8 +43,8 @@ class Benchmark {
         void init();
         void runGrid();
         void runDegrid();
-        void runGridCheck();
-        void runDegridCheck();
+        //void runGridCheck();
+        //void runDegridCheck();
 
         void gridKernel(const std::vector<Value>& C,
                         std::vector<Value>& grid, const int gSize);
@@ -85,7 +85,7 @@ class Benchmark {
         Real baseline; // Maximum baseline in meters
 
         std::vector<Value> grid1;
-        std::vector<Value> grid2;
+        //std::vector<Value> grid2;
         std::vector<Coord> u;           // [nSamples]
         std::vector<Coord> v;           // [nSamples]
         std::vector<Coord> w;           // [nSamples*nChan]

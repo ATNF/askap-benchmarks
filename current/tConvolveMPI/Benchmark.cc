@@ -234,6 +234,9 @@ void Benchmark::init()
     outdata1.resize(nSamples*nChan);
     outdata2.resize(nSamples*nChan);
 
+std::cout <<"size of vectors (GB): "<<nSamples*(3*sizeof(Coord)+(3*sizeof(Value)+4*sizeof(int))*nChan)/1e9<<std::endl;
+std::cout <<"size of grids (GB): " << (1*sizeof(Value)*gSize*gSize)/1e9 << std::endl;
+
     cOffset0.resize(wSize);
     sSize.resize(wSize);
     numPerPlane.resize(wSize);
@@ -259,8 +262,8 @@ void Benchmark::init()
 
     grid1.resize(gSize*gSize);
     grid1.assign(grid1.size(), Value(0.0));
-    grid2.resize(gSize*gSize);
-    grid2.assign(grid2.size(), Value(0.0));
+    //grid2.resize(gSize*gSize);
+    //grid2.assign(grid2.size(), Value(0.0));
 
     // Measurement frequency in inverse wavelengths
     std::vector<Coord> wavenumber(nChan);
@@ -309,6 +312,7 @@ void Benchmark::runDegrid()
     degridKernel(grid1, gSize, C, outdata1);
 }
 
+/*
 void Benchmark::runGridCheck()
 {
     double sum1 = 0.0;
@@ -350,6 +354,7 @@ void Benchmark::runDegridCheck()
         std::cout << "     - null test: sum of absolute data values = " << sum1 << ", " << sum2 << std::endl;
     }
 }
+*/
 
 /////////////////////////////////////////////////////////////////////////////////
 // The next two functions are the kernel of the gridding/degridding.
