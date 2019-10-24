@@ -82,7 +82,9 @@ int main(int argc, char *argv[])
     bmark.setSort(0);
 
     // get required gridding rates
-    std::vector<float> rates = bmark.requiredRate();
+    if (rank == 0) {
+        std::vector<float> rates = bmark.requiredRate();
+    }
 
     for (int run=0; run<2; ++run) {
 
