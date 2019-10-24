@@ -146,46 +146,46 @@ $ srun -N 1 -n 24 ./tConvolveMPI > tConvolveMPI_np24.out
 
 ```text
 $ grep 'Continuum gridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Continuum gridding performance:   0.778712 (Mvis/sec) / 0.093312 (Mpix/sec) = 8.34526x requirement
-tConvolveMPI_np04.out:    Continuum gridding performance:   0.63073  (Mvis/sec) / 0.093312 (Mpix/sec) = 6.75937x requirement
-tConvolveMPI_np08.out:    Continuum gridding performance:   0.518894 (Mvis/sec) / 0.093312 (Mpix/sec) = 5.56085x requirement
-tConvolveMPI_np12.out:    Continuum gridding performance:   0.469241 (Mvis/sec) / 0.093312 (Mpix/sec) = 5.02874x requirement
-tConvolveMPI_np16.out:    Continuum gridding performance:   0.419676 (Mvis/sec) / 0.093312 (Mpix/sec) = 4.49756x requirement
-tConvolveMPI_np20.out:    Continuum gridding performance:   0.369281 (Mvis/sec) / 0.093312 (Mpix/sec) = 3.95749x requirement
-tConvolveMPI_np24.out:    Continuum gridding performance:   0.324967 (Mvis/sec) / 0.093312 (Mpix/sec) = 3.48259x requirement
+tConvolveMPI_np01.out:    Continuum gridding performance:   0.778712 (Mvis/sec) / 0.093312 (Mvis/sec) = 8.34526x requirement
+tConvolveMPI_np04.out:    Continuum gridding performance:   0.63073  (Mvis/sec) / 0.093312 (Mvis/sec) = 6.75937x requirement
+tConvolveMPI_np08.out:    Continuum gridding performance:   0.518894 (Mvis/sec) / 0.093312 (Mvis/sec) = 5.56085x requirement
+tConvolveMPI_np12.out:    Continuum gridding performance:   0.469241 (Mvis/sec) / 0.093312 (Mvis/sec) = 5.02874x requirement
+tConvolveMPI_np16.out:    Continuum gridding performance:   0.419676 (Mvis/sec) / 0.093312 (Mvis/sec) = 4.49756x requirement
+tConvolveMPI_np20.out:    Continuum gridding performance:   0.369281 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.95749x requirement
+tConvolveMPI_np24.out:    Continuum gridding performance:   0.324967 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.48259x requirement
 ```
 
 ```text
 $ grep 'Continuum degridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Continuum degridding performance:   0.550931 (Mvis/sec) / 0.093312 (Mpix/sec) = 5.90418x requirement
-tConvolveMPI_np04.out:    Continuum degridding performance:   0.461288 (Mvis/sec) / 0.093312 (Mpix/sec) = 4.9435x requirement
-tConvolveMPI_np08.out:    Continuum degridding performance:   0.383865 (Mvis/sec) / 0.093312 (Mpix/sec) = 4.11378x requirement
-tConvolveMPI_np12.out:    Continuum degridding performance:   0.349371 (Mvis/sec) / 0.093312 (Mpix/sec) = 3.74412x requirement
-tConvolveMPI_np16.out:    Continuum degridding performance:   0.330492 (Mvis/sec) / 0.093312 (Mpix/sec) = 3.54179x requirement
-tConvolveMPI_np20.out:    Continuum degridding performance:   0.318689 (Mvis/sec) / 0.093312 (Mpix/sec) = 3.4153x requirement
-tConvolveMPI_np24.out:    Continuum degridding performance:   0.300729 (Mvis/sec) / 0.093312 (Mpix/sec) = 3.22284x requirement
+tConvolveMPI_np01.out:    Continuum degridding performance:   0.550931 (Mvis/sec) / 0.093312 (Mvis/sec) = 5.90418x requirement
+tConvolveMPI_np04.out:    Continuum degridding performance:   0.461288 (Mvis/sec) / 0.093312 (Mvis/sec) = 4.9435x requirement
+tConvolveMPI_np08.out:    Continuum degridding performance:   0.383865 (Mvis/sec) / 0.093312 (Mvis/sec) = 4.11378x requirement
+tConvolveMPI_np12.out:    Continuum degridding performance:   0.349371 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.74412x requirement
+tConvolveMPI_np16.out:    Continuum degridding performance:   0.330492 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.54179x requirement
+tConvolveMPI_np20.out:    Continuum degridding performance:   0.318689 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.4153x requirement
+tConvolveMPI_np24.out:    Continuum degridding performance:   0.300729 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.22284x requirement
 ```
 
 ```text
 $ grep 'Spectral gridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Spectral gridding performance:    5.62871 (Mvis/sec) / 0.164003 (Mpix/sec) = 34.3208x requirement
-tConvolveMPI_np04.out:    Spectral gridding performance:    5.54713 (Mvis/sec) / 0.164003 (Mpix/sec) = 33.8234x requirement
-tConvolveMPI_np08.out:    Spectral gridding performance:    4.97081 (Mvis/sec) / 0.164003 (Mpix/sec) = 30.3093x requirement
-tConvolveMPI_np12.out:    Spectral gridding performance:    4.20607 (Mvis/sec) / 0.164003 (Mpix/sec) = 25.6463x requirement
-tConvolveMPI_np16.out:    Spectral gridding performance:    3.544   (Mvis/sec) / 0.164003 (Mpix/sec) = 21.6094x requirement
-tConvolveMPI_np20.out:    Spectral gridding performance:    3.03771 (Mvis/sec) / 0.164003 (Mpix/sec) = 18.5223x requirement
-tConvolveMPI_np24.out:    Spectral gridding performance:    2.658   (Mvis/sec) / 0.164003 (Mpix/sec) = 16.207x requirement
+tConvolveMPI_np01.out:    Spectral gridding performance:    5.62871 (Mvis/sec) / 0.164003 (Mvis/sec) = 34.3208x requirement
+tConvolveMPI_np04.out:    Spectral gridding performance:    5.54713 (Mvis/sec) / 0.164003 (Mvis/sec) = 33.8234x requirement
+tConvolveMPI_np08.out:    Spectral gridding performance:    4.97081 (Mvis/sec) / 0.164003 (Mvis/sec) = 30.3093x requirement
+tConvolveMPI_np12.out:    Spectral gridding performance:    4.20607 (Mvis/sec) / 0.164003 (Mvis/sec) = 25.6463x requirement
+tConvolveMPI_np16.out:    Spectral gridding performance:    3.544   (Mvis/sec) / 0.164003 (Mvis/sec) = 21.6094x requirement
+tConvolveMPI_np20.out:    Spectral gridding performance:    3.03771 (Mvis/sec) / 0.164003 (Mvis/sec) = 18.5223x requirement
+tConvolveMPI_np24.out:    Spectral gridding performance:    2.658   (Mvis/sec) / 0.164003 (Mvis/sec) = 16.207x requirement
 ```
 
 ```text
 $ grep 'Spectral degridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Spectral degridding performance:    4.61147 (Mvis/sec) / 0.164003 (Mpix/sec) = 28.1182x requirement
-tConvolveMPI_np04.out:    Spectral degridding performance:    4.50296 (Mvis/sec) / 0.164003 (Mpix/sec) = 27.4566x requirement
-tConvolveMPI_np08.out:    Spectral degridding performance:    4.11561 (Mvis/sec) / 0.164003 (Mpix/sec) = 25.0948x requirement
-tConvolveMPI_np12.out:    Spectral degridding performance:    3.61087 (Mvis/sec) / 0.164003 (Mpix/sec) = 22.0171x requirement
-tConvolveMPI_np16.out:    Spectral degridding performance:    3.16324 (Mvis/sec) / 0.164003 (Mpix/sec) = 19.2877x requirement
-tConvolveMPI_np20.out:    Spectral degridding performance:    2.77357 (Mvis/sec) / 0.164003 (Mpix/sec) = 16.9117x requirement
-tConvolveMPI_np24.out:    Spectral degridding performance:    2.40725 (Mvis/sec) / 0.164003 (Mpix/sec) = 14.6781x requirement
+tConvolveMPI_np01.out:    Spectral degridding performance:    4.61147 (Mvis/sec) / 0.164003 (Mvis/sec) = 28.1182x requirement
+tConvolveMPI_np04.out:    Spectral degridding performance:    4.50296 (Mvis/sec) / 0.164003 (Mvis/sec) = 27.4566x requirement
+tConvolveMPI_np08.out:    Spectral degridding performance:    4.11561 (Mvis/sec) / 0.164003 (Mvis/sec) = 25.0948x requirement
+tConvolveMPI_np12.out:    Spectral degridding performance:    3.61087 (Mvis/sec) / 0.164003 (Mvis/sec) = 22.0171x requirement
+tConvolveMPI_np16.out:    Spectral degridding performance:    3.16324 (Mvis/sec) / 0.164003 (Mvis/sec) = 19.2877x requirement
+tConvolveMPI_np20.out:    Spectral degridding performance:    2.77357 (Mvis/sec) / 0.164003 (Mvis/sec) = 16.9117x requirement
+tConvolveMPI_np24.out:    Spectral degridding performance:    2.40725 (Mvis/sec) / 0.164003 (Mvis/sec) = 14.6781x requirement
 ```
 
 ### tConvolveACC
