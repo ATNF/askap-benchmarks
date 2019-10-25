@@ -831,7 +831,7 @@ std::vector<float> Benchmark::requiredRate()
     Npercycle = 3;
     NTT = 1;
     Npol = 1;
-    Nchanperproc = 20; // 15,000 compute units (cores) / 36 beams = 417 cores available per beam
+    Nchanperproc = 44; // 18,144 chan * 36 beams / 15,000 compute units (cores) = 44 chan per cores
 
     rates[1] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc / tmax);
 
