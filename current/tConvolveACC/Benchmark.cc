@@ -819,10 +819,11 @@ std::vector<float> Benchmark::requiredRate()
     long NTT = 3;                       // number of Taylor terms gridded
     long Npol = 1;                      // number of polarisations gridded
     long Nchanperproc = 1;              // number of griddings per cycle (grid,degrid,psf)
+    long Npixels = 20*20;               // average number of gridding kernel pixels per visibility
 
-    rates[0] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc / tmax);
-    std::cout << "continuum gridding rate for " << Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc <<
-                 " vis gridded is " << rates[0]/1e6 << " Mvis/sec" << std::endl;
+    rates[0] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc * Npixels / tmax);
+    std::cout << "continuum gridding rate for " << Nvis*Ncycles*Npercycle*NTT*Npol*Nchanperproc*Npixels/1e9 <<
+                 "e9 pix gridded is " << rates[0]/1e6 << " Mpix/sec" << std::endl;
 
     // calculate gridding rate for spectral-line imaging
     tmax = 5500.;
@@ -831,12 +832,13 @@ std::vector<float> Benchmark::requiredRate()
     Npercycle = 3;
     NTT = 1;
     Npol = 1;
-    Nchanperproc = 44; // 18,144 chan * 36 beams / 15,000 compute units (cores) = 44 chan per cores
+    Nchanperproc = 78; // 18144 chan * 36 beams / 8400 compute units (cores) = 78 chan per cores
+    Npixels = 10*10;
 
-    rates[1] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc / tmax);
+    rates[1] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc * Npixels / tmax);
 
-    std::cout << "spectral gridding rate for " << Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc <<
-                 " vis gridded is " << rates[1]/1e6 << " Mvis/sec" << std::endl;
+    std::cout << "spectral gridding rate for " << Nvis*Ncycles*Npercycle*NTT*Npol*Nchanperproc*Npixels/1e9 <<
+                 "e9 pix gridded is " << rates[1]/1e6 << " Mpix/sec" << std::endl;
 
     return rates;
 

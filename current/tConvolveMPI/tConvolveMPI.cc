@@ -125,12 +125,12 @@ int main(int argc, char *argv[])
         }
 
         if ((rank == 0) && (run==0)) {
-            std::cout << "    Continuum gridding performance:   " << (ngridvis/1e6)/time << " (Mvis/sec) / "
-                      << rates[0]/1e6 << " (Mvis/sec) = " << ngridvis/time/rates[0] << "x requirement" << std::endl;
+            std::cout << "    Continuum gridding performance:   " << (ngridpix/1e6)/time << " (Mpix/sec) / "
+                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[0] << "x requirement" << std::endl;
         }
         if ((rank == 0) && (run==1)) {
-            std::cout << "    Spectral gridding performance:    " << (ngridvis/1e6)/time << " (Mvis/sec) / "
-                      << rates[1]/1e6 << " (Mvis/sec) = " << ngridvis/time/rates[1] << "x requirement" << std::endl;
+            std::cout << "    Spectral gridding performance:    " << (ngridpix/1e6)/time << " (Mpix/sec) / "
+                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[1] << "x requirement" << std::endl;
         }
  
         // Report on accuracy
@@ -161,12 +161,12 @@ int main(int argc, char *argv[])
         }
 
         if ((rank == 0) && (run==0)) {
-            std::cout << "    Continuum degridding performance:   " << (ngridvis/1e6)/time << " (Mvis/sec) / "
-                      << rates[0]/1e6 << " (Mvis/sec) = " << ngridvis/time/rates[0] << "x requirement" << std::endl;
+            std::cout << "    Continuum degridding performance:   " << (ngridpix/1e6)/time << " (Mpix/sec) / "
+                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[0] << "x requirement" << std::endl;
         }
         if ((rank == 0) && (run==1)) {
-            std::cout << "    Spectral degridding performance:    " << (ngridvis/1e6)/time << " (Mvis/sec) / "
-                      << rates[1]/1e6 << " (Mvis/sec) = " << ngridvis/time/rates[1] << "x requirement" << std::endl;
+            std::cout << "    Spectral degridding performance:    " << (ngridpix/1e6)/time << " (Mpix/sec) / "
+                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[1] << "x requirement" << std::endl;
         }
  
         // Report on accuracy
