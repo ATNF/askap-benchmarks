@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
             		<< " (Mpix/sec)" << std::endl;
         }
         if ((rank == 0) && (run==1)) {
-            std::cout << "    Spectral gridding performance (pre process):    " << (ngridpix/1e6)/time
+            std::cout << "    Spectral gridding performance (per process):    " << (ngridpix/1e6)/time
             		<< " (Mpix/sec)" << std::endl;
         }
  
@@ -161,11 +161,11 @@ int main(int argc, char *argv[])
         }
 
         if ((rank == 0) && (run==0)) {
-            std::cout << "    Continuum degridding performance:   " << (ngridpix/1e6)/time
+            std::cout << "    Continuum degridding performance (per process):   " << (ngridpix/1e6)/time
             		<< " (Mpix/sec)" << std::endl;
         }
         if ((rank == 0) && (run==1)) {
-            std::cout << "    Spectral degridding performance:    " << (ngridpix/1e6)/time
+            std::cout << "    Spectral degridding performance (per process):    " << (ngridpix/1e6)/time
             		<< " (Mpix/sec)" << std::endl;
         }
  

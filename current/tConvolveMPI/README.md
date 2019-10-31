@@ -19,6 +19,8 @@ Building and execution of the benchmark requires:
 * Make
 * MPI (e.g. OpenMPI, MPICH)
 
+By default, the Makefile uses GNU C++ compiler and flags.
+
 Building
 --------
 Given the file tConvolveMPI.tgz, the benchmark can be extracted and compiled as follows:
