@@ -146,52 +146,48 @@ $ srun -N 1 -n 24 ./tConvolveMPI > tConvolveMPI_np24.out
 
 ```text
 $ grep 'Continuum gridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Continuum gridding performance:   0.778712 (Mvis/sec) / 0.093312 (Mvis/sec) = 8.34526x requirement
-tConvolveMPI_np04.out:    Continuum gridding performance:   0.63073  (Mvis/sec) / 0.093312 (Mvis/sec) = 6.75937x requirement
-tConvolveMPI_np08.out:    Continuum gridding performance:   0.518894 (Mvis/sec) / 0.093312 (Mvis/sec) = 5.56085x requirement
-tConvolveMPI_np12.out:    Continuum gridding performance:   0.469241 (Mvis/sec) / 0.093312 (Mvis/sec) = 5.02874x requirement
-tConvolveMPI_np16.out:    Continuum gridding performance:   0.419676 (Mvis/sec) / 0.093312 (Mvis/sec) = 4.49756x requirement
-tConvolveMPI_np20.out:    Continuum gridding performance:   0.369281 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.95749x requirement
-tConvolveMPI_np24.out:    Continuum gridding performance:   0.324967 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.48259x requirement
+tConvolveMPI_np01.out:    Continuum gridding performance (per process):   294.649 (Mpix/sec)
+tConvolveMPI_np04.out:    Continuum gridding performance (per process):   241.014 (Mpix/sec)
+tConvolveMPI_np08.out:    Continuum gridding performance (per process):   195.967 (Mpix/sec)
+tConvolveMPI_np16.out:    Continuum gridding performance (per process):   164.975 (Mpix/sec)
+tConvolveMPI_np20.out:    Continuum gridding performance (per process):   145.151 (Mpix/sec)
+tConvolveMPI_np24.out:    Continuum gridding performance (per process):   126.717 (Mpix/sec)
 ```
 
 ```text
 $ grep 'Continuum degridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Continuum degridding performance:   0.550931 (Mvis/sec) / 0.093312 (Mvis/sec) = 5.90418x requirement
-tConvolveMPI_np04.out:    Continuum degridding performance:   0.461288 (Mvis/sec) / 0.093312 (Mvis/sec) = 4.9435x  requirement
-tConvolveMPI_np08.out:    Continuum degridding performance:   0.383865 (Mvis/sec) / 0.093312 (Mvis/sec) = 4.11378x requirement
-tConvolveMPI_np12.out:    Continuum degridding performance:   0.349371 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.74412x requirement
-tConvolveMPI_np16.out:    Continuum degridding performance:   0.330492 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.54179x requirement
-tConvolveMPI_np20.out:    Continuum degridding performance:   0.318689 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.4153x  requirement
-tConvolveMPI_np24.out:    Continuum degridding performance:   0.300729 (Mvis/sec) / 0.093312 (Mvis/sec) = 3.22284x requirement
+tConvolveMPI_np01.out:    Continuum degridding performance (per process):   206.756 (Mpix/sec)
+tConvolveMPI_np04.out:    Continuum degridding performance (per process):   175.339 (Mpix/sec)
+tConvolveMPI_np08.out:    Continuum degridding performance (per process):   142.056 (Mpix/sec)
+tConvolveMPI_np16.out:    Continuum degridding performance (per process):   124.577 (Mpix/sec)
+tConvolveMPI_np20.out:    Continuum degridding performance (per process):   119.049 (Mpix/sec)
+tConvolveMPI_np24.out:    Continuum degridding performance (per process):   113.613 (Mpix/sec)
 ```
 
 ```text
 $ grep 'Spectral gridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Spectral gridding performance:    5.71272 (Mvis/sec) / 0.360806 (Mvis/sec) = 15.8332x requirement
-tConvolveMPI_np04.out:    Spectral gridding performance:    5.54713 (Mvis/sec) / 0.360806 (Mvis/sec) = 15.3743x requirement
-tConvolveMPI_np08.out:    Spectral gridding performance:    4.97081 (Mvis/sec) / 0.360806 (Mvis/sec) = 13.7769x requirement
-tConvolveMPI_np12.out:    Spectral gridding performance:    4.16035 (Mvis/sec) / 0.360806 (Mvis/sec) = 11.5307x requirement
-tConvolveMPI_np16.out:    Spectral gridding performance:    3.544   (Mvis/sec) / 0.360806 (Mvis/sec) = 9.82244x requirement
-tConvolveMPI_np20.out:    Spectral gridding performance:    3.03771 (Mvis/sec) / 0.360806 (Mvis/sec) = 8.41924x requirement
-tConvolveMPI_np24.out:    Spectral gridding performance:    2.63967 (Mvis/sec) / 0.360806 (Mvis/sec) = 7.31603x requirement
+tConvolveMPI_np01.out:    Spectral gridding performance (per process):    482.345 (Mpix/sec)
+tConvolveMPI_np04.out:    Spectral gridding performance (per process):    482.345 (Mpix/sec)
+tConvolveMPI_np08.out:    Spectral gridding performance (per process):    431.572 (Mpix/sec)
+tConvolveMPI_np16.out:    Spectral gridding performance (per process):    300.912 (Mpix/sec)
+tConvolveMPI_np20.out:    Spectral gridding performance (per process):    258.263 (Mpix/sec)
+tConvolveMPI_np24.out:    Spectral gridding performance (per process):    224.654 (Mpix/sec)
 ```
 
 ```text
 $ grep 'Spectral degridding performance' tConvolveMPI_np??.out
-tConvolveMPI_np01.out:    Spectral degridding performance:    4.61147 (Mvis/sec) / 0.360806 (Mvis/sec) = 12.781x  requirement
-tConvolveMPI_np04.out:    Spectral degridding performance:    4.39945 (Mvis/sec) / 0.360806 (Mvis/sec) = 12.1934x requirement
-tConvolveMPI_np08.out:    Spectral degridding performance:    4.07183 (Mvis/sec) / 0.360806 (Mvis/sec) = 11.2854x requirement
-tConvolveMPI_np12.out:    Spectral degridding performance:    3.61087 (Mvis/sec) / 0.360806 (Mvis/sec) = 10.0078x requirement
-tConvolveMPI_np16.out:    Spectral degridding performance:    3.08671 (Mvis/sec) / 0.360806 (Mvis/sec) = 8.55503x requirement
-tConvolveMPI_np20.out:    Spectral degridding performance:    2.79381 (Mvis/sec) / 0.360806 (Mvis/sec) = 7.74324x requirement
-tConvolveMPI_np24.out:    Spectral degridding performance:    2.3922  (Mvis/sec) / 0.360806 (Mvis/sec) = 6.63015x requirement
+tConvolveMPI_np01.out:    Spectral degridding performance (per process):    390.47 (Mpix/sec)
+tConvolveMPI_np04.out:    Spectral degridding performance (per process):    377.005 (Mpix/sec)
+tConvolveMPI_np08.out:    Spectral degridding performance (per process):    348.93 (Mpix/sec)
+tConvolveMPI_np16.out:    Spectral degridding performance (per process):    264.512 (Mpix/sec)
+tConvolveMPI_np20.out:    Spectral degridding performance (per process):    235.967 (Mpix/sec)
+tConvolveMPI_np24.out:    Spectral degridding performance (per process):    204.997 (Mpix/sec)
 ```
 
 ### tConvolveACC
 
 Note that the performance numbers quoted here are the same as those quoted in
-tConvolveMPI. That is, assuming ~ 12,000 and 15,000 separate processing units
+tConvolveMPI. That is, assuming ~ 12,000 and 8,400 separate processing units
 for continuum and spectral line observing respectively. If GPUs were used for
 gridding instead of multi-core CPUs, the reduction in processing units would
 need to be accounted for in the performance numbers (where here it is assumed
