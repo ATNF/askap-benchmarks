@@ -119,18 +119,18 @@ int main(int argc, char *argv[])
             std::cout << "    Time " << time << " (s) " << std::endl;
             std::cout << "    Time per visibility spectral sample " << 1e6*time / ngridvis << " (us) " << std::endl;
             std::cout << "    Time per gridding   " << 1e9*time / ngridpix << " (ns) " << std::endl;
-            std::cout << "    Gridding rate (per node)   "<<(ngridvis/1e6)/time<<" (Mvis/sec)" << std::endl;
-            std::cout << "    Gridding rate (per node)   "<<(ngridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
+            std::cout << "    Gridding rate (per process)   "<<(ngridvis/1e6)/time<<" (Mvis/sec)" << std::endl;
+            std::cout << "    Gridding rate (per process)   "<<(ngridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
             std::cout << "    Gridding rate (total)      "<<(tgridpix/1e6)/time<<" (Mpix/sec)" << std::endl;
         }
 
         if ((rank == 0) && (run==0)) {
-            std::cout << "    Continuum gridding performance:   " << (ngridpix/1e6)/time << " (Mpix/sec) / "
-                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[0] << "x requirement" << std::endl;
+            std::cout << "    Continuum gridding performance (per process):   " << (ngridpix/1e6)/time
+            		<< " (Mpix/sec)" << std::endl;
         }
         if ((rank == 0) && (run==1)) {
-            std::cout << "    Spectral gridding performance:    " << (ngridpix/1e6)/time << " (Mpix/sec) / "
-                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[1] << "x requirement" << std::endl;
+            std::cout << "    Spectral gridding performance (pre process):    " << (ngridpix/1e6)/time
+            		<< " (Mpix/sec)" << std::endl;
         }
  
         // Report on accuracy
@@ -161,12 +161,12 @@ int main(int argc, char *argv[])
         }
 
         if ((rank == 0) && (run==0)) {
-            std::cout << "    Continuum degridding performance:   " << (ngridpix/1e6)/time << " (Mpix/sec) / "
-                      << rates[0]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[0] << "x requirement" << std::endl;
+            std::cout << "    Continuum degridding performance:   " << (ngridpix/1e6)/time
+            		<< " (Mpix/sec)" << std::endl;
         }
         if ((rank == 0) && (run==1)) {
-            std::cout << "    Spectral degridding performance:    " << (ngridpix/1e6)/time << " (Mpix/sec) / "
-                      << rates[1]/1e6 << " (Mpix/sec) = " << ngridpix/time/rates[1] << "x requirement" << std::endl;
+            std::cout << "    Spectral degridding performance:    " << (ngridpix/1e6)/time
+            		<< " (Mpix/sec)" << std::endl;
         }
  
         // Report on accuracy

@@ -705,7 +705,7 @@ std::vector<float> Benchmark::requiredRate()
     std::vector<float> rates(2);
 
     // calculate gridding rate for continuum imaging. Assume 1 process per beam and frequency
-    double tmax = 5250.;                // maximum allowed time (seconds)
+    double tmax = 5250.;                // maximum allowed time (seconds) - This is explained in the ASKAP HPC Requirements paper
     long Nvis = (36*35)/2*12*3600./5.;  // number of visibilities (use actual rather than nVisibilitiesGridded)
     long Ncycles = 10;                  // total number of major cycles
     long Npercycle = 3;                 // number of griddings per cycle (grid,degrid,psf)
@@ -713,9 +713,11 @@ std::vector<float> Benchmark::requiredRate()
     long Npol = 1;                      // number of polarisations gridded
     long Nchanperproc = 1;              // number of griddings per cycle (grid,degrid,psf)
     long Npixels = 20*20;               // average number of gridding kernel pixels per visibility
+    long efficiency=10;					// efficiency factor between benchmarking code (surrogate)
+    									// and the production (cimager) - obtained empirically
 
-    rates[0] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc * Npixels / tmax);
-    std::cout << "continuum gridding rate for " << Nvis*Ncycles*Npercycle*NTT*Npol*Nchanperproc*Npixels/1e9 <<
+    rates[0] = float(efficiency * Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc * Npixels / tmax);
+    std::cout << "continuum gridding rate (per process) for " << Nvis*Ncycles*Npercycle*NTT*Npol*Nchanperproc*Npixels/1e9 <<
                  "e9 pix gridded is " << rates[0]/1e6 << " Mpix/sec" << std::endl;
 
     // calculate gridding rate for spectral-line imaging
@@ -728,9 +730,9 @@ std::vector<float> Benchmark::requiredRate()
     Nchanperproc = 78; // 18144 chan * 36 beams / 8400 compute units (cores) = 78 chan per cores
     Npixels = 10*10;
 
-    rates[1] = float(Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc * Npixels / tmax);
+    rates[1] = float(efficiency * Nvis * Ncycles * Npercycle * NTT * Npol * Nchanperproc * Npixels / tmax);
 
-    std::cout << "spectral gridding rate for " << Nvis*Ncycles*Npercycle*NTT*Npol*Nchanperproc*Npixels/1e9 <<
+    std::cout << "spectral gridding rate (per process) for " << Nvis*Ncycles*Npercycle*NTT*Npol*Nchanperproc*Npixels/1e9 <<
                  "e9 pix gridded is " << rates[1]/1e6 << " Mpix/sec" << std::endl;
 
     return rates;
