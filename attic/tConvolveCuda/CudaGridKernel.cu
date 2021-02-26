@@ -188,7 +188,7 @@ __global__ void d_degridKernel(const Complex *grid, const int gSize,
 
     const int sSize = 2 * support + 1;
 
-    #pragma unroll 8
+    //#pragma unroll 
     // row gives the support location in the v direction
     for (int row = 0; row < sSize; ++row)
     {
@@ -200,7 +200,7 @@ __global__ void d_degridKernel(const Complex *grid, const int gSize,
 
         // compute warp sums
         int i = threadIdx.x;
-        if (i < sSize - 1)
+        if (i < sSize -1)
             sum = sumReduceWarpComplex<support>(sum);
 
         const int numWarps = (2 * support) / 32;
@@ -217,7 +217,7 @@ __global__ void d_degridKernel(const Complex *grid, const int gSize,
         // combine warp sums 
         if (i == 0)
         {
-#pragma unroll
+            //#pragma unroll
             for (int w = 1; w < numWarps+1; w++)
                 sum = cuCaddf(sum, s_data[w]);
 
