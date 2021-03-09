@@ -23,29 +23,11 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 
-// System includes
-#include <iostream>
-#include <cmath>
-#include <ctime>
-#include <complex>
-#include <vector>
-#include <algorithm>
-#include <limits>
 
 // Local includes
-#include "CudaGridder.h"
+#include "common.h"
+#include "HIPCPUGridder.h"
 #include "Stopwatch.h"
-
-using std::cout;
-using std::endl;
-using std::abs;
-
-// Typedefs for easy testing
-// Cost of using double for Coord is low, cost for
-// double for Real is also low
-typedef double Coord;
-typedef float Real;
-typedef std::complex<Real> Value;
 
 /////////////////////////////////////////////////////////////////////////////////
 // The next two functions are the kernel of the gridding/degridding.
@@ -360,12 +342,7 @@ int main(int argc, char* argv[])
         sw.start();
         gridKernel(data, support, C, cOffset, iu, iv, cpugrid, gSize);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per gridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
@@ -379,33 +356,11 @@ int main(int argc, char* argv[])
         // Time is measured inside this function call, unlike the CPU versions
         double time = 0.0;
         gridKernelCuda(data, support, C, cOffset, iu, iv, gpugrid, gSize, time);
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per gridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
-
-    cout << "Verifying result...";
-
-    if (cpugrid.size() != gpugrid.size()) {
-        cout << "Fail (Grid sizes differ)" << std::endl;
-        return 1;
-    }
-
-    for (unsigned int i = 0; i < cpugrid.size(); ++i) {
-        if (fabs(cpugrid[i].real() - gpugrid[i].real()) > 0.00001) {
-            cout << "Fail (Expected " << cpugrid[i].real() << " got "
-                     << gpugrid[i].real() << " at index " << i << ")"
-                     << std::endl;
-            return 1;
-        }
-    }
-
-    cout << "Pass" << std::endl;
+    verify_result(" Forward processing ", cpugrid, gpugrid);
 
     ///////////////////////////////////////////////////////////////////////////
     // DO DEGRIDDING
@@ -419,12 +374,7 @@ int main(int argc, char* argv[])
         sw.start();
         degridKernel(cpugrid, gSize, support, C, cOffset, iu, iv, cpuoutdata);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per degridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
@@ -437,34 +387,11 @@ int main(int argc, char* argv[])
         // Time is measured inside this function call, unlike the CPU versions
         double time = 0.0;
         degridKernelCuda(gpugrid, gSize, support, C, cOffset, iu, iv, gpuoutdata, time);
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per degridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
-
-    // Verify degridding results
-    cout << "Verifying result...";
-
-    if (cpuoutdata.size() != gpuoutdata.size()) {
-        cout << "Fail (Data vector sizes differ)" << std::endl;
-        return 1;
-    }
-
-    for (unsigned int i = 0; i < cpuoutdata.size(); ++i) {
-        if (fabs(cpuoutdata[i].real() - gpuoutdata[i].real()) > 0.00001) {
-            cout << "Fail (Expected " << cpuoutdata[i].real() << " got "
-                     << gpuoutdata[i].real() << " at index " << i << ")"
-                     << std::endl;
-            return 1;
-        }
-    }
-
-    cout << "Pass" << std::endl;
+    verify_result(" Reverse processing ", cpuoutdata, gpuoutdata);
 
     return 0;
 }

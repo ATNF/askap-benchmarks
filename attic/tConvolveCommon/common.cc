@@ -84,3 +84,24 @@ void report_timings(const double time, Options &opt, const int sSize, const doub
     cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
 }
 
+int verify_result(std::string compname, 
+    std::vector<Value> ref, std::vector<Value> comp, 
+    double abserr, double relerr)
+{
+    cout << "Verifying "<<compname<<" results ..."<<endl;
+    if (ref.size() != comp.size()) {
+        cout << "Failed! (Grid sizes differ)" << std::endl;
+        return 1;
+    }
+
+    for (unsigned long long i = 0; i < ref.size(); ++i) {
+        if (fabs(ref[i].real() - comp[i].real()) > abserr) 
+        {
+            cout << "Failed! Expected " << comp[i].real() << ", got "
+                     << comp[i].real() << " at index " << i <<endl;
+            return 1;
+        }
+    }
+    cout << "Passed" << endl;
+    return 0;
+}

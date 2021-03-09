@@ -464,7 +464,6 @@ int main(int argc, char* argv[])
     // DO GRIDDING
     ///////////////////////////////////////////////////////////////////////////
     std::vector<Value> cpugrid(gSize*gSize);
-#ifdef SERIAL_GRIDING
     cpugrid.assign(cpugrid.size(), Value(0.0));
     {
         // Now we can do the timing for the CPU implementation
@@ -478,10 +477,8 @@ int main(int argc, char* argv[])
 
         cout << "Done" << endl;
     }
-#endif
 
     std::vector<Value> ompgrid(gSize*gSize);
-#ifdef OMP_GRIDING
     ompgrid.assign(ompgrid.size(), Value(0.0));
     {
         // Now we can do the timing for the GPU implementation
@@ -492,36 +489,16 @@ int main(int argc, char* argv[])
         sw.start();
         const int nthreads = gridKernelOMP(data, support, C, cOffset, iu, iv, ompgrid, gSize);
         const double time = sw.stop();
+        cout<<" Running with "<< nthreads <<" threads "<<endl;
         report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
-#endif
-
-#ifdef VERIFY_GRIDING
-    cout << "Verifying result...";
-
-    if (cpugrid.size() != ompgrid.size()) {
-        cout << "Fail (Grid sizes differ)" << std::endl;
-        return 1;
-    }
-
-    for (unsigned int i = 0; i < cpugrid.size(); ++i) {
-        if (fabs(cpugrid[i].real() - ompgrid[i].real()) > 0.00001) {
-            cout << "Fail (Expected " << cpugrid[i].real() << " got "
-                     << ompgrid[i].real() << " at index " << i << ")"
-                     << std::endl;
-            return 1;
-        }
-    }
-
-    cout << "Pass" << std::endl;
-#endif
+    verify_result(" Forward Processing ", cpugrid, ompgrid);
 
     ///////////////////////////////////////////////////////////////////////////
     // DO DEGRIDDING
     ///////////////////////////////////////////////////////////////////////////
-#ifdef SERIAL_DEGRIDING
     {
         cpugrid.assign(cpugrid.size(), Value(1.0));
         // Now we can do the timing for the CPU implementation
@@ -535,8 +512,6 @@ int main(int argc, char* argv[])
 
         cout << "Done" << endl;
     }
-#endif
-#ifdef OMP_DEGRIDING
     {
         ompgrid.assign(ompgrid.size(), Value(1.0));
         // Now we can do the timing for the GPU implementation
@@ -547,32 +522,11 @@ int main(int argc, char* argv[])
         sw.start();
         const int nthreads = degridKernelOMP(ompgrid, gSize, support, C, cOffset, iu, iv, ompoutdata);
         const double time = sw.stop();
+        cout<<" Running with "<< nthreads <<" threads "<<endl;
         report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
-#endif
-
-#ifdef VERIFY_DEGRIDING
-    // Verify degridding results
-    cout << "Verifying result...";
-
-    if (cpuoutdata.size() != ompoutdata.size()) {
-        cout << "Fail (Data vector sizes differ)" << std::endl;
-        return 1;
-    }
-
-    for (unsigned int i = 0; i < cpuoutdata.size(); ++i) {
-        if (fabs(cpuoutdata[i].real() - ompoutdata[i].real()) > 0.00001) {
-            cout << "Fail (Expected " << cpuoutdata[i].real() << " got "
-                     << ompoutdata[i].real() << " at index " << i << ")"
-                     << std::endl;
-            return 1;
-        }
-    }
-
-    cout << "Pass" << std::endl;
-
+    verify_result(" Reverse Processing ", cpuoutdata, ompoutdata);
     return 0;
-#endif
 }

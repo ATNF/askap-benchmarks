@@ -24,7 +24,7 @@
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 
 // Include own header file first
-#include "CudaGridder.h"
+#include "HIPCPUGridder.h"
 
 // System includes
 #include <iostream>
@@ -36,7 +36,7 @@
 #include <hip/hip_runtime_api.h>
 
 // Local includes
-#include "CudaGridKernel.h"
+#include "HIPCPUGridKernel.h"
 #include "Stopwatch.h"
 
 typedef float Real;

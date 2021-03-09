@@ -68,4 +68,8 @@ void configerror(std::string &);
 void getinput(int argc, char **argv, struct Options &opt);
 void report_timings(const double time, Options &opt, const int sSize, const double griddings);
 
+int verify_result(std::string compname, 
+    std::vector<Value> ref, std::vector<Value> comp, 
+    double abserr = 1e-6, double relerr = 1e-6);
+
 #endif 

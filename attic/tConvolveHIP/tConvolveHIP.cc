@@ -339,24 +339,7 @@ int main(int argc, char* argv[])
         report_timings(time, opt, sSize, griddings);
         cout << "Done" << endl;
     }
-
-    cout << "Verifying result...";
-
-    if (cpugrid.size() != gpugrid.size()) {
-        cout << "Fail (Grid sizes differ)" << std::endl;
-        return 1;
-    }
-
-    for (unsigned int i = 0; i < cpugrid.size(); ++i) {
-        if (fabs(cpugrid[i].real() - gpugrid[i].real()) > 0.00001) {
-            cout << "Fail (Expected " << cpugrid[i].real() << " got "
-                     << gpugrid[i].real() << " at index " << i << ")"
-                     << std::endl;
-            return 1;
-        }
-    }
-
-    cout << "Pass" << std::endl;
+    verify_result(" Forward Processing ", cpugrid, gpugrid);
 
     ///////////////////////////////////////////////////////////////////////////
     // DO DEGRIDDING
@@ -385,25 +368,6 @@ int main(int argc, char* argv[])
         report_timings(time, opt, sSize, griddings);
         cout << "Done" << endl;
     }
-
-    // Verify degridding results
-    cout << "Verifying result...";
-
-    if (cpuoutdata.size() != gpuoutdata.size()) {
-        cout << "Fail (Data vector sizes differ)" << std::endl;
-        return 1;
-    }
-
-    for (unsigned int i = 0; i < cpuoutdata.size(); ++i) {
-        if (fabs(cpuoutdata[i].real() - gpuoutdata[i].real()) > 0.00001) {
-            cout << "Fail (Expected " << cpuoutdata[i].real() << " got "
-                     << gpuoutdata[i].real() << " at index " << i << ")"
-                     << std::endl;
-            return 1;
-        }
-    }
-
-    cout << "Pass" << std::endl;
-
+    verify_result(" Reverse Processing ", cpuoutdata, gpuoutdata);
     return 0;
 }

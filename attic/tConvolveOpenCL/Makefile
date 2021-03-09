@@ -4,7 +4,7 @@ INCLUDE=-I/home/hum092/NVIDIA_GPU_Computing_SDK/OpenCL/common/inc
 LIBPATH=-L/home/hum092/NVIDIA_GPU_Computing_SDK/OpenCL/common/lib/Linux64
 
 EXENAME = tConvolveOpenCL
-EXEOBJS = $(EXENAME).o Stopwatch.o OpenCLGridder.o
+EXEOBJS = $(EXENAME).o Stopwatch.o OpenCLGridder.o common.o
 EXELIBS = -lOpenCL
 
 all:		$(EXENAME)

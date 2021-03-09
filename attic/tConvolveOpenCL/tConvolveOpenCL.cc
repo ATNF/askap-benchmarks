@@ -36,30 +36,11 @@
 /// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 ///
 
-// System includes
-#include <iostream>
-#include <cmath>
-#include <ctime>
-#include <complex>
-#include <vector>
-#include <algorithm>
-#include <limits>
 
 // Local includes
+#include "common.h"
 #include "OpenCLGridder.h"
 #include "Stopwatch.h"
-
-using std::cout;
-using std::endl;
-using std::complex;
-using std::abs;
-
-// Typedefs for easy testing
-// Cost of using double for Coord is low, cost for
-// double for Real is also low
-typedef double Coord;
-typedef float Real;
-typedef std::complex<Real> Value;
 
 /////////////////////////////////////////////////////////////////////////////////
 // The next two functions are the kernel of the gridding/degridding.
@@ -303,21 +284,17 @@ int randomInt()
 }
 
 // Main testing routine
-int main()
+int main(int argc, char* argv[])
 {
-	// Change these if necessary to adjust run time
-	//const int nSamples=160000; // Number of data samples
-	const int nSamples=1600; // Number of data samples
-	const int wSize=33; // Number of lookup planes in w projection
-	const int nChan=1; // Number of spectral channels
-
-	// Don't change any of these numbers unless you know what you are doing!
-	//const int gSize=4096; // Size of output grid in pixels
-	//const Coord cellSize=5.0; // Cellsize of output grid in wavelengths
-	//const int baseline=2000; // Maximum baseline in meters
-	const int gSize=512; // Size of output grid in pixels
-	const Coord cellSize=40.0; // Cellsize of output grid in wavelengths
-	const int baseline=2000; // Maximum baseline in meters
+    Options opt;
+    getinput(argc, argv, opt);
+    // Change these if necessary to adjust run time
+    int nSamples = opt.nSamples;
+    int wSize = opt.wSize;
+    int nChan = opt.nChan;
+    Coord cellSize = opt.cellSize;
+    const int gSize = opt.gSize;
+    const int baseline = opt.baseline; 
 
 	// Initialize the data to be gridded
 	std::vector<Coord> u(nSamples);
@@ -379,12 +356,7 @@ int main()
 		sw.start();
 		gridKernel(data, support, C, cOffset, iu, iv, cpugrid, gSize);
 		double time = sw.stop();
-
-		// Report on timings
-		cout << "    Time " << time << " (s) " << endl;
-		cout << "    Time per visibility spectral sample " << 1e6*time/double(data.size()) << " (us) " << endl;
-		cout << "    Time per gridding   " << 1e9*time/(double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-		cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+		report_timings(time, opt, sSize, griddings);
 
 		cout << "Done" << endl;
 	}
@@ -398,31 +370,11 @@ int main()
 		// Time is measured inside this function call, unlike the CPU versions
 		double time = 0.0;
 		gridKernelOpenCL(data, support, C, cOffset, iu, iv, gpugrid, gSize, time);
-
-		// Report on timings
-		cout << "    Time " << time << " (s) " << endl;
-		cout << "    Time per visibility spectral sample " << 1e6*time/double(data.size()) << " (us) " << endl;
-		cout << "    Time per gridding   " << 1e9*time/(double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-		cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+		report_timings(time, opt, sSize, griddings);
 
 		cout << "Done" << endl;
 	}
-
-	cout << "Verifying result...";
-	if (cpugrid.size() != gpugrid.size()) {
-		cout << "Fail (Grid sizes differ)" << std::endl;
-		return 0;
-	}
-
-	for (unsigned int i = 0; i < cpugrid.size(); ++i) {
-		if (fabs(cpugrid[i].real() - gpugrid[i].real()) > 0.00001) {
-			cout << "Fail (Expected " << cpugrid[i].real() << " got "
-				<< gpugrid[i].real() << " at index " << i << ")"
-				<< std::endl;
-			return 0;
-		}
-	}
-	cout << "Pass" << std::endl;
+	verify_result(" Forward processing ", cpugrid, gpugrid);
 
 	///////////////////////////////////////////////////////////////////////////
 	// DO DEGRIDDING
@@ -436,12 +388,7 @@ int main()
 		sw.start();
 		degridKernel(cpugrid, gSize, support, C, cOffset, iu, iv, cpuoutdata);
 		double time = sw.stop();
-
-		// Report on timings
-		cout << "    Time " << time << " (s) " << endl;
-		cout << "    Time per visibility spectral sample " << 1e6*time/double(data.size()) << " (us) " << endl;
-		cout << "    Time per degridding   " << 1e9*time/(double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-		cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+		report_timings(time, opt, sSize, griddings);
 
 		cout << "Done" << endl;
 	}
@@ -454,32 +401,11 @@ int main()
 		// Time is measured inside this function call, unlike the CPU versions
 		double time = 0.0;
 		degridKernelOpenCL(gpugrid, gSize, support, C, cOffset, iu, iv, gpuoutdata, time);
-
-		// Report on timings
-		cout << "    Time " << time << " (s) " << endl;
-		cout << "    Time per visibility spectral sample " << 1e6*time/double(data.size()) << " (us) " << endl;
-		cout << "    Time per degridding   " << 1e9*time/(double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-		cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+		report_timings(time, opt, sSize, griddings);
 
 		cout << "Done" << endl;
 	}
-
-	// Verify degridding results
-	cout << "Verifying result...";
-	if (cpuoutdata.size() != gpuoutdata.size()) {
-		cout << "Fail (Data vector sizes differ)" << std::endl;
-		return 0;
-	}
-
-	for (unsigned int i = 0; i < cpuoutdata.size(); ++i) {
-		if (fabs(cpuoutdata[i].real() - gpuoutdata[i].real()) > 0.00001) {
-			cout << "Fail (Expected " << cpuoutdata[i].real() << " got "
-				<< gpuoutdata[i].real() << " at index " << i << ")"
-				<< std::endl;
-			return 0;
-		}
-	}
-	cout << "Pass" << std::endl;
+	verify_result(" Reverse processing ", cpuoutdata, gpuoutdata);
 
 	return 0;
 }
