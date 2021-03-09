@@ -72,4 +72,38 @@ int verify_result(std::string compname,
     std::vector<Value> ref, std::vector<Value> comp, 
     double abserr = 1e-6, double relerr = 1e-6);
 
+/////////////////////////////////////////////////////////////////////////////////
+// Initialize W project convolution function
+// - This is application specific and should not need any changes.
+//
+// freq - temporal frequency (inverse wavelengths)
+// cellSize - size of one grid cell in wavelengths
+// support - Total width of convolution function=2*support+1
+// wCellSize - size of one w grid cell in wavelengths
+// wSize - Size of lookup table in w
+void initC(const std::vector<Coord>& freq, const Coord cellSize,
+           const Coord baseline,
+           const int wSize, int& support, int& overSample,
+           Coord& wCellSize, std::vector<Value>& C);
+
+// Initialize Lookup function
+// - This is application specific and should not need any changes.
+//
+// freq - temporal frequency (inverse wavelengths)
+// cellSize - size of one grid cell in wavelengths
+// gSize - size of grid in pixels (per axis)
+// support - Total width of convolution function=2*support+1
+// wCellSize - size of one w grid cell in wavelengths
+// wSize - Size of lookup table in w
+void initCOffset(const std::vector<Coord>& u, const std::vector<Coord>& v,
+                 const std::vector<Coord>& w, const std::vector<Coord>& freq,
+                 const Coord cellSize, const Coord wCellSize,
+                 const int wSize, const int gSize, const int support, const int overSample,
+                 std::vector<int>& cOffset, std::vector<int>& iu,
+                 std::vector<int>& iv);
+
+// Return a pseudo-random integer in the range 0..2147483647
+// Based on an algorithm in Kernighan & Ritchie, "The C Programming Language"
+int randomInt();
+
 #endif 
