@@ -425,7 +425,7 @@ void usage() {
 int main(int argc, char* argv[])
 {
     // Change these if necessary to adjust run time
-    int nSamples = 160000; // Number of data samples
+    int nSamples = 4000000; // Number of data samples
     int wSize = 33; // Number of lookup planes in w projection
     int nChan = 1; // Number of spectral channels
     Coord cellSize = 5.0; // Cellsize of output grid in wavelengths

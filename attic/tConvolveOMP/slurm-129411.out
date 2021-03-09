@@ -1,0 +1,84 @@
+OMP_NUM_THREADS = 4
+nSamples = 4000000
+Initializing W projection convolution function
+FoV = 11.4592 deg
+Support = 64 pixels
+W cellsize = 566.034 wavelengths
+Size of convolution function = 268 MB
+Shape of convolution function = [129, 129, 8, 8, 33]
++++++ Forward processing (CPU) +++++
+    Time 134 (s) 
+    Time per visibility spectral sample 33.5 (us) 
+    Time per gridding   2.0131 (ns) 
+    Gridding rate   496.746 (million grid points per second)
+Done
++++++ Forward processing (OpenMP) +++++
+    Num threads: 4
+    Time 58.46 (s) 
+    Time per visibility spectral sample 14.615 (us) 
+    Time per gridding   0.878253 (ns) 
+    Gridding rate   1138.62 (million grid points per second)
+Done
+Verifying result...Pass
++++++ Reverse processing (CPU) +++++
+    Time 173.48 (s) 
+    Time per visibility spectral sample 43.37 (us) 
+    Time per degridding   2.60621 (ns) 
+    Degridding rate   383.698 (million grid points per second)
+Done
++++++ Reverse processing (OpenMP) +++++
+    Num threads: 4
+    Time 52.12 (s) 
+    Time per visibility spectral sample 13.03 (us) 
+    Time per degridding   0.783006 (ns) 
+    Degridding rate   1277.13 (million grid points per second)
+Done
+Verifying result...Pass
+OMP_NUM_THREADS = 8
+nSamples = 4000000
+Initializing W projection convolution function
+FoV = 11.4592 deg
+Support = 64 pixels
+W cellsize = 566.034 wavelengths
+Size of convolution function = 268 MB
+Shape of convolution function = [129, 129, 8, 8, 33]
++++++ Forward processing (CPU) +++++
+    Time 135.27 (s) 
+    Time per visibility spectral sample 33.8175 (us) 
+    Time per gridding   2.03218 (ns) 
+    Gridding rate   492.083 (million grid points per second)
+Done
++++++ Forward processing (OpenMP) +++++
+    Num threads: 8
+    Time 33.7 (s) 
+    Time per visibility spectral sample 8.425 (us) 
+    Time per gridding   0.50628 (ns) 
+    Gridding rate   1975.19 (million grid points per second)
+Done
+Verifying result...Pass
++++++ Reverse processing (CPU) +++++
+    Time 176.72 (s) 
+    Time per visibility spectral sample 44.18 (us) 
+    Time per degridding   2.65489 (ns) 
+    Degridding rate   376.664 (million grid points per second)
+Done
++++++ Reverse processing (OpenMP) +++++
+    Num threads: 8
+    Time 28.34 (s) 
+    Time per visibility spectral sample 7.085 (us) 
+    Time per degridding   0.425756 (ns) 
+    Degridding rate   2348.76 (million grid points per second)
+Done
+Verifying result...Pass
+OMP_NUM_THREADS = 16
+nSamples = 4000000
+Initializing W projection convolution function
+FoV = 11.4592 deg
+Support = 64 pixels
+W cellsize = 566.034 wavelengths
+Size of convolution function = 268 MB
+Shape of convolution function = [129, 129, 8, 8, 33]
++++++ Forward processing (CPU) +++++
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 129411 ON t021 CANCELLED AT 2021-02-27T01:06:23 DUE TO TIME LIMIT ***
+slurmstepd: error: *** STEP 129411.2 ON t021 CANCELLED AT 2021-02-27T01:06:23 DUE TO TIME LIMIT ***

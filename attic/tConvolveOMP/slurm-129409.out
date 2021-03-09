@@ -1,0 +1,12 @@
+OMP_NUM_THREADS = 4
+nSamples = 4000000
+Initializing W projection convolution function
+FoV = 11.4592 deg
+Support = 64 pixels
+W cellsize = 566.034 wavelengths
+Size of convolution function = 268 MB
+Shape of convolution function = [129, 129, 8, 8, 33]
++++++ Forward processing (CPU) +++++
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 129409 ON t022 CANCELLED AT 2021-02-27T00:51:00 ***
+slurmstepd: error: *** STEP 129409.0 ON t022 CANCELLED AT 2021-02-27T00:51:00 ***

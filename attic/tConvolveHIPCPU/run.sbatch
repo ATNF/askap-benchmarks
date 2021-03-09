@@ -9,6 +9,7 @@
 # load modules 
 module load gcc 
 module load cuda
+module load hip
 
 # compile and build
 make clean
