@@ -35,7 +35,7 @@
 #include <assert.h>
 
 // Local includes
-#include "CudaGridKernel.h"
+#include "HIPGridKernel.h"
 
 // Check and report last error
 __host__ __inline__ void checkError(void)
@@ -43,7 +43,7 @@ __host__ __inline__ void checkError(void)
         hipError_t err = hipGetLastError();
         if (err != hipSuccess)
         {
-                printf("CUDA Error: %s\n", hipGetErrorString(err));
+                printf("HIP Error: %s\n", hipGetErrorString(err));
         }
 }
 

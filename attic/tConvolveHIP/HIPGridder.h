@@ -23,8 +23,8 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 
-#ifndef CUDA_GRIDDER_H
-#define CUDA_GRIDDER_H
+#ifndef HIP_GRIDDER_H
+#define HIP_GRIDDER_H
 
 #include <vector>
 #include <complex>

@@ -23,21 +23,16 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 
-// System includes
-#include <iostream>
-#include <cmath>
-#include <ctime>
-#include <complex>
-#include <vector>
-#include <algorithm>
-#include <limits>
+// Local includes
+#include "../tConvolveCommon/common.h"
+#include "Stopwatch.h"
+
+// system includes
 #include <cassert>
 
 // OpenMP includes
 #include <omp.h>
 
-// Local includes
-#include "Stopwatch.h"
 
 // BLAS includes
 #ifdef USEBLAS
@@ -76,18 +71,6 @@
 	#define OMP_DEGRIDING 1
 	#define VERIFY_DEGRIDING 1
 #endif  
-
-using std::cout;
-using std::endl;
-using std::abs;
-
-// Typedefs for easy testing
-// Cost of using double for Coord is low, cost for
-// double for Real is also low
-typedef double Coord;
-typedef float Real;
-typedef std::complex<Real> Value;
-
 
 /////////////////////////////////////////////////////////////////////////////////
 // The next two functions are the kernel of the gridding/degridding.
@@ -413,60 +396,19 @@ int randomInt()
     return ((unsigned int)(next / 65536) % maxint);
 }
 
-void usage() {
-    cout << "usage: tConvolveOMP [-h] [option]" << endl;
-    cout << "-n num\t change the number of data samples to num." << endl;
-    cout << "-w num\t change the number of lookup planes in w projection to num." << endl;
-    cout << "-c num\t change the number of spectral channels to num." << endl;
-    cout << "-f val\t reduce the field of view by a factor of val (=> reduce the kernel size)." << endl;
-}
 
 // Main testing routine
 int main(int argc, char* argv[])
 {
+    Options opt;
+    getinput(argc, argv, opt);
     // Change these if necessary to adjust run time
-    int nSamples = 4000000; // Number of data samples
-    int wSize = 33; // Number of lookup planes in w projection
-    int nChan = 1; // Number of spectral channels
-    Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
-
-    if (argc > 1) {
-        for (int i=1; i < argc; i++) {
-            if (argv[i][0] == '-') {
-                if (argv[i][1] == 'h') {
-                    usage();
-                    return 0;
-                }
-                else if (argv[i][1] == 'n') {
-                    nSamples = atoi(argv[i+1]);
-                    i++;
-                }
-                else if (argv[i][1] == 'w') {
-                    wSize = atoi(argv[i+1]);
-                    i++;
-                }
-                else if (argv[i][1] == 'c') {
-                    nChan = atoi(argv[i+1]);
-                    i++;
-                }
-                else if (argv[i][1] == 'f') {
-                    cellSize *= atof(argv[i+1]);
-                    i++;
-                }
-                else {
-                    usage();
-                    return 1;
-                }
-            }
-            else {
-                usage();
-                return 1;
-            }
-        }
-    }
-    // Don't change any of these numbers unless you know what you are doing!
-    const int gSize = 4096; // Size of output grid in pixels
-    const int baseline = 2000; // Maximum baseline in meters
+    int nSamples = opt.nSamples;
+    int wSize = opt.wSize;
+    int nChan = opt.nChan;
+    Coord cellSize = opt.cellSize;
+    const int gSize = opt.gSize;
+    const int baseline = opt.baseline; 
 
     cout << "nSamples = " << nSamples <<endl;
     // Initialize the data to be gridded
@@ -532,12 +474,7 @@ int main(int argc, char* argv[])
         sw.start();
         gridKernel(data, support, C, cOffset, iu, iv, cpugrid, gSize);
         double time = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per gridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
@@ -555,13 +492,7 @@ int main(int argc, char* argv[])
         sw.start();
         const int nthreads = gridKernelOMP(data, support, C, cOffset, iu, iv, ompgrid, gSize);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Num threads: " << nthreads << endl;
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per gridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
@@ -600,12 +531,7 @@ int main(int argc, char* argv[])
         sw.start();
         degridKernel(cpugrid, gSize, support, C, cOffset, iu, iv, cpuoutdata);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per degridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
@@ -621,13 +547,7 @@ int main(int argc, char* argv[])
         sw.start();
         const int nthreads = degridKernelOMP(ompgrid, gSize, support, C, cOffset, iu, iv, ompoutdata);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Num threads: " << nthreads << endl;
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per degridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }

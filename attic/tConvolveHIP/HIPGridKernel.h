@@ -23,8 +23,8 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 
-#ifndef CUDA_GRID_KERNEL_H
-#define CUDA_GRID_KERNEL_H
+#ifndef HIP_GRID_KERNEL_H
+#define HIP_GRID_KERNEL_H
 
 #include <cuComplex.h>
 

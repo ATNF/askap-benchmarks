@@ -30,21 +30,6 @@
 #include <vector>
 #include <complex>
 
-// Typedefs
-typedef double Coord;
-typedef float Real;
-typedef std::complex<Real> Value;
-
-// Change these if necessary to adjust run time
-const int nSamples = 160000; // Number of data samples
-const int wSize = 33; // Number of lookup planes in w projection
-const int nChan = 1; // Number of spectral channels
-
-// Don't change any of these numbers unless you know what you are doing!
-const int gSize = 4096; // Size of output grid in pixels
-const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
-const int baseline = 2000; // Maximum baseline in meters
-
 struct Sample {
     Value data;
     int iu;

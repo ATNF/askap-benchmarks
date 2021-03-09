@@ -27,10 +27,10 @@ CFLAGS = -Wall -Wextra -O2 -fstrict-aliasing -fcx-limited-range -fPIC
 CUDA = $(CUDATOOLKIT_HOME)/include
 EXENAME = tConvolveCuda
 EXEOBJS = $(EXENAME).o
-EXELIBS = -lCudaGridder
+EXELIBS = -lHIPGridder
 
-LIBNAME=libCudaGridder.so
-LIBOBJS=CudaGridder.o CudaGridKernel.o Stopwatch.o
+LIBNAME=libHIPGridder.so
+LIBOBJS=HIPGridder.o HIPGridKernel.o Stopwatch.o common.o
 
 NVCCFLAGS= --compiler-options -fPIC
 
@@ -39,9 +39,9 @@ all:		$(EXENAME) $(LIBNAME)
 %.o:		%.cc %.h
 		$(CXX) $(CFLAGS) -I$(CUDA) -c $<
 
-$(LIBNAME):	CudaGridder.cc CudaGridder.h CudaGridKernel.cu Stopwatch.o
-		hipcc $(NVCCFLAGS) -I$(CUDA) -c CudaGridKernel.cu
-		hipcc $(NVCCFLAGS) -I$(CUDA) -c CudaGridder.cc
+$(LIBNAME):	HIPGridder.cc HIPGridder.h HIPGridKernel.cu Stopwatch.o common.o
+		hipcc $(NVCCFLAGS) -I$(CUDA) -c HIPGridKernel.cu
+		hipcc $(NVCCFLAGS) -I$(CUDA) -c HIPGridder.cc
 		hipcc $(NVCCFLAGS) -shared -o $(LIBNAME) $(LIBOBJS)
 
 $(EXENAME):	$(EXEOBJS) $(LIBNAME)

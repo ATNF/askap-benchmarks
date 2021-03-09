@@ -52,3 +52,14 @@ compute node.
 ### tConvolveCuda
 This is implemented in NVIDIA CUDA and executes on a single NVIDIA GPU.
 
+### tConvolveHIP 
+This is the HIP implementation and executes on a single NVIDIA/AMD GPU.
+
+### tConvolveOpenCL
+This is the OpenCl implementation and executes on a single NVIDIA/AMD GPU.
+
+### tConvolveHIPCPU
+This is the HIP CPU implementation and executes on CPUs
+
+### tConvolveCommon
+This contains common functions used in all implementations of the convolution function.

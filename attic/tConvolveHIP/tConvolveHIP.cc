@@ -23,29 +23,10 @@
 /// @author Ben Humphreys <ben.humphreys@csiro.au>
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 
-// System includes
-#include <iostream>
-#include <cmath>
-#include <ctime>
-#include <complex>
-#include <vector>
-#include <algorithm>
-#include <limits>
-
 // Local includes
-#include "CudaGridder.h"
+#include "common.h"
+#include "HIPGridder.h"
 #include "Stopwatch.h"
-
-using std::cout;
-using std::endl;
-using std::abs;
-
-// Typedefs for easy testing
-// Cost of using double for Coord is low, cost for
-// double for Real is also low
-typedef double Coord;
-typedef float Real;
-typedef std::complex<Real> Value;
 
 /////////////////////////////////////////////////////////////////////////////////
 // The next two functions are the kernel of the gridding/degridding.
@@ -274,34 +255,15 @@ int randomInt()
 // Main testing routine
 int main(int argc, char* argv[])
 {
+    Options opt;
+    getinput(argc,argv,opt);
     // Change these if necessary to adjust run time
-/*  
-    const int nSamples = 4000000; // Number of data samples
-    const int wSize = 33; // Number of lookup planes in w projection
-    const int nChan = 1; // Number of spectral channels 
-*/
-    int nSamples; // Number of data samples
-    int wSize; // Number of lookup planes in w projection
-    int nChan; // Number of spectral channels 
-
-    // Don't change any of these numbers unless you know what you are doing!
-    const int gSize = 4096; // Size of output grid in pixels
-    const Coord cellSize = 5.0; // Cellsize of output grid in wavelengths
-    const int baseline = 2000; // Maximum baseline in meters
-
-    nSamples=100000;
-    wSize=33;
-    nChan=1;
-
-    // Read input parameters
-    if (argc != 4) { 
-        std::cerr << "Usage: " << argv[0] << " nSamples wSize nChan" << std::endl; 
-        return 1;
-    } else {
-        nSamples = atoi(argv[1]);
-        wSize = atoi(argv[2]);
-        nChan = atoi(argv[3]);
-    }
+    int nSamples = opt.nSamples;
+    int wSize = opt.wSize;
+    int nChan = opt.nChan;
+    Coord cellSize = opt.cellSize;
+    const int gSize = opt.gSize;
+    const int baseline = opt.baseline; 
 
     // Initialize the data to be gridded
     std::vector<Coord> u(nSamples);
@@ -360,12 +322,7 @@ int main(int argc, char* argv[])
         sw.start();
         gridKernel(data, support, C, cOffset, iu, iv, cpugrid, gSize);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per gridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
+        report_timings(time, opt, sSize, griddings);
 
         cout << "Done" << endl;
     }
@@ -379,13 +336,7 @@ int main(int argc, char* argv[])
         // Time is measured inside this function call, unlike the CPU versions
         double time = 0.0;
         gridKernelCuda(data, support, C, cOffset, iu, iv, gpugrid, gSize, time);
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per gridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Gridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
-
+        report_timings(time, opt, sSize, griddings);
         cout << "Done" << endl;
     }
 
@@ -419,13 +370,7 @@ int main(int argc, char* argv[])
         sw.start();
         degridKernel(cpugrid, gSize, support, C, cOffset, iu, iv, cpuoutdata);
         const double time = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per degridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
-
+        report_timings(time, opt, sSize, griddings);
         cout << "Done" << endl;
     }
 
@@ -437,13 +382,7 @@ int main(int argc, char* argv[])
         // Time is measured inside this function call, unlike the CPU versions
         double time = 0.0;
         degridKernelCuda(gpugrid, gSize, support, C, cOffset, iu, iv, gpuoutdata, time);
-
-        // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per visibility spectral sample " << 1e6*time / double(data.size()) << " (us) " << endl;
-        cout << "    Time per degridding   " << 1e9*time / (double(data.size())* double((sSize)*(sSize))) << " (ns) " << endl;
-        cout << "    Degridding rate   " << (griddings / 1000000) / time << " (million grid points per second)" << endl;
-
+        report_timings(time, opt, sSize, griddings);
         cout << "Done" << endl;
     }
 
