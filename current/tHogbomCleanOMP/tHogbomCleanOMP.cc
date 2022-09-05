@@ -40,6 +40,8 @@
 #include "HogbomGolden.h"
 #include "HogbomOMP.h"
 
+#include <profile_util.h>
+
 using namespace std;
 
 vector<float> readImage(const string& filename)
@@ -102,8 +104,25 @@ bool compare(const vector<float>& expected, const vector<float>& actual)
     return true;
 }
 
+void AnalyseReportTimes(double time0, unsigned int g_niters) 
+{
+    // Report on timings
+    cout << "    Time " << time0 << " (s) " << endl;
+    cout << "    Time per cycle " << time0 / static_cast<double>(g_niters) * 1000. << " (ms)" << endl;
+    cout << "    Cleaning rate  " << static_cast<double>(g_niters) / time0 << " (iterations per second)" << endl;
+}
+
+void AnalyseReportTimes(double time0, int num_threads, double tref, unsigned int g_niters) 
+{
+    // Report on timings
+    AnalyseReportTimes(time0,g_niters);
+    cout << "    Number of threads = " << num_threads<< ", speedup = " << tref/time0 << endl;
+}
+
 int main(int /*argc*/, char** /* argv*/)
 {
+    LogParallelAPI();
+    LogBinding();   
     cout << "Reading dirty image and psf image" << endl;
     // Load dirty image and psf
     vector<float> dirty = readImage(g_dirtyFile);
@@ -117,9 +136,11 @@ int main(int /*argc*/, char** /* argv*/)
     //
     // Run the golden version of the code
     //
-    double time0;
+    double time_serial, time_omp;
+    std::vector<double> times_serial, times_omp;
     vector<float> goldenResidual;
     vector<float> goldenModel(dirty.size());
+    LogMemUsage();
     zeroInit(goldenModel);
     {
         // Now we can do the timing for the serial (Golden) CPU implementation
@@ -129,13 +150,9 @@ int main(int /*argc*/, char** /* argv*/)
         Stopwatch sw;
         sw.start();
         golden.deconvolve(dirty, dim, psf, psfDim, goldenModel, goldenResidual);
-        time0 = sw.stop();
-
-        // Report on timings
-        cout << "    Time " << time0 << " (s) " << endl;
-        cout << "    Time per cycle " << time0 / g_niters * 1000 << " (ms)" << endl;
-        cout << "    Cleaning rate  " << g_niters / time0 << " (iterations per second)" << endl;
-        cout << "Done" << endl;
+        time_serial = sw.stop();
+        AnalyseReportTimes(time_serial, g_niters);
+        cout<< " Done "<<endl;
     }
 
     // Write images out
@@ -156,13 +173,10 @@ int main(int /*argc*/, char** /* argv*/)
         Stopwatch sw;
         sw.start();
         omp.deconvolve(dirty, dim, psf, psfDim, ompModel, ompResidual);
-        const double time = sw.stop();
+        time_omp = sw.stop();
 
         // Report on timings
-        cout << "    Time " << time << " (s) " << endl;
-        cout << "    Time per cycle " << time / g_niters * 1000 << " (ms)" << endl;
-        cout << "    Cleaning rate  " << g_niters / time << " (iterations per second)" << endl;
-        cout << "    Number of threads = " << omp.num_threads() << ", speedup = " << time0/time << endl;
+        AnalyseReportTimes(time_omp, omp.num_threads(), time_serial, g_niters);
         cout << "Done" << endl;
     }
 

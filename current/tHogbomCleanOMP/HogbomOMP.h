@@ -25,6 +25,9 @@
 #ifndef HOGBOM_OMP_H
 #define HOGBOM_OMP_H
 
+#define OMP_HOGBOM_FINDPEAK 100
+#define OMP_HOGBOM_SUBTRACTPSF 100
+
 // System includes
 #include <vector>
 #include <cstddef>
