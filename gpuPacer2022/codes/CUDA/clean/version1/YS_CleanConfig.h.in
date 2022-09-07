@@ -1,3 +1,3 @@
 // The configured options and settings
 #define YS_Clean_VERSION_MAJOR @YS_Clean_VERSION_MAJOR@
-#define YS_Clean_VERSION_MINOR @YS_ysClean_VERSION_MINOR@
+#define YS_Clean_VERSION_MINOR @YS_Clean_VERSION_MINOR@

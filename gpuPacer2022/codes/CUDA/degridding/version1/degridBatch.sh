@@ -6,4 +6,4 @@
 #SBATCH --time=00:05:00
 #SBATCH --account=director2196
 
-srun ./YS_Clean
+srun ./YS_Degrid
