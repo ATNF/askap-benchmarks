@@ -1,5 +1,6 @@
 // ****************************************************************************************
 // ****************************************************************************************
+// ****************************************************************************************
 /// @copyright (c) 2009 CSIRO
 /// Australia Telescope National Facility (ATNF)
 /// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
@@ -26,7 +27,7 @@
 /// @author Tim Cornwell  <tim.cornwell@csiro.au>
 // ****************************************************************************************
 // ****************************************************************************************
-
+// ****************************************************************************************
 
 /* Parameters:
     data      : values to be gridded in a 1D vector
@@ -51,8 +52,8 @@
 #include "utilities/PrintVector.h"
 
 #include "src/Setup.h"
-#include "src/DegridderCPU.h"
-#include "src/DegridderGPU.h"
+#include "src/GridderCPU.h"
+#include "src/GridderGPU.h"
 
 #include <iostream>
 #include <complex>
@@ -121,35 +122,31 @@ int main()
 
     const int SSIZE = 2 * support + 1;
     vector<Value> cpuGrid(GSIZE * GSIZE);
-    cpuGrid.assign(cpuGrid.size(), static_cast<Value>(1.0));
+    cpuGrid.assign(cpuGrid.size(), static_cast<Value>(0.0));
     vector<Value> gpuGrid(GSIZE * GSIZE);
-    gpuGrid.assign(gpuGrid.size(), static_cast<Value>(1.0));
+    gpuGrid.assign(gpuGrid.size(), static_cast<Value>(0.0));
 
     // printVector.printVector(u);
     // printVector.printVector(v);
     // printVector.printVector(w);
 
-    // Degridding on CPU
-    const size_t DSIZE = data.size();
-    DegridderCPU<Value> degridderCPU(cpuGrid, DSIZE, GSIZE, support, C, cOffset, iu, iv, cpuOutData);
+    // Gridding on CPU
+    GridderCPU<Value> gridderCPU(support, GSIZE, data, C, cOffset, iu, iv, cpuGrid);
     tInit = omp_get_wtime();
-    degridderCPU.cpuKernel();
+    gridderCPU.gridder();
     tFin = omp_get_wtime();
-    auto timeDegridCPU = (tFin - tInit) * 1000.0; // in ms
+    auto timeGridCPU = (tFin - tInit) * 1000.0; // in ms
 
-    // Degridding on GPU
-    DegridderGPU<Value> degridderGPU(gpuGrid, SSIZE, DSIZE, GSIZE, support, C, cOffset, iu, iv, gpuOutData);
+    // Gridding on GPU
+    GridderGPU<Value> gridderGPU(support, GSIZE, data, C, cOffset, iu, iv, gpuGrid);
     tInit = omp_get_wtime();
-    degridderGPU.degridder();
+    gridderGPU.gridder();
     tFin = omp_get_wtime();
-    auto timeDegridGPU = (tFin - tInit) * 1000.0; // in ms
+    auto timeGridGPU = (tFin - tInit) * 1000.0; // in ms
     
-    //printVectorComplex.printVector(cpuOutData);
-    //printVectorComplex.printVector(gpuOutData);
-
     cout << "Verify the code" << endl;
-    maximumError.maxError(cpuOutData, gpuOutData);
-    
+    maximumError.maxError(cpuGrid, gpuGrid);
+
     cout << "\nRUNTIME IN MILLISECONDS:" << endl;
     cout << left << setw(21) << "Setup"
         << left << setw(21) << "Gridding CPU"
@@ -158,8 +155,7 @@ int main()
 
     cout << setprecision(2) << fixed;
     cout << left << setw(21) << timeSetup
-        << left << setw(21) << timeDegridCPU
-        << left << setw(21) << timeDegridGPU 
-        << left << setw(21) << timeDegridCPU/timeDegridGPU << endl;
-        
+        << left << setw(21) << timeGridCPU
+        << left << setw(21) << timeGridGPU 
+        << left << setw(21) << timeGridCPU/timeGridGPU << endl;
 }

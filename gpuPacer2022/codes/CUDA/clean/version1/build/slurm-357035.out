@@ -1,0 +1,38 @@
+
+The following have been reloaded with a version change:
+  1) gcc/8.3.0 => gcc/11.1.0
+
+Reading dirty image & psf image
+Iterations: 1000
+Image dimension: 1024 x 1024
+Forward Processing - CPU Golden
+PSF peak: 1, at location: 512, 512
+Iteration: 100 - Maximum = 178.096 at location 479,482, index: 494047
+Iteration: 200 - Maximum = 163.34 at location 536,604, index: 619032
+Iteration: 300 - Maximum = 153.259 at location 525,468, index: 479757
+Iteration: 400 - Maximum = 146.572 at location 492,361, index: 370156
+Iteration: 500 - Maximum = 140.824 at location 491,363, index: 372203
+Iteration: 600 - Maximum = 136.329 at location 497,360, index: 369137
+Iteration: 700 - Maximum = 132.341 at location 519,676, index: 692743
+Iteration: 800 - Maximum = 128.624 at location 521,635, index: 650761
+Iteration: 900 - Maximum = 125.614 at location 486,409, index: 419302
+Iteration: 1000 - Maximum = 122.072 at location 488,600, index: 614888
+Time 20.0405 (s) 
+Time per cycle 20.0405 (ms)
+Cleaning rate  49.899 (iterations per second)
+Done
+Forward Processing - GPU Cuda
+    Using CUDA Device 0: Tesla V100-PCIE-16GB
+Found peak of PSF: Maximum = 1 at location 512,512
+Time 0.445812 (s) 
+Time per cycle 0.445812 (ms)
+Cleaning rate  2243.1 (iterations per second)
+Done
+Verifying model...
+Maximum Error: 0
+Verifying residual...
+Maximum Error: 0
+
+RUNTIME IN SECONDS:
+CLEAN CPU            CLEAN GPU            Speedup              
+20.04                0.45                 44.95                

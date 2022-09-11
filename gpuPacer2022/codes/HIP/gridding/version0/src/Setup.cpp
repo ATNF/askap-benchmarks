@@ -8,6 +8,11 @@ using std::setw;
 using std::left;
 using std::setprecision;
 
+/*
+    T0: Real        ->  float, double
+    T1: Coord       ->  float, double
+    T2: Value       ->  complex<Real>
+*/
 template<typename T0, typename T1, typename T2>
 void Setup<T0, T1, T2>::initCoord()
 {
@@ -158,11 +163,11 @@ void Setup<T0, T1, T2>::initCOffset()
 template<typename T0, typename T1, typename T2>
 void Setup<T0, T1, T2>::setup()
 {
-    cout << "DEGRIDDING SETUP" << endl;
+    cout << "GRIDDING SETUP" << endl;
     initCoord();
     initC();
     initCOffset();
-    cout << "DEGRIDDING SETUP COMPLETED" << endl;
+    cout << "GRIDDING SETUP COMPLETED" << endl;
 }
 
 template void Setup<float, double, complex<float>>::initC();

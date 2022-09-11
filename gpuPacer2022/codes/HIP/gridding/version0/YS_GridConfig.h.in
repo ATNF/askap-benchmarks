@@ -1,0 +1,3 @@
+// The configured options and settings
+#define YS_Grid_VERSION_MAJOR @YS_Grid_VERSION_MAJOR@
+#define YS_Grid_VERSION_MINOR @YS_Grid_VERSION_MINOR@
