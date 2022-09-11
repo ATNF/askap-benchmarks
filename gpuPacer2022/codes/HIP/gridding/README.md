@@ -1,3 +1,8 @@
 # Gridding
 ## Version 0
-- Code to be HIPified
+- The CUDA code to be HIPified
+- Works on NVIDIA
+- Results Verified
+
+## Version 1
+- 

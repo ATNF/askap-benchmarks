@@ -1,3 +1,8 @@
 # Degridding
 ## Version 0
-- The code to be HIPified
+- The CUDA code to be HIPified
+- Works on NVIDIA
+- Results Verified
+
+## Version 1
+- 
