@@ -1,14 +1,14 @@
 #pragma once
 
-#include "cuda_runtime.h"
+#include "hip/hip_runtime.h"
 #include "device_launch_parameters.h"
 
 #include <complex>
 #include <iostream>
-#include <cuComplex.h>
+#include <hip/hip_complex.h>
 #include <vector>
 
-#include "gridKernelGPU.cuh"
+#include "gridKernelGPU.h"
 
 template <typename T2>
 class GridderGPU

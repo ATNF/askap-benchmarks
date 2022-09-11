@@ -5,4 +5,4 @@
 - Results Verified
 
 ## Version 1
-- 
+- HIPified code - tested on Topaz
