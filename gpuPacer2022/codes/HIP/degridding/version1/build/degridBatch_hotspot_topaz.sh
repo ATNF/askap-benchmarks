@@ -7,9 +7,9 @@
 ###SBATCH --account=director2196
 #SBATCH --account=pawsey0007
 
-module load hip/4.3.0
+module load hip/4.3.0 cuda/11.4.2 gcc/11.1.0
 
 make clean
-make all
+CXXFLAGS="-v -Xcompiler -fopenmp -O2" make all
 
 srun nvprof ./bin/askapDegrid.exe
