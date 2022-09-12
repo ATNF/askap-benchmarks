@@ -24,8 +24,10 @@
 # $ make
 #
 
-CXX=g++
-CFLAGS=-g -O3 -fstrict-aliasing -Wall -Wextra -fopenmp
+CXX=CC
+curdir = $(shell pwd)
+CFLAGS=-g -O3 -fstrict-aliasing -Wall -Wextra -fopenmp -I$(curdir)/../profile_util/include #-DOLDOPENMP
+LFLAGS=-L$(curdir)/../profile_util/lib/ -Wl,-rpath=$(curdir)/../profile_util/lib/ -lprofile_util_omp
 
 EXENAME = tHogbomCleanOMP
 OBJS = $(EXENAME).o Stopwatch.o HogbomGolden.o HogbomOMP.o
@@ -36,7 +38,7 @@ all:		$(EXENAME)
 			$(CXX) $(CFLAGS) -c $<
 
 $(EXENAME):	$(OBJS)
-		$(CXX) $(CFLAGS) -o $(EXENAME) $(OBJS)
+		$(CXX) $(CFLAGS) $(LFLAGS) -o $(EXENAME) $(OBJS)
 
 clean:
 		rm -f $(EXENAME) *.o
