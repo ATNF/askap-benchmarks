@@ -1,5 +1,5 @@
 CXX = hipcc
-CXXFLAGS = -v -O2 #-Xcompiler
+CXXFLAGS ?=  -v -Xcompiler -fopenmp -O2
 
 # Target executable name:
 EXE = bin/askapDegrid.exe
@@ -32,4 +32,4 @@ obj/%.o: ../%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
 clean:
-	rm $(OBJS) $(EXE)
+	rm -f $(OBJS) $(EXE)
