@@ -12,5 +12,11 @@
 *.la
 *.a
 
+# logs 
+*.log
+
 # Images
 *.img
+
+# executables 
+*.exe

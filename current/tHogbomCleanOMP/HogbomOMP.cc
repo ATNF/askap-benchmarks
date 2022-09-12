@@ -107,12 +107,14 @@ void HogbomOMP::subtractPSF(const vector<float>& psf,
     const int diffx = rx - px;
     const int diffy = ry - px;
 
-    const int startx = max(0, rx - px);
-    const int starty = max(0, ry - py);
+    const int startx = std::max(0, rx - px);
+    const int starty = std::max(0, ry - py);
 
-    const int stopx = min(residualWidth - 1, rx + (psfWidth - px - 1));
-    const int stopy = min(residualWidth - 1, ry + (psfWidth - py - 1));
+    const int stopx = std::min(residualWidth - 1, rx + (psfWidth - px - 1));
+    const int stopy = std::min(residualWidth - 1, ry + (psfWidth - py - 1));
 
+
+#ifdef OLDOPENMP
     #pragma omp parallel for default(shared) schedule(static)
     for (int y = starty; y <= stopy; ++y) {
         for (int x = startx; x <= stopx; ++x) {
@@ -120,6 +122,19 @@ void HogbomOMP::subtractPSF(const vector<float>& psf,
                 * psf[posToIdx(psfWidth, Position(x - diffx, y - diffy))];
         }
     }
+#else 
+    const int nsteps = (stopx-startx)*(stopy - starty);
+    #pragma omp parallel for \
+    default(none) shared(nsteps, starty, stopy, startx, stopx, residual, psf) \
+    firstprivate(residualWidth, psfWidth, gain, absPeakVal, diffx, diffy) \
+    schedule(static) collapse(2) if (nsteps > OMP_HOGBOM_SUBTRACTPSF)
+    for (int y = starty; y <= stopy; ++y) {
+        for (int x = startx; x <= stopx; ++x) {
+            residual[posToIdx(residualWidth, Position(x, y))] -= gain * absPeakVal
+                * psf[posToIdx(psfWidth, Position(x - diffx, y - diffy))];
+        }
+    }
+#endif
 }
 
 void HogbomOMP::findPeak(const vector<float>& image,
@@ -129,6 +144,7 @@ void HogbomOMP::findPeak(const vector<float>& image,
     maxPos = 0;
     const size_t size = image.size();
 
+#ifdef OLDOPENMP
     #pragma omp parallel
     {
         float threadAbsMaxVal = 0.0;
@@ -149,6 +165,28 @@ void HogbomOMP::findPeak(const vector<float>& image,
             maxPos = threadAbsMaxPos;
         }
     }
+#else
+    #pragma omp parallel if (size>OMP_HOGBOM_FINDPEAK) \
+    default(none) shared(size, image, maxVal, maxPos)
+    {
+        float threadAbsMaxVal = 0.0;
+        size_t threadAbsMaxPos = 0;
+        #pragma omp for schedule(static) nowait
+        for (size_t i = 0; i < size; ++i) {
+            if (abs(image[i]) > threadAbsMaxVal) {
+                threadAbsMaxVal = abs(image[i]);
+                threadAbsMaxPos = i;
+            }
+        }
+        #pragma omp critical
+        if (threadAbsMaxVal > maxVal) {
+            maxVal = threadAbsMaxVal;
+            maxPos = threadAbsMaxPos;
+        }
+    }
+    maxVal = image[maxPos];
+#endif
+    
 }
 
 inline

@@ -6,6 +6,6 @@
 #SBATCH --time=00:10:00
 #SBATCH --account=director2196
 
-module load hip/4.3.0
-hipcc ../main.cpp ../src/GridderCPU.cpp ../src/GridderGPU.hip ../src/gridKernelGPU.hip ../src/Setup.cpp ../utilities/MaxError.cpp ../utilities/PrintVector.cpp ../utilities/RandomVectorGenerator.cpp -o askapGrid -std=c++14 -Xcompiler -fopenmp
-srun ./askapGrid
+#module load hip/4.3.0
+#hipcc ../main.cpp ../src/GridderCPU.cpp ../src/GridderGPU.hip ../src/gridKernelGPU.hip ../src/Setup.cpp ../utilities/MaxError.cpp ../utilities/PrintVector.cpp ../utilities/RandomVectorGenerator.cpp -o askapGrid -std=c++14 -Xcompiler -fopenmp
+srun ./bin/askapGrid.exe

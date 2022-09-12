@@ -6,6 +6,5 @@
 #SBATCH --time=00:10:00
 #SBATCH --account=director2196
 
-module load hip/4.3.0
-hipcc ../main.cpp ../src/HogbomCuda.hip ../src/HogbomGolden.cpp ../utilities/MaxError.cpp ../utilities/ImageProcess.cpp -o askapClean -std=c++14 -Xcompiler -fopenmp
-srun ./askapClean
+#module load hip/4.3.0
+srun .bin//askapClean.exe

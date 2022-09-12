@@ -29,8 +29,8 @@
 #include <string>
 
 // Configuration
-static const std::string g_dirtyFile = "dirty.img";
-static const std::string g_psfFile = "psf.img";
+static const std::string g_dirtyFile = "../../data/dirty_4096.img";
+static const std::string g_psfFile = "../../data/psf_4096.img";
 
 static const unsigned int g_niters = 1000;
 static const float g_gain = 0.1;
