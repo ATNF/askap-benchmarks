@@ -1,4 +1,4 @@
-#include "degridKernelGPU.cuh"
+#include "degridKernelGPU.h"
 
 template <int support>
 __device__ Complex sumReduceWarpComplex(Complex val)
@@ -24,7 +24,7 @@ __device__ Complex sumReduceWarpComplex(Complex val)
     vals[i] = v = v + vals[i + 2];
     vals[i] = v = v + vals[i + 1];
 
-    return make_cuComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+    return make_hipComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
 }
 
 // launch_bounds__(2*support+1, 8)
@@ -68,7 +68,7 @@ void devDegridKernel(
         int gind = gindShared + GSIZE * row;
         int cind = cindShared + SSIZE * row;
 
-        Complex sum = cuCmulf(grid[gind + threadIdx.x], C[cind + threadIdx.x]);
+        Complex sum = hipCmulf(grid[gind + threadIdx.x], C[cind + threadIdx.x]);
 
         // compute warp sums
         int i = threadIdx.x;
@@ -96,10 +96,10 @@ void devDegridKernel(
 #pragma unroll
             for (int w = 1; w < NUMWARPS + 1; w++)
             {
-                sum = cuCaddf(sum, dataShared[w]);
+                sum = hipCaddf(sum, dataShared[w]);
             }
 
-            original = cuCaddf(original, sum);
+            original = hipCaddf(original, sum);
         }
     }
     if (threadIdx.x == 0)

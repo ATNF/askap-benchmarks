@@ -2,6 +2,10 @@
 
 #include "CommonGPU.h"
 
+#ifdef __NVCC__
+#include "device_launch_parameters.h"
+#endif
+
 typedef hipComplex Complex;
 
 template <int support>
