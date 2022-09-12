@@ -7,5 +7,4 @@
 #SBATCH --account=director2196
 
 module load hip/4.3.0
-hipcc ../main.cpp ../src/DegridderCPU.cpp ../src/DegridderGPU.hip ../src/degridKernelGPU.hip ../src/Setup.cpp ../utilities/MaxError.cpp ../utilities/PrintVector.cpp ../utilities/RandomVectorGenerator.cpp -o askapDegrid -std=c++14 -Xcompiler -fopenmp
-srun ./askapDegrid
+srun ./bin/askapDegrid.exe

@@ -49,6 +49,7 @@
 #include "utilities/MaxError.h"
 #include "utilities/Parameters.h"
 #include "utilities/PrintVector.h"
+#include "utilities/RunInfo.h"
 
 #include "src/Setup.h"
 #include "src/DegridderCPU.h"

@@ -2,12 +2,12 @@ CXX = hipcc
 CXXFLAGS = -std=c++17 -fopenmp -O2 #-Xcompiler
 
 # Target executable name:
-EXE = bin/askapGrid.exe
+EXE = bin/askapDegrid.exe
 
 OBJS = obj/main.o \
-obj/GridderCPU.o \
-obj/GridderGPU.o \
-obj/gridKernelGPU.o \
+obj/DegridderCPU.o \
+obj/DegridderGPU.o \
+obj/degridKernelGPU.o \
 obj/Setup.o \
 obj/MaxError.o \
 obj/PrintVector.o \
