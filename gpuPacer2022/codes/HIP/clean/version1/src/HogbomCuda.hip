@@ -1,23 +1,9 @@
-#include "hip/hip_runtime.h"
-#include "hip/hip_runtime.h"
 #include "HogbomCuda.h"
 
 using std::vector;
 using std::cout;
 using std::endl;
 
-// Error checking macro
-#define gpuCheckErrors(msg) \
-    do { \
-        hipError_t __err = hipGetLastError(); \
-        if (__err != hipSuccess) { \
-            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, hipGetErrorString(__err), \
-                __FILE__, __LINE__); \
-            fprintf(stderr, "*** FAILED - ABORTING\n"); \
-            exit(1); \
-        } \
-    } while (0)
 
 // Some constants for findPeak
 const int findPeakNBlocks = 4;
@@ -97,15 +83,15 @@ static Peak findPeak(const float* dImage, size_t size)
     // Note: dPeaks array is not initialised (hence avoiding the memcpy)
     // It is up to do device function to do that.
     Peak* dPeak;
-    hipMalloc(&dPeak, nBlocks * sizeof(Peak));
+    gpuErrchk(hipMalloc(&dPeak, nBlocks * sizeof(Peak)));
     gpuCheckErrors("hipMalloc failure in findPeak");
 
     // Find peak
-    dFindPeak << <nBlocks, findPeakWidth >> > (dImage, size, dPeak);
+    dFindPeak <<<nBlocks, findPeakWidth>>>(dImage, size, dPeak);
     gpuCheckErrors("kernel launch failure in findPeak");
 
     // Get the peaks array back from the device
-    hipMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), hipMemcpyDeviceToHost);
+    gpuErrchk(hipMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), hipMemcpyDeviceToHost));
     gpuCheckErrors("hipMemcpy D2H failure in findPeak");
 
     //=================================================================================
@@ -114,7 +100,7 @@ static Peak findPeak(const float* dImage, size_t size)
 //    hipDeviceSynchronize();
 //    gpuCheckErrors("hipDeviceSynchronize failure in findPeak");
 
-    hipFree(dPeak);
+    gpuErrchk(hipFree(dPeak));
     gpuCheckErrors("hipFree failure in findPeak");
 
     // Each thread block return a peak, find the absolute maximum
@@ -184,12 +170,12 @@ static void subtractPSF(const float* dPsf,
     const int stopy = std::min(residualWidth - 1, ry + (psfWidth - py - 1));
 
     // Note: Both start* and stop* locations are inclusive.
-    const int blocksx = ceil((stopx - startx + 1.0) / static_cast<float>(blockDim));
-    const int blocksy = ceil((stopy - starty + 1.0) / static_cast<float>(blockDim));
+    const int blocksx = std::ceil((stopx - startx + 1.0) / static_cast<float>(blockDim));
+    const int blocksy = std::ceil((stopy - starty + 1.0) / static_cast<float>(blockDim));
 
     dim3 numBlocks(blocksx, blocksy);
     dim3 threadsPerBlock(blockDim, blockDim);
-    dSubtractPSF << <numBlocks, threadsPerBlock >> > (dPsf, psfWidth, dResidual, residualWidth,
+    dSubtractPSF <<<numBlocks, threadsPerBlock>>>(dPsf, psfWidth, dResidual, residualWidth,
         startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gain);
     gpuCheckErrors("kernel launch failure in subtractPSF");
 }

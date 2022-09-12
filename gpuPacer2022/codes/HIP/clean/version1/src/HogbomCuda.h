@@ -1,9 +1,7 @@
 #pragma once
 
 // Cuda includes
-#include <hip/hip_runtime_api.h>
-#include "hip/hip_runtime.h"
-#include "device_launch_parameters.h"
+#include <CommonGPU.h>
 
 #include <vector>
 #include <iostream>

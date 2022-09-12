@@ -35,6 +35,7 @@
 #include <omp.h>
 
 #include "utilities/ImageProcess.h"
+#include "utilities/RunInfo.h"
 #include "utilities/Parameters.h"
 #include "utilities/MaxError.h"
 
@@ -52,6 +53,9 @@ using std::fixed;
 
 int main()
 {
+	RunInfo r;
+	r.GetInfo();
+	
 	// Maximum error evaluator
 	MaxError<float> maximumError;
 
