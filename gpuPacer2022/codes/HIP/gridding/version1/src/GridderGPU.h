@@ -1,11 +1,11 @@
 #pragma once
 
-#include "hip/hip_runtime.h"
-#include "device_launch_parameters.h"
+// #include "hip/hip_runtime.h"
+// no need to include device parameters 
+// #include "device_launch_parameters.h"
 
 #include <complex>
 #include <iostream>
-#include <hip/hip_complex.h>
 #include <vector>
 
 #include "gridKernelGPU.h"

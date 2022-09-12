@@ -46,5 +46,5 @@ void devGridKernel(
     cind += SSIZE * blockIdx.x;
 
     // threadIdx.x gives the support location in the u direction
-    grid[gind + threadIdx.x] = cuCfmaf(dataLocal, C[cind + threadIdx.x], grid[gind + threadIdx.x]);
+    grid[gind + threadIdx.x] = hipCfmaf(dataLocal, C[cind + threadIdx.x], grid[gind + threadIdx.x]);
 }

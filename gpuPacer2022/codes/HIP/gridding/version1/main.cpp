@@ -50,8 +50,10 @@
 #include "utilities/MaxError.h"
 #include "utilities/Parameters.h"
 #include "utilities/PrintVector.h"
+#include "utilities/RunInfo.h"
 
 #include "src/Setup.h"
+#include "src/CommonGPU.h"
 #include "src/GridderCPU.h"
 #include "src/GridderGPU.h"
 
@@ -77,6 +79,9 @@ std::string randomType = "random";
 
 int main()
 {
+    RunInfo r;
+    r.GetInfo();
+
     // Print vector object
     PrintVector<Value> printVectorComplex;
     PrintVector<Coord> printVector;
