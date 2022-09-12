@@ -1,5 +1,5 @@
 CXX = hipcc
-CXXFLAGS = -std=c++17 -fopenmp -O2 #-Xcompiler
+CXXFLAGS ?=  -v -Xcompiler -fopenmp -O2
 
 # Target executable name:
 EXE = bin/askapGrid.exe
@@ -19,16 +19,16 @@ all : $(EXE)
 $(EXE) : $(OBJS)
 	$(CXX) $(CXXFLAGS) -v $(OBJS) -o $@ -I../src/ -I../utilities 2> make.$(shell date -Iseconds).log 
 
-obj/%.o: ../src/%.cpp ../src/*.h ../src/*.cuh ../utilities/*.h
+obj/%.o: ../src/%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
-obj/%.o: ../utilities/%.cpp ../src/*.h ../src/*.cuh ../utilities/*.h
+obj/%.o: ../utilities/%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
-obj/%.o: ../src/%.hip ../src/*.h ../src/*.cuh ../utilities/*.h
+obj/%.o: ../src/%.cu ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
-obj/%.o: ../%.cpp ../src/*.h ../src/*.cuh ../utilities/*.h
+obj/%.o: ../%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
 clean:
