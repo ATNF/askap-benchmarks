@@ -8,5 +8,8 @@
 #SBATCH --account=pawsey0007
 
 module load cuda/11.4.2 gcc/11.1.0
-nvcc ../main.cpp ../src/DegridderCPU.cpp ../src/DegridderGPU.cu ../src/degridKernelGPU.cu ../src/Setup.cpp ../utilities/MaxError.cpp ../utilities/PrintVector.cpp ../utilities/RandomVectorGenerator.cpp -o askapDegrid -std=c++17 -Xcompiler -fopenmp
-srun nvprof ./askapDegrid
+
+make clean
+CXXFLAGS="-v -Xcompiler -fopenmp -O2" make all
+
+srun nvprof ./bin/askapDegrid.exe
