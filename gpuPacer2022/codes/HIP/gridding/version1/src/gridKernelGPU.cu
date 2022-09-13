@@ -1,4 +1,4 @@
-#include "gridKernelGPU.cuh"
+#include "gridKernelGPU.h"
 
 __global__
 void devGridKernel(
@@ -14,8 +14,6 @@ void devGridKernel(
 {
     //printf("Hi there!\n");
     // The actual starting grid point
-    /// PJE: why is this in shared memory? is it just to have 
-    /// thread local small bits of memory
     __shared__ int gindShared;
 
     // The Convolution function point from which we offset
@@ -29,9 +27,6 @@ void devGridKernel(
     // rather than all reading from device (global) memory
     __shared__ Complex dataLocal;
 
-
-    /// PJE: why have only first thread do this? 
-    /// can we speed up the code to remove if statement.
     if (threadIdx.x == 0)
     {
         gindShared = iu[dindLocal] + GSIZE * iv[dindLocal] - support;
@@ -42,7 +37,6 @@ void devGridKernel(
     __syncthreads();
 
     // Make a local copy from shared memory
-    /// PJE: I'm confused by use of shared to then copy to local
     int gind = gindShared;
     int cind = cindShared;
 

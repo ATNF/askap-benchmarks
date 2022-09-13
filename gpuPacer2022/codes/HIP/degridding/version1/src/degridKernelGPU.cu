@@ -1,4 +1,4 @@
-#include "degridKernelGPU.cuh"
+#include "degridKernelGPU.h"
 
 template <int support>
 __device__ Complex sumReduceWarpComplex(Complex val)
@@ -24,7 +24,15 @@ __device__ Complex sumReduceWarpComplex(Complex val)
     vals[i] = v = v + vals[i + 2];
     vals[i] = v = v + vals[i + 1];
 
-    return make_cuComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+// joe@fluidnumerics.com Sept. 12 2022 : This patch is needed for rocm 4.3.0 on Topaz
+// The amd_detail/hip_complex.h header file does not have the same API defined as the 
+// nvidia_detail/hip_complex.h. For Nvidia, the hip_complex.h defines "make_Complex"
+// to map to make_cuComplex ; For AMD, the hip_complex.h defines "make_hipComplex"
+#ifdef __NVCC__
+    return make_Complex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+#else
+    return make_hipComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+#endif
 }
 
 // launch_bounds__(2*support+1, 8)
@@ -68,7 +76,7 @@ void devDegridKernel(
         int gind = gindShared + GSIZE * row;
         int cind = cindShared + SSIZE * row;
 
-        Complex sum = cuCmulf(grid[gind + threadIdx.x], C[cind + threadIdx.x]);
+        Complex sum = hipCmulf(grid[gind + threadIdx.x], C[cind + threadIdx.x]);
 
         // compute warp sums
         int i = threadIdx.x;
@@ -96,10 +104,10 @@ void devDegridKernel(
 #pragma unroll
             for (int w = 1; w < NUMWARPS + 1; w++)
             {
-                sum = cuCaddf(sum, dataShared[w]);
+                sum = hipCaddf(sum, dataShared[w]);
             }
 
-            original = cuCaddf(original, sum);
+            original = hipCaddf(original, sum);
         }
     }
     if (threadIdx.x == 0)

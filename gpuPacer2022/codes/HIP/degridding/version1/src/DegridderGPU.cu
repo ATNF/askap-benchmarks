@@ -5,19 +5,6 @@ using std::endl;
 using std::vector;
 using std::complex;
 
-// Error checking macro
-#define cudaCheckErrors(msg) \
-    do { \
-        cudaError_t __err = cudaGetLastError(); \
-        if (__err != cudaSuccess) { \
-            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, cudaGetErrorString(__err), \
-                __FILE__, __LINE__); \
-            fprintf(stderr, "*** FAILED - ABORTING\n"); \
-            exit(1); \
-        } \
-    } while (0)
-
 void degridHelper(const Complex* dGrid,
     const int SSIZE,
     const int DSIZE,
@@ -30,9 +17,9 @@ void degridHelper(const Complex* dGrid,
     Complex* dData)
 {
     int device;
-    cudaGetDevice(&device);
-    cudaDeviceProp devProp;
-    cudaGetDeviceProperties(&devProp, device);
+    hipGetDevice(&device);
+    hipDeviceProp_t devProp;
+    hipGetDeviceProperties(&devProp, device);
 
     int count = 0;
     int gridSize = 1024 * devProp.multiProcessorCount; // is starting size, will be reduced as required
@@ -49,12 +36,12 @@ void degridHelper(const Complex* dGrid,
         switch (support)
         {
         case 64:
-            devDegridKernel<64> << < gridSize, SSIZE >> > (dGrid, GSIZE, dC, dCOffset, dIU, dIV, dData, dind);
+            devDegridKernel<64> <<< gridSize, SSIZE >>>(dGrid, GSIZE, dC, dCOffset, dIU, dIV, dData, dind);
             break;
         default:
             assert(0);
         }
-        cudaCheckErrors("cuda kernel launch failure");
+        gpuCheckErrors("cuda kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;
 
@@ -81,38 +68,38 @@ void DegridderGPU<T2>::degridder()
     int* dIV;
 
     // Allocate device vectors
-    cudaMalloc(&dData, SIZE_DATA);
-    cudaMalloc(&dGrid, SIZE_GRID);
-    cudaMalloc(&dC, SIZE_C);
-    cudaMalloc(&dCOffset, SIZE_COFFSET);
-    cudaMalloc(&dIU, SIZE_IU);
-    cudaMalloc(&dIV, SIZE_IV);
-    cudaCheckErrors("cudaMalloc failure");
+    gpuErrchk(hipMalloc(&dData, SIZE_DATA));
+    gpuErrchk(hipMalloc(&dGrid, SIZE_GRID));
+    gpuErrchk(hipMalloc(&dC, SIZE_C));
+    gpuErrchk(hipMalloc(&dCOffset, SIZE_COFFSET));
+    gpuErrchk(hipMalloc(&dIU, SIZE_IU));
+    gpuErrchk(hipMalloc(&dIV, SIZE_IV));
+    gpuCheckErrors("hipMalloc failure");
 
-    cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
-    cudaMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
-    cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
-    cudaMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
-    cudaCheckErrors("cudaMemcpy H2D failure");
+    gpuErrchk(hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice));
+    gpuCheckErrors("hipMemcpy H2D failure");
 
     // Kernel launch
-    typedef cuComplex Complex;
+    typedef hipComplex Complex;
     degridHelper((const Complex*)dGrid, SSIZE, DSIZE, GSIZE, support, (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dData);
 
-    cudaMemcpy(data.data(), dData, SIZE_DATA, cudaMemcpyDeviceToHost);
-    cudaCheckErrors("cudaMemcpy D2H failure");
+    gpuErrchk(hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost));
+    gpuCheckErrors("hipMemcpy D2H failure");
 
 
     // Deallocate device vectors
-    cudaFree(dData);
-    cudaFree(dGrid);
-    cudaFree(dC);
-    cudaFree(dCOffset);
-    cudaFree(dIU);
-    cudaFree(dIV);
-    cudaCheckErrors("cudaFree failure");
+    gpuErrchk(hipFree(dData));
+    gpuErrchk(hipFree(dGrid));
+    gpuErrchk(hipFree(dC));
+    gpuErrchk(hipFree(dCOffset));
+    gpuErrchk(hipFree(dIU));
+    gpuErrchk(hipFree(dIV));
+    gpuCheckErrors("hipFree failure");
 }
 
 template void DegridderGPU<std::complex<float>>::degridder();

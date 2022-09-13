@@ -90,7 +90,7 @@ void GridderGPU<T2>::gridder()
     for (int dind = 0; dind < DSIZE; dind += step)
     {
         step = gridStep(DSIZE, SSIZE, dind, iu, iv);
-        cout << "Step = " << step << endl;
+//        cout << "Step = " << step << endl;
         dim3 gridDim(SSIZE, step);
         devGridKernel << <gridDim, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
         cudaCheckErrors("kernel launch (devGridKernel_v0) failure");

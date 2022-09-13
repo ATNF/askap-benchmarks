@@ -1,18 +1,17 @@
-CXX = hipcc
+CXX = nvcc
 CXXFLAGS ?=  -v -Xcompiler -fopenmp -O2
 
 # Target executable name:
-EXE = bin/askapDegrid.exe
+EXE = bin/askapGrid.exe
 
 OBJS = obj/main.o \
-obj/DegridderCPU.o \
-obj/DegridderGPU.o \
-obj/degridKernelGPU.o \
+obj/GridderCPU.o \
+obj/GridderGPU.o \
+obj/gridKernelGPU.o \
 obj/Setup.o \
 obj/MaxError.o \
 obj/PrintVector.o \
-obj/RandomVectorGenerator.o \
-obj/RunInfo.o
+obj/RandomVectorGenerator.o
 
 all : $(EXE)
 
@@ -32,4 +31,4 @@ obj/%.o: ../%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(EXE)
+	rm $(OBJS) $(EXE)

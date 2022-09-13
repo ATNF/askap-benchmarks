@@ -5,31 +5,12 @@ using std::endl;
 using std::vector;
 using std::complex;
 
-// Error checking macro
-#define cudaCheckErrors(msg) \
-    do { \
-        cudaError_t __err = cudaGetLastError(); \
-        if (__err != cudaSuccess) { \
-            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, cudaGetErrorString(__err), \
-                __FILE__, __LINE__); \
-            fprintf(stderr, "*** FAILED - ABORTING\n"); \
-            exit(1); \
-        } \
-    } while (0)
-
 int gridStep(const int DSIZE, const int SSIZE, const int dind, const std::vector<int>&iu, const std::vector<int>&iv);
 
 template <typename T2>
 void GridderGPU<T2>::gridder()
 {
     cout << "\nGridding on GPU" << endl;
-
-    // Timing
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaCheckErrors("cudaEvent create failure");
 
     // Device parameters
     const size_t SIZE_DATA = data.size() * sizeof(T2);
@@ -47,29 +28,29 @@ void GridderGPU<T2>::gridder()
     int* dIV;
 
     // Allocate device vectors
-    cudaMalloc(&dData, SIZE_DATA);
-    cudaMalloc(&dGrid, SIZE_GRID);
-    cudaMalloc(&dC, SIZE_C);
-    cudaMalloc(&dCOffset, SIZE_COFFSET);
-    cudaMalloc(&dIU, SIZE_IU);
-    cudaMalloc(&dIV, SIZE_IV);
-    cudaCheckErrors("cudaMalloc failure");
+    gpuErrchk(hipMalloc(&dData, SIZE_DATA));
+    gpuErrchk(hipMalloc(&dGrid, SIZE_GRID));
+    gpuErrchk(hipMalloc(&dC, SIZE_C));
+    gpuErrchk(hipMalloc(&dCOffset, SIZE_COFFSET));
+    gpuErrchk(hipMalloc(&dIU, SIZE_IU));
+    gpuErrchk(hipMalloc(&dIV, SIZE_IV));
+    gpuCheckErrors("hipMalloc failure");
 
-    cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
-    cudaMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
-    cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
-    cudaMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
-    cudaCheckErrors("cudaMemcpy H2D failure");
+    gpuErrchk(hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice));
+    gpuErrchk(hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice));
+    gpuCheckErrors("hipMemcpy H2D failure");
 
     /*******************************************************************************************************/
     /*******************************************************************************************************/
     // Kernel launch
     cout << "Kernel launch" << endl;
     const size_t DSIZE = data.size();
-    typedef cuComplex Complex;
-    cudaFuncSetCacheConfig(devGridKernel, cudaFuncCachePreferL1);
+    typedef hipComplex Complex;
+    hipFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernel), hipFuncCachePreferL1);
 
     const int SSIZE = 2 * support + 1;
     int step = 1;
@@ -90,25 +71,25 @@ void GridderGPU<T2>::gridder()
     for (int dind = 0; dind < DSIZE; dind += step)
     {
         step = gridStep(DSIZE, SSIZE, dind, iu, iv);
-        cout << "Step = " << step << endl;
         dim3 gridDim(SSIZE, step);
-        devGridKernel << <gridDim, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
-        cudaCheckErrors("kernel launch (devGridKernel_v0) failure");
+        /// PJE: make sure any chevron is tightly packed
+        devGridKernel <<<gridDim, SSIZE >>>((const Complex*)dData, support, (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
+        gpuCheckErrors("kernel launch (devGridKernel_v0) failure");
         count++;
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    cudaMemcpy(gpuGrid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
-    cudaCheckErrors("cudaMemcpy D2H failure");
+    gpuErrchk(hipMemcpy(gpuGrid.data(), dGrid, SIZE_GRID, hipMemcpyDeviceToHost));
+    gpuCheckErrors("hipMemcpy D2H failure");
 
     // Deallocate device vectors
-    cudaFree(dData);
-    cudaFree(dGrid);
-    cudaFree(dC);
-    cudaFree(dCOffset);
-    cudaFree(dIU);
-    cudaFree(dIV);
-    cudaCheckErrors("cudaFree failure");
+    gpuErrchk(hipFree(dData));
+    gpuErrchk(hipFree(dGrid));
+    gpuErrchk(hipFree(dC));
+    gpuErrchk(hipFree(dCOffset));
+    gpuErrchk(hipFree(dIU));
+    gpuErrchk(hipFree(dIV));
+    gpuCheckErrors("hipFree failure");
 }
 
 int gridStep(const int DSIZE, const int SSIZE, const int dind, const std::vector<int>& iu, const std::vector<int>& iv)
