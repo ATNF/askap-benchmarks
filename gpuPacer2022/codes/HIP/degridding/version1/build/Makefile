@@ -22,7 +22,7 @@ $(EXE) : $(OBJS)
 obj/%.o: ../src/%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
-obj/%.o: ../utilities/%.cpp ../src/*.h ../src/*.cuh ../utilities/*.h
+obj/%.o: ../utilities/%.cpp ../src/*.h ../utilities/*.h
 	$(CXX) $(CXXFLAGS) -I../src/ -I../utilities -c $< -o $@
 
 obj/%.o: ../src/%.cu ../src/*.h ../utilities/*.h
