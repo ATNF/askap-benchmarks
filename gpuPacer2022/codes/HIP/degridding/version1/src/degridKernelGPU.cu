@@ -1,5 +1,6 @@
 #include "degridKernelGPU.h"
 
+#define FULL_MASK 0xffffffff
 template <int support>
 __device__ Complex sumReduceWarpComplex(Complex val)
 {
@@ -29,7 +30,7 @@ __device__ Complex sumReduceWarpComplex(Complex val)
 // nvidia_detail/hip_complex.h. For Nvidia, the hip_complex.h defines "make_Complex"
 // to map to make_cuComplex ; For AMD, the hip_complex.h defines "make_hipComplex"
 #ifdef __NVCC__
-    return make_Complex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+    return make_cuComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
 #else
     return make_hipComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
 #endif
@@ -80,9 +81,14 @@ void devDegridKernel(
 
         // compute warp sums
         int i = threadIdx.x;
-        if (i < SSIZE - 1)
+        if (i < SSIZE)
         {
-            sum = sumReduceWarpComplex<support>(sum);
+          for (int offset = 16; offset > 0; offset /=2 )
+          {
+            sum.x += __shfl_down_sync(FULL_MASK,sum.x,offset);
+            sum.y += __shfl_down_sync(FULL_MASK,sum.y,offset);
+          }
+          
         }
 
         const int NUMWARPS = (2 * support) / 32;
