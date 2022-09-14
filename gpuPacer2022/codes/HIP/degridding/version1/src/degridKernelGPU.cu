@@ -1,40 +1,13 @@
+#include <hip/hip_runtime.h>
 #include "degridKernelGPU.h"
 
 #define FULL_MASK 0xffffffff
-template <int support>
-__device__ Complex sumReduceWarpComplex(Complex val)
-{
-    const int offset = 2 * support;
-    volatile __shared__ float vals[offset * 2];
 
-    int i = threadIdx.x;
-    int lane = i & 31;
-    vals[i] = val.x;
-    vals[i + offset] = val.y;
-
-    float v = val.x;
-    if (lane >= 16)
-    {
-        i += offset;
-        v = val.y;
-    }
-
-    vals[i] = v = v + vals[i + 16];
-    vals[i] = v = v + vals[i + 8];
-    vals[i] = v = v + vals[i + 4];
-    vals[i] = v = v + vals[i + 2];
-    vals[i] = v = v + vals[i + 1];
-
-// joe@fluidnumerics.com Sept. 12 2022 : This patch is needed for rocm 4.3.0 on Topaz
-// The amd_detail/hip_complex.h header file does not have the same API defined as the 
-// nvidia_detail/hip_complex.h. For Nvidia, the hip_complex.h defines "make_Complex"
-// to map to make_cuComplex ; For AMD, the hip_complex.h defines "make_hipComplex"
 #ifdef __NVCC__
-    return make_cuComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+#define WARPSIZE 32
 #else
-    return make_hipComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
+#define WARPSIZE 64
 #endif
-}
 
 // launch_bounds__(2*support+1, 8)
 template <int support>
@@ -49,7 +22,7 @@ void devDegridKernel(
     Complex* data,
     const int dind)
 {
-    //printf("Hi there!\n");
+
     const int dindLocal = dind + blockIdx.x;
 
     // The actual starting grid point
@@ -69,7 +42,7 @@ void devDegridKernel(
 
     const int SSIZE = 2 * support + 1;
 
-#pragma unroll 8
+//#pragma unroll 8
     // row gives the support location in the v-direction
     for (int row = 0; row < SSIZE; ++row)
     {
@@ -83,19 +56,24 @@ void devDegridKernel(
         int i = threadIdx.x;
         if (i < SSIZE)
         {
-          for (int offset = 16; offset > 0; offset /=2 )
+          for (int offset = WARPSIZE/2; offset > 0; offset /=2 )
           {
-            sum.x += __shfl_down_sync(FULL_MASK,sum.x,offset);
-            sum.y += __shfl_down_sync(FULL_MASK,sum.y,offset);
+#ifdef __NVCC__		  
+            sum.x += __shfl_down_sync(FULL_MASK,sum.x,offset,WARPSIZE);
+            sum.y += __shfl_down_sync(FULL_MASK,sum.y,offset,WARPSIZE);
+#else
+            sum.x += __shfl_down(sum.x,offset,WARPSIZE);
+            sum.y += __shfl_down(sum.y,offset,WARPSIZE);
+#endif	    
           }
           
         }
 
-        const int NUMWARPS = (2 * support) / 32;
+        const int NUMWARPS = (2 * support) / WARPSIZE;
         __shared__ Complex dataShared[NUMWARPS + 1];
 
-        int warp = i / 32;
-        int lane = threadIdx.x & 31;
+        int warp = i / WARPSIZE;
+        int lane = threadIdx.x & (WARPSIZE-1);
 
         if (lane == 0)
         {
@@ -107,7 +85,7 @@ void devDegridKernel(
         // combine warp sums 
         if (i == 0)
         {
-#pragma unroll
+//#pragma unroll
             for (int w = 1; w < NUMWARPS + 1; w++)
             {
                 sum = hipCaddf(sum, dataShared[w]);
@@ -134,6 +112,6 @@ void devDegridKernel<64>(
     Complex* data,
     const int dind);
 
-template
-__device__
-Complex sumReduceWarpComplex<64>(Complex val);
+//template
+//__device__
+//Complex sumReduceWarpComplex<64>(Complex val);
