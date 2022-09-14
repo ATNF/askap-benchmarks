@@ -45,40 +45,60 @@ static size_t posToIdx(const int width, const Position& pos)
     return (pos.y * width) + pos.x;
 }
 
+template <unsigned int blockSize>
 __device__
 void warpReduce(volatile float* data, volatile size_t* index, int tileIdx)
 {
-    if (fabs(data[tileIdx + 32]) > fabs(data[tileIdx]))
+    if (blockSize >= 64)
     {
-        data[tileIdx] = data[tileIdx + 32];
-        index[tileIdx] = index[tileIdx + 32];
+        if (fabs(data[tileIdx + 32]) > fabs(data[tileIdx]))
+        {
+            data[tileIdx] = data[tileIdx + 32];
+            index[tileIdx] = index[tileIdx + 32];
+        }
     }
-    if (fabs(data[tileIdx + 16]) > fabs(data[tileIdx]))
+    if (blockSize >= 32)
     {
-        data[tileIdx] = data[tileIdx + 16];
-        index[tileIdx] = index[tileIdx + 16];
+        if (fabs(data[tileIdx + 16]) > fabs(data[tileIdx]))
+        {
+            data[tileIdx] = data[tileIdx + 16];
+            index[tileIdx] = index[tileIdx + 16];
+        }
     }
-    if (fabs(data[tileIdx + 8]) > fabs(data[tileIdx]))
+    if (blockSize >= 16)
     {
-        data[tileIdx] = data[tileIdx + 8];
-        index[tileIdx] = index[tileIdx + 8];
+        if (fabs(data[tileIdx + 8]) > fabs(data[tileIdx]))
+        {
+            data[tileIdx] = data[tileIdx + 8];
+            index[tileIdx] = index[tileIdx + 8];
+        }
     }
-    if (fabs(data[tileIdx + 4]) > fabs(data[tileIdx]))
+    if (blockSize >= 8)
     {
-        data[tileIdx] = data[tileIdx + 4];
-        index[tileIdx] = index[tileIdx + 4];
+        if (fabs(data[tileIdx + 4]) > fabs(data[tileIdx]))
+        {
+            data[tileIdx] = data[tileIdx + 4];
+            index[tileIdx] = index[tileIdx + 4];
+        }
     }
-    if (fabs(data[tileIdx + 2]) > fabs(data[tileIdx]))
+    if (blockSize >= 4)
     {
-        data[tileIdx] = data[tileIdx + 2];
-        index[tileIdx] = index[tileIdx + 2];
+        if (fabs(data[tileIdx + 2]) > fabs(data[tileIdx]))
+        {
+            data[tileIdx] = data[tileIdx + 2];
+            index[tileIdx] = index[tileIdx + 2];
+        }
     }
-    if (fabs(data[tileIdx + 1]) > fabs(data[tileIdx]))
+    if (blockSize >= 2)
     {
-        data[tileIdx] = data[tileIdx + 1];
-        index[tileIdx] = index[tileIdx + 1];
+        if (fabs(data[tileIdx + 1]) > fabs(data[tileIdx]))
+        {
+            data[tileIdx] = data[tileIdx + 1];
+            index[tileIdx] = index[tileIdx + 1];
+        }
     }
 }
+
 
 __global__
 void dFindPeak_Step2(float* data, size_t* inIndex, size_t* outIndex, size_t n)
@@ -124,6 +144,7 @@ void dFindPeak_Step2(float* data, size_t* inIndex, size_t* outIndex, size_t n)
     }
 }
 
+template <unsigned int blockSize>
 __global__
 void dFindPeak_Step1(const float* data, float* outMax, size_t* outIndex, size_t n)
 {
@@ -151,6 +172,8 @@ void dFindPeak_Step1(const float* data, float* outMax, size_t* outIndex, size_t 
 
     for (unsigned int s = blockDim.x / 2; s > 32; s >>= 1)
     {
+        
+
         // parallel sweep reduction
         if (tileIdx < s)
         {
@@ -162,10 +185,48 @@ void dFindPeak_Step1(const float* data, float* outMax, size_t* outIndex, size_t 
         }
         __syncthreads();
     }
+    
+    if (blockSize >= 512) 
+    {
+        if (tileIdx < 256)
+        {
+            if (fabs(TILE_VAL[tileIdx + 256]) > fabs(TILE_VAL[tileIdx]))
+            {
+                TILE_VAL[tileIdx] = TILE_VAL[tileIdx + 256];
+                TILE_IDX[tileIdx] = TILE_IDX[tileIdx + 256];
+            }
+            
+        } 
+        __syncthreads();
+    }
+    if (blockSize >= 256) 
+    {
+        if (tileIdx < 128)
+        { 
+            if (fabs(TILE_VAL[tileIdx + 128]) > fabs(TILE_VAL[tileIdx]))
+            {
+                TILE_VAL[tileIdx] = TILE_VAL[tileIdx + 128];
+                TILE_IDX[tileIdx] = TILE_IDX[tileIdx + 128];
+            }
+        } 
+        __syncthreads();
+    }
+    if (blockSize >= 128) 
+    {
+        if (tileIdx < 64)
+        { 
+            if (fabs(TILE_VAL[tileIdx + 64]) > fabs(TILE_VAL[tileIdx]))
+            {
+                TILE_VAL[tileIdx] = TILE_VAL[tileIdx + 64];
+                TILE_IDX[tileIdx] = TILE_IDX[tileIdx + 64];
+            }
+        } 
+        __syncthreads();
+    }
 
     if (tileIdx < 32)
     {
-        warpReduce(TILE_VAL, TILE_IDX, tileIdx);
+        warpReduce<blockSize>(TILE_VAL, TILE_IDX, tileIdx);
     }
 
     if (tileIdx == 0)
@@ -196,8 +257,45 @@ static Peak findPeak(const float* dData, size_t N)
     cudaMalloc(&dIndex, SIZE_MAX_INDEX);
     cudaMalloc(&d2Index, sizeof(size_t));
     cudaCheckErrors("cudaMalloc failure!");
+
     
-    dFindPeak_Step1<< <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+    switch (BLOCK_SIZE)
+    {
+    case 1024:
+        dFindPeak_Step1<1024> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 512:
+        dFindPeak_Step1<512> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 256:
+        dFindPeak_Step1<256> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 128:
+        dFindPeak_Step1<128> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 64:
+        dFindPeak_Step1<64> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 32:
+        dFindPeak_Step1<32> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 16:
+        dFindPeak_Step1<16> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 8:
+        dFindPeak_Step1<8> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 4:
+        dFindPeak_Step1<4> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 2:
+        dFindPeak_Step1<2> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    case 1:
+        dFindPeak_Step1<1> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        break;
+    }
+    
     cudaCheckErrors("cuda kernel launch 1 failure!");
     dFindPeak_Step2 << <1, BLOCK_SIZE >> > (dMax, dIndex, d2Index, GRID_SIZE);
     cudaCheckErrors("cuda kernel launch 2 failure!");
@@ -319,6 +417,7 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
     cout << "Found peak of PSF: " << "Maximum = " << psfPeak.val
         << " at location " << idxToPos(psfPeak.pos, psfWidth).x << ","
         << idxToPos(psfPeak.pos, psfWidth).y << endl;
+
 
     for (unsigned int i = 0; i < gNiters; ++i)
     {
