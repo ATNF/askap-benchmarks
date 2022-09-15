@@ -1,4 +1,4 @@
-#include "HogbomCuda.cuh"
+#include "HogbomCuda.h"
 
 using std::vector;
 using std::cout;
@@ -16,10 +16,6 @@ using std::endl;
             exit(1); \
         } \
     } while (0)
-
-// Some constants for findPeak
-const int findPeakNBlocks = 4;
-const int findPeakWidth = 1024;
 
 struct Peak
 {
@@ -50,84 +46,139 @@ static size_t posToIdx(const int width, const Position& pos)
 }
 
 __global__
-void dFindPeak(const float* image, size_t size, Peak* absPeak)
+void dFindPeak_Step2(float* data, size_t* inIndex, size_t* outIndex, size_t n)
 {
-    __shared__ float maxVal[findPeakWidth];
-    __shared__ size_t maxPos[findPeakWidth];
+    __shared__ float TILE_VAL[BLOCK_SIZE];
+    __shared__ size_t TILE_IDX[BLOCK_SIZE];
 
-    const int column = blockDim.x * blockIdx.x + threadIdx.x;
-    maxVal[threadIdx.x] = 0.0;
-    maxPos[threadIdx.x] = 0;
+    size_t tileIdx = threadIdx.x;
+    TILE_VAL[tileIdx] = 0.0;
+    TILE_IDX[tileIdx] = 0;
+    size_t globalIdx = threadIdx.x + blockIdx.x * blockDim.x;
 
-    for (int idx = column; idx < size; idx += 4096)
+    // grid stride loop to load data
+    while (globalIdx < n)
     {
-        if (abs(image[idx]) > abs(maxVal[threadIdx.x]))
+        if (fabs(data[globalIdx]) > fabs(TILE_VAL[tileIdx]))
         {
-            maxVal[threadIdx.x] = image[idx];
-            maxPos[threadIdx.x] = idx;
+            TILE_VAL[tileIdx] = data[globalIdx];
+            TILE_IDX[tileIdx] = inIndex[globalIdx];
+        }
+        globalIdx += gridDim.x * blockDim.x;
+    }
+
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
+    {
+        __syncthreads();
+
+        // parallel sweep reduction
+        if (tileIdx < s)
+        {
+            if (fabs(TILE_VAL[tileIdx + s]) > fabs(TILE_VAL[tileIdx]))
+            {
+                TILE_VAL[tileIdx] = TILE_VAL[tileIdx + s];
+                TILE_IDX[tileIdx] = TILE_IDX[tileIdx + s];
+            }
         }
     }
 
-    __syncthreads();
-    if (threadIdx.x == 0)
+    if (tileIdx == 0)
     {
-        absPeak[blockIdx.x].val = 0.0;
-        absPeak[blockIdx.x].pos = 0;
-        for (int i = 0; i < findPeakWidth; ++i)
+        outIndex[blockIdx.x] = TILE_IDX[tileIdx];
+        data[blockIdx.x] = TILE_VAL[tileIdx];
+    }
+}
+
+__global__
+void dFindPeak_Step1(const float* data, float* outMax, size_t* outIndex, size_t n)
+{
+    __shared__ float TILE_VAL[BLOCK_SIZE];
+    __shared__ size_t TILE_IDX[BLOCK_SIZE];
+
+    size_t tileIdx = threadIdx.x;
+
+    TILE_VAL[tileIdx] = 0.0;
+    TILE_IDX[tileIdx] = 0;
+
+    size_t globalIdx = threadIdx.x + blockIdx.x * blockDim.x;
+    size_t gridSize = gridDim.x * blockDim.x;
+
+    // grid stride loop to load data
+    while (globalIdx < n)
+    {
+        if (fabs(data[globalIdx]) > fabs(TILE_VAL[tileIdx]))
         {
-            if (abs(maxVal[i]) > abs(absPeak[blockIdx.x].val))
+            TILE_VAL[tileIdx] = data[globalIdx];
+            TILE_IDX[tileIdx] = globalIdx;
+        }
+        globalIdx += gridSize;
+    }
+
+    for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1)
+    {
+        __syncthreads();
+
+        // parallel sweep reduction
+        if (tileIdx < s)
+        {
+            if (fabs(TILE_VAL[tileIdx + s]) > fabs(TILE_VAL[tileIdx]))
             {
-                absPeak[blockIdx.x].val = maxVal[i];
-                absPeak[blockIdx.x].pos = maxPos[i];
+                TILE_VAL[tileIdx] = TILE_VAL[tileIdx + s];
+                TILE_IDX[tileIdx] = TILE_IDX[tileIdx + s];
             }
         }
+
+    }
+    
+    if (tileIdx == 0)
+    {
+        outMax[blockIdx.x] = TILE_VAL[tileIdx];
+        outIndex[blockIdx.x] = TILE_IDX[tileIdx];
     }
 }
 
 __host__
-static Peak findPeak(const float* dImage, size_t size)
+static Peak findPeak(const float* dData, size_t N)
 {
-    const int nBlocks = findPeakNBlocks; // 4
-    vector<Peak> peaks(nBlocks);
+    const size_t SIZE_DATA = N * sizeof(float);
+    const size_t SIZE_MAX_VALUE = GRID_SIZE * sizeof(float);
+    const size_t SIZE_MAX_INDEX = GRID_SIZE * sizeof(size_t);
 
-    // Initialise a peaks array on the device. Each thread block will return
-    // a peak. 
-    // Note: dPeaks array is not initialised (hence avoiding the memcpy)
-    // It is up to do device function to do that.
-    Peak* dPeak;
-    cudaMalloc(&dPeak, nBlocks * sizeof(Peak));
-    cudaCheckErrors("cudaMalloc failure in findPeak");
+    // Host vector for max values
+    vector<float> hMax(GRID_SIZE, 0.0);
+    // Host vector for index values
+    vector<size_t> hIndex(GRID_SIZE, 0);
 
-    // Find peak
-    dFindPeak << <nBlocks, findPeakWidth >> > (dImage, size, dPeak);
-    cudaCheckErrors("kernel launch failure in findPeak");
+    // Device vectors
+    float* dMax;
+    size_t* dIndex;
+    size_t* d2Index;
 
-    // Get the peaks array back from the device
-    cudaMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), cudaMemcpyDeviceToHost);
-    cudaCheckErrors("cudaMemcpy D2H failure in findPeak");
+    cudaMalloc(&dMax, SIZE_MAX_VALUE);
+    cudaMalloc(&dIndex, SIZE_MAX_INDEX);
+    cudaMalloc(&d2Index, sizeof(size_t));
+    cudaCheckErrors("cudaMalloc failure!");
 
-    //=================================================================================
-    // OPTIMIZATION 1 - Unnecessary synchronization
-    //=================================================================================
-//    cudaDeviceSynchronize();
-//    cudaCheckErrors("cudaDeviceSynchronize failure in findPeak");
+    dFindPeak_Step1<< <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+    cudaCheckErrors("cuda kernel launch 1 failure!");
+    dFindPeak_Step2 << <1, BLOCK_SIZE >> > (dMax, dIndex, d2Index, GRID_SIZE);
+    cudaCheckErrors("cuda kernel launch 2 failure!");
 
-    cudaFree(dPeak);
-    cudaCheckErrors("cudaFree failure in findPeak");
+    cudaMemcpy(hMax.data(), dMax, sizeof(float), cudaMemcpyDeviceToHost);
+    cudaCheckErrors("cudaMemcpy D2H failure!");
+    cudaMemcpy(hIndex.data(), d2Index, sizeof(size_t), cudaMemcpyDeviceToHost);
+    cudaCheckErrors("cudaMemcpy D2H failure!");
 
-    // Each thread block return a peak, find the absolute maximum
     Peak p;
-    p.val = 0;
-    p.pos = 0;
-    for (int i = 0; i < nBlocks; ++i)
-    {
-        if (abs(peaks[i].val) > abs(p.val))
-        {
-            p.val = peaks[i].val;
-            p.pos = peaks[i].pos;
-        }
-    }
+    p.val = hMax[0];
+    p.pos = hIndex[0];
 
+
+    cudaFree(dMax);
+    cudaFree(dIndex);
+    cudaFree(d2Index);
+    cudaCheckErrors("cudaFree failure!");
+    
     return p;
 }
 
@@ -230,21 +281,18 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
     cout << "Found peak of PSF: " << "Maximum = " << psfPeak.val
         << " at location " << idxToPos(psfPeak.pos, psfWidth).x << ","
         << idxToPos(psfPeak.pos, psfWidth).y << endl;
-    //=================================================================================
-    // OPTIMIZATION 3 - Unnecessary assert
-    //=================================================================================
-    //assert(psfPeak.pos <= psf.size());
-    // May be included in DEBUG
 
     for (unsigned int i = 0; i < gNiters; ++i)
     {
         // Find peak in the residual image
         Peak peak = findPeak(dResidual, residual.size()); 
-        //=================================================================================
-        // OPTIMIZATION 4 - Unnecessary assert
-        //=================================================================================
-        //assert(peak.pos <= residual.size());
-        // May be included in DEBUG
+        
+        if ((i + 1) % 100 == 0 || i == 0)
+        {
+            cout << "Iteration: " << i + 1 << " - Maximum = " << peak.val
+                << " at location " << idxToPos(peak.pos, dirtyWidth).x << ","
+                << idxToPos(peak.pos, dirtyWidth).y << ", index = " << peak.pos << endl;
+        }
         
         // Check if threshold has been reached
         if (abs(peak.val) < gThreshold)
@@ -260,14 +308,6 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
 
         // Add to model
         model[peak.pos] += peak.val * gGain;
-
-        // Wait for the PSF subtraction to finish
-        //=================================================================================
-        // OPTIMIZATION 2 - Unnecessary synchronization?? !!!!!!!but CAREFUL!!!!!!!!!!!!!!!!!!!!!
-        //=================================================================================
-        //cudaDeviceSynchronize();
-        //cudaCheckErrors("cudaDeviceSynchronize failure in deconvolve");
-
     }
 
     // Copy device arrays back into the host vector
