@@ -63,7 +63,7 @@ int main()
 	ImageProcess imagProc;
 
 	// Load dirty image and psf
-	cout << "Reading dirty image & psf image" << endl;
+//	cout << "Reading dirty image & psf image" << endl;
 	vector<float> dirty = imagProc.readImage(gDirtyFile);
 	vector<float> psf = imagProc.readImage(gPsfFile);
 	const size_t DIRTY_DIM = imagProc.checkSquare(dirty);
@@ -94,15 +94,15 @@ int main()
 		runtimeGolden = t1 - t0;
 
 		// Report on timings
-		cout << "Time " << runtimeGolden << " (s) " << endl;
-		cout << "Time per cycle " << runtimeGolden / gNiters * 1000 << " (ms)" << endl;
-		cout << "Cleaning rate  " << gNiters / runtimeGolden << " (iterations per second)" << endl;
-		cout << "Done" << endl;
+//		cout << "Time " << runtimeGolden << " (s) " << endl;
+//		cout << "Time per cycle " << runtimeGolden / gNiters * 1000 << " (ms)" << endl;
+//		cout << "Cleaning rate  " << gNiters / runtimeGolden << " (iterations per second)" << endl;
+//		cout << "Done" << endl;
 	}
 
 	// Write images out
-	imagProc.writeImage("residual.img", goldenResidual);
-	imagProc.writeImage("model.img", goldenModel);
+//	imagProc.writeImage("residual.img", goldenResidual);
+//	imagProc.writeImage("model.img", goldenModel);
 
 	//==================================================================================
 	//==================================================================================
@@ -120,10 +120,10 @@ int main()
 		auto t1 = omp_get_wtime();
 		runtimeGPU = t1 - t0;
 		// Report on timings
-		cout << "Time " << runtimeGPU << " (s) " << endl;
-		cout << "Time per cycle " << runtimeGPU / gNiters * 1000 << " (ms)" << endl;
-		cout << "Cleaning rate  " << gNiters / runtimeGPU << " (iterations per second)" << endl;
-		cout << "Done" << endl;
+//		cout << "Time " << runtimeGPU << " (s) " << endl;
+//		cout << "Time per cycle " << runtimeGPU / gNiters * 1000 << " (ms)" << endl;
+//		cout << "Cleaning rate  " << gNiters / runtimeGPU << " (iterations per second)" << endl;
+//		cout << "Done" << endl;
 	}
 
 	cout << "Verifying model..." << endl;

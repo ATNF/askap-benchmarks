@@ -1,0 +1,4 @@
+"Name","Calls","TotalDurationNs","AverageNs","Percentage"
+dSubtractPSF(float const*, int, float*, int, int, int, int, int, int, int, float, float),1000,128664650,128664,54.80347399044285
+dFindPeak_Step1(float const*, float*, unsigned long*, unsigned long),1001,101949348,101847,43.424347258245426
+dFindPeak_Step2(float*, unsigned long*, unsigned long*, unsigned long),1001,4160626,4156,1.7721787513117262

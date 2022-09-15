@@ -90,43 +90,43 @@ int main()
 		runtimeGolden = t1 - t0;
 
 		// Report on timings
-		cout << "Time " << runtimeGolden << " (s) " << endl;
-		cout << "Time per cycle " << runtimeGolden / gNiters * 1000 << " (ms)" << endl;
-		cout << "Cleaning rate  " << gNiters / runtimeGolden << " (iterations per second)" << endl;
-		cout << "Done" << endl;
+//		cout << "Time " << runtimeGolden << " (s) " << endl;
+//		cout << "Time per cycle " << runtimeGolden / gNiters * 1000 << " (ms)" << endl;
+//		cout << "Cleaning rate  " << gNiters / runtimeGolden << " (iterations per second)" << endl;
+//		cout << "Done" << endl;
 	}
 
 	// Write images out
-	imagProc.writeImage("residual.img", goldenResidual);
-	imagProc.writeImage("model.img", goldenModel);
+//	imagProc.writeImage("residual.img", goldenResidual);
+//	imagProc.writeImage("model.img", goldenModel);
 
 	//==================================================================================
 	//==================================================================================
 	// CUDA (GPU) VERSION
-	vector<float> cudaResidual(dirty.size());
-	vector<float> cudaModel(dirty.size(), 0.0);
-	float runtimeCuda = 0.0;
+	vector<float> gpuResidual(dirty.size());
+	vector<float> gpuModel(dirty.size(), 0.0);
+	float runtimeGPU = 0.0;
 	{
 		auto t0 = omp_get_wtime();
-		cout << "Forward Processing - GPU Cuda" << endl;
-		HogbomCuda cuda;
+		cout << "Forward Processing - GPU" << endl;
+		HogbomCuda gpu;
 
-		cuda.deconvolve(dirty, DIRTY_DIM, psf, PSF_DIM, cudaModel, cudaResidual);
+		gpu.deconvolve(dirty, DIRTY_DIM, psf, PSF_DIM, gpuModel, gpuResidual);
 		
 		auto t1 = omp_get_wtime();
-		runtimeCuda = t1 - t0;
+		runtimeGPU = t1 - t0;
 		// Report on timings
-		cout << "Time " << runtimeCuda << " (s) " << endl;
-		cout << "Time per cycle " << runtimeCuda / gNiters * 1000 << " (ms)" << endl;
-		cout << "Cleaning rate  " << gNiters / runtimeCuda << " (iterations per second)" << endl;
-		cout << "Done" << endl;
+//		cout << "Time " << runtimeGPU << " (s) " << endl;
+//		cout << "Time per cycle " << runtimeGPU / gNiters * 1000 << " (ms)" << endl;
+//		cout << "Cleaning rate  " << gNiters / runtimeGPU << " (iterations per second)" << endl;
+//		cout << "Done" << endl;
 	}
 
 	cout << "Verifying model..." << endl;
-	maximumError.maxError(goldenModel, cudaModel);
+	maximumError.maxError(goldenModel, gpuModel);
 	
 	cout << "Verifying residual..." << endl;
-	maximumError.maxError(goldenResidual, cudaResidual);
+	maximumError.maxError(goldenResidual, gpuResidual);
 
 	cout << "\nRUNTIME IN SECONDS:" << endl;
 	cout << left << setw(21) << "CLEAN CPU"
@@ -135,8 +135,8 @@ int main()
 
 	cout << setprecision(2) << fixed;
 	cout << left << setw(21) << runtimeGolden
-		<< left << setw(21) << runtimeCuda
-		<< left << setw(21) << runtimeGolden / runtimeCuda << endl;
+		<< left << setw(21) << runtimeGPU
+		<< left << setw(21) << runtimeGolden / runtimeGPU << endl;
 
 	return 0;
 }

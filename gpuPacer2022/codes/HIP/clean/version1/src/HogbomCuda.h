@@ -1,7 +1,7 @@
 #pragma once
 
 // Cuda includes
-#include <CommonGPU.h>
+#include "CommonGPU.h"
 
 #include <vector>
 #include <iostream>

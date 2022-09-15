@@ -82,8 +82,8 @@ void HogbomGolden::deconvolve(const std::vector<float>& dirty,
 	size_t psfPeakPos = 0;
 	findPeak(psf, psfPeakVal, psfPeakPos);
 	
-	cout << "PSF peak: " << psfPeakVal << ", at location: " << idxToPos(psfPeakPos, psfWidth).x
-		<< ", " << idxToPos(psfPeakPos, psfWidth).y << endl;
+//	cout << "PSF peak: " << psfPeakVal << ", at location: " << idxToPos(psfPeakPos, psfWidth).x
+//		<< ", " << idxToPos(psfPeakPos, psfWidth).y << endl;
 
 	for (unsigned int i = 0; i < gNiters; ++i)
 	{
@@ -92,12 +92,12 @@ void HogbomGolden::deconvolve(const std::vector<float>& dirty,
 		size_t absPeakPos = 0;
 		findPeak(residual, absPeakVal, absPeakPos);
 
-		if ((i + 1) % 100 == 0)
-		{
-			cout << "Iteration: " << i + 1 << " - Maximum = " << absPeakVal
-				<< " at location " << idxToPos(absPeakPos, dirtyWidth).x << ","
-				<< idxToPos(absPeakPos, dirtyWidth).y << ", index: " << absPeakPos << endl;
-		}
+//		if ((i + 1) % 100 == 0)
+//		{
+//			cout << "Iteration: " << i + 1 << " - Maximum = " << absPeakVal
+//				<< " at location " << idxToPos(absPeakPos, dirtyWidth).x << ","
+//				<< idxToPos(absPeakPos, dirtyWidth).y << ", index: " << absPeakPos << endl;
+//		}
 
 		// Check if the threshold is reached
 		if (fabs(absPeakVal) < gThreshold) 
