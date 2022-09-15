@@ -1,4 +1,4 @@
-#include "HogbomCuda.cuh"
+#include "HogbomCuda.h"
 
 using std::vector;
 using std::cout;

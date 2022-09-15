@@ -98,7 +98,7 @@ void HogbomGolden::deconvolve(const std::vector<float>& dirty,
 		}
 
 		// Check if the threshold is reached
-		if (abs(absPeakVal) < gThreshold) 
+		if (fabs(absPeakVal) < gThreshold) 
 		{
 			cout << "Reached stopping threshold" << endl;
 			break;

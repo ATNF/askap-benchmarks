@@ -39,7 +39,7 @@
 #include "utilities/MaxError.h"
 
 #include "src/HogbomGolden.h"
-#include "src/HogbomCuda.cuh"
+#include "src/HogbomCuda.h"
 
 using std::cout;
 using std::cerr;
