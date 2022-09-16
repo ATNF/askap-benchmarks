@@ -215,9 +215,9 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
     // Find peak of psf
     Peak psfPeak = findPeak(dPsf, psf.size());
 
-    cout << "Found peak of PSF: " << "Maximum = " << psfPeak.val
-        << " at location " << idxToPos(psfPeak.pos, psfWidth).x << ","
-        << idxToPos(psfPeak.pos, psfWidth).y << endl;
+//    cout << "Found peak of PSF: " << "Maximum = " << psfPeak.val
+  //      << " at location " << idxToPos(psfPeak.pos, psfWidth).x << ","
+    //    << idxToPos(psfPeak.pos, psfWidth).y << endl;
     //=================================================================================
     // OPTIMIZATION 3 - Unnecessary assert
     //=================================================================================
@@ -234,12 +234,12 @@ void HogbomCuda::deconvolve(const vector<float>& dirty,
         //assert(peak.pos <= residual.size());
         // May be included in DEBUG
 
-	if ((i+1) % 100 == 0)
-	{
-	    cout << "Iteration: " << i + 1 << " - Maximum = " << peak.val 
-		<< " at location " << idxToPos(peak.pos, dirtyWidth).x << "," 
-		<< idxToPos(peak.pos, dirtyWidth).y << endl;
-	}
+//	if ((i+1) % 100 == 0)
+//	{
+//	    cout << "Iteration: " << i + 1 << " - Maximum = " << peak.val 
+//		<< " at location " << idxToPos(peak.pos, dirtyWidth).x << "," 
+//		<< idxToPos(peak.pos, dirtyWidth).y << endl;
+//	}
         
         // Check if threshold has been reached
         if (abs(peak.val) < gThreshold)
