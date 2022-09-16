@@ -22,18 +22,18 @@ srun rocprof --stats ./bin/askapDegrid.exe
 #  >> get the first two lines of results.stats.csv
 #  >> remove the header line
 #  >> reverse the line, remove timing information, reverse again to give kernel name
-kernel=$(head -n2 results.stats.csv | tail -n1 | rev | cut -d "," -f5- | rev | sed 's/"//g')
+kernel=$(head -n2 results.stats.csv | tail -n1 | rev | cut -d "," -f5- | rev)
 kernel_runtime=$(head -n2 results.stats.csv | tail -n1 | rev | cut -d "," -f5- | rev)
 
 # Get the shortened name for the kernel
-kernel_short=$(echo $kernel | sed 's/void //g' | cut -d "(" -f1 | cut -d "<" -f1)
+kernel_short=$(echo $kernel | sed 's/void //g' | cut -d "(" -f1 | cut -d "<" -f1 | sed 's/"//g')
 echo "Most expensive kernel : $kernel_short"
 
 
 # Create a metrics file for rocprof from the irm template
 sed "s/@KERNEL@/$kernel_short/g" rocprof-irm.tmpl > rocprof-irm.txt
 
-srun rocprof -i rocprof-irm.txt ./bin/askapDegrid.exe
+srun rocprof -i rocprof-irm.txt --stats ./bin/askapDegrid.exe
 
 # Replace the kernel name with the shortname - this makes parsing the csv easier in python for plotting
 sed -i "s/$kernel/$kernel_short/g" rocprof-irm.csv
