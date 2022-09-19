@@ -7,3 +7,22 @@
 ## Version 1
 - CMake implemented
 - Going to be tested on Topaz
+
+## Version 2
+- A new launch configuration implemented
+    - kernel<<<***gridSize***, ***blockSize***>>>(...)
+    - ***gridSize***
+        - Number of data to be produced after degridding
+        - Each block will priduce a single datum
+    - ***blockSize***
+        - dim3(blockSize1, blockSize2)
+        - Each block size equals to ***BLOCK_SIZE32*** (32).
+        - Blocks here are 2 dimensional
+            - blockSize1 is responsible for the loop **suppU**
+            - blockSize2 is responsible for the loop **suppV**
+- Hence, the inner suppV loop is eliminated.
+- A **block-stride loop** is employed for **data load** from **global** to **shared** memory.
+- A parallel sweep is implemented.
+- More modifications are needed for further performance improvements
+- Tests will be performed on Topaz and Mulan for different data size 
+
