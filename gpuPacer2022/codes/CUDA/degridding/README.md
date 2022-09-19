@@ -16,7 +16,7 @@
         - Each block will priduce a single datum
     - ***blockSize***
         - dim3(blockSize1, blockSize2)
-        - Each block size equals to ***BLOCK_SIZE32*** (32).
+        - Each block size equals to ***BLOCK_SIZE*** (32).
         - Blocks here are 2 dimensional
             - blockSize1 is responsible for the loop **suppU**
             - blockSize2 is responsible for the loop **suppV**
