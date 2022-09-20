@@ -1,46 +1,22 @@
-#include "hip/hip_runtime.h"
-#include "degridKernelGPU.cuh"
+#include "degridKernelGPU.h"
+#include <cassert>
 
-template <int support>
-__device__ Complex sumReduceWarpComplex(Complex val)
-{
-    const int offset = 2 * support;
-    volatile __shared__ float vals[offset * 2];
+// need a max size for the static shared memory vectors. Note that there are two of them.
+#define MAX_SSIZE 256
 
-    int i = threadIdx.x;
-    int lane = i & 31;
-    vals[i] = val.x;
-    vals[i + offset] = val.y;
-
-    float v = val.x;
-    if (lane >= 16)
-    {
-        i += offset;
-        v = val.y;
-    }
-
-    vals[i] = v = v + vals[i + 16];
-    vals[i] = v = v + vals[i + 8];
-    vals[i] = v = v + vals[i + 4];
-    vals[i] = v = v + vals[i + 2];
-    vals[i] = v = v + vals[i + 1];
-
-    return make_hipComplex(vals[threadIdx.x], vals[threadIdx.x + offset]);
-}
-
-// launch_bounds__(2*support+1, 8)
-template <int support>
 __global__
 void devDegridKernel(
     const Complex* grid,
     const int GSIZE,
     const Complex* C,
+    const int support,
     const int* cOffset,
     const int* iu,
     const int* iv,
     Complex* data,
     const int dind)
 {
+
     const int bind = blockIdx.x;
     const int tind = threadIdx.x;
 
@@ -177,20 +153,5 @@ void devDegridKernel(
     {
         data[dindLocal] = original;
     }
+
 }
-
-template
-__global__
-void devDegridKernel<64>(
-    const Complex* grid,
-    const int GSIZE,
-    const Complex* C,
-    const int* cOffset,
-    const int* iu,
-    const int* iv,
-    Complex* data,
-    const int dind);
-
-template
-__device__
-Complex sumReduceWarpComplex<64>(Complex val);

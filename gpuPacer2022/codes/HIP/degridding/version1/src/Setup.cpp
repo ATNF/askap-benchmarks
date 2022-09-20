@@ -181,4 +181,3 @@ template void Setup<double, float, complex<double>>::initC();
 template void Setup<double, float, complex<double>>::initCOffset();
 template void Setup<double, float, complex<double>>::initCoord();
 template void Setup<double, float, complex<double>>::setup();
-

@@ -1,15 +1,12 @@
 #pragma once
 
-#include "hip/hip_runtime.h"
-//#include "device_launch_parameters.h"
 
 #include <complex>
 #include <iostream>
-#include <hip/hip_complex.h>
 #include <vector>
 #include <cassert>
 
-#include "degridKernelGPU.cuh"
+#include "degridKernelGPU.h"
 
 template <typename T2>
 class DegridderGPU

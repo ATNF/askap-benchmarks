@@ -1,16 +1,15 @@
 #pragma once
 
-#include "hip/hip_runtime.h"
-#include "hip/hip_complex.h"
+#include "CommonGPU.h"
 
 typedef hipComplex Complex;
 
-template <int support>
 __global__
 void devDegridKernel(
     const Complex* grid,
     const int GSIZE,
     const Complex* C,
+    const int support,
     const int* cOffset,
     const int* iu,
     const int* iv,

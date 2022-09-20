@@ -25,11 +25,12 @@
 - More modifications are needed for further performance improvements
 - Tests will be performed on Topaz and Mulan for different data size 
 
-## Version 3
+## Version 3 ***NOT WORKING FOR BIG DATA***
 - ***cind*** and ***gind*** are not shared anymore
 - Avoided 1 ***__syncthreads***
 
 ## Version 4
+- ***cind*** and ***gind*** are shared again
 - Half of the threads in parallel sweep were idle in Versions 2 and 3
 - The idle ones are now working on the imaginary part
 - Stolen and adapted from **Mitch**'s branch
