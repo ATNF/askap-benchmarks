@@ -8,6 +8,7 @@
 #include <cuComplex.h>
 #include <vector>
 #include <cassert>
+#include <iomanip>
 
 #include "degridKernelGPU.cuh"
 

@@ -4,6 +4,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::complex;
+using std::left;
+using std::setw;
 
 // Error checking macro
 #define cudaCheckErrors(msg) \
@@ -31,7 +33,7 @@ void degridHelper(const Complex* dGrid,
 {
     int device;
     cudaGetDevice(&device);
-    cudaDeviceProp_t devProp;
+    cudaDeviceProp devProp;
     cudaGetDeviceProperties(&devProp, device);
 
     //cout << "maxGridSize "<<devProp.maxGridSize[0]<<" maxThreadsPerBlock = "<<devProp.maxThreadsPerBlock << endl;
