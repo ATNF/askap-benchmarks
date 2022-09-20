@@ -5,7 +5,7 @@
 - GPU and CPU results are different
 
 ## Version 1
-- From Mitch's branch
+- The pre-hackathon version
 
 ## Version 2
 - A new launch configuration implemented
