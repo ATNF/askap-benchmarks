@@ -16,9 +16,21 @@ void devDegridKernel(
     const int dind = i + blockIdx.x;
     const int lastThreadID = blockDim.x * blockDim.y - 1;
 
+    // The actual starting grid point
+    __shared__ int gindShared;
+    // The Convolution function point from which we offset
+    __shared__ int cindShared;
+
     int suppU = threadIdx.x;
     int suppV = threadIdx.y;
     int tID = blockDim.x * suppV + suppU;
+
+    if (tID == 0)
+    {
+        gindShared = iu[dind] + GSIZE * iv[dind] - support;
+        cindShared = cOffset[dind];
+    }
+    __syncthreads();
 
     const int SSIZE = 2 * support + 1;
 
@@ -27,9 +39,6 @@ void devDegridKernel(
  
     sdata_re[tID] = 0.0;
     sdata_im[tID] = 0.0;
-
-    int gindShared = iu[dind] + GSIZE * iv[dind] - support;
-    int cindShared = cOffset[dind];
 
     // Block-stride loading
     while (suppV < SSIZE)

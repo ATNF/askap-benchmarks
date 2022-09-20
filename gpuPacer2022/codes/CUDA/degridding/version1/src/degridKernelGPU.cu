@@ -1,4 +1,4 @@
-#include "degridKernelGPU.h"
+#include "degridKernelGPU.cuh"
 #include <cassert>
 
 // need a max size for the static shared memory vectors. Note that there are two of them.
