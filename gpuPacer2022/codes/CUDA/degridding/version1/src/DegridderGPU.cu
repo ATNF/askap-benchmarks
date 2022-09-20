@@ -31,29 +31,26 @@ void degridHelper(const Complex* dGrid,
 {
     int device;
     cudaGetDevice(&device);
-    cudaDeviceProp devProp;
+    cudaDeviceProp_t devProp;
     cudaGetDeviceProperties(&devProp, device);
 
+    //cout << "maxGridSize "<<devProp.maxGridSize[0]<<" maxThreadsPerBlock = "<<devProp.maxThreadsPerBlock << endl;
+    int gridSize = devProp.maxGridSize[0]/(support+1);  // launch kernels for this number of samples at a time
+    assert(SSIZE <= devProp.maxThreadsPerBlock);
+
     int count = 0;
-    int gridSize = 1024 * devProp.multiProcessorCount; // is starting size, will be reduced as required
     for (int dind = 0; dind < DSIZE; dind += gridSize)
     {
-        // if there are less than dimGrid elements left,
-        // do the remaining
+        // if there are less than dimGrid elements left, do the remaining
         if ((DSIZE - dind) < gridSize)
         {
             gridSize = DSIZE - dind;
         }
 
         ++count;
-        switch (support)
-        {
-        case 64:
-            devDegridKernel<64> << < gridSize, SSIZE >> > (dGrid, GSIZE, dC, dCOffset, dIU, dIV, dData, dind);
-            break;
-        default:
-            assert(0);
-        }
+
+        devDegridKernel <<< gridSize, SSIZE >>>(dGrid, GSIZE, dC, support, dCOffset, dIU, dIV, dData, dind);
+
         cudaCheckErrors("cuda kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;
@@ -64,6 +61,15 @@ template <typename T2>
 void DegridderGPU<T2>::degridder()
 {
     cout << "\nDegridding on GPU" << endl;
+
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float tAlloc{ 0.0 }; // in milliseconds
+    float tH2D{ 0.0 }; // in milliseconds
+    float tKernel{ 0.0 }; // in milliseconds
+    float tD2H{ 0.0 }; // in milliseconds
+    float tFrees{ 0.0 }; // in milliseconds
 
     // Device parameters
     const size_t SIZE_DATA = data.size() * sizeof(T2);
@@ -81,6 +87,8 @@ void DegridderGPU<T2>::degridder()
     int* dIV;
 
     // Allocate device vectors
+    cudaEventRecord(start);
+    cudaEventSynchronize(start);
     cudaMalloc(&dData, SIZE_DATA);
     cudaMalloc(&dGrid, SIZE_GRID);
     cudaMalloc(&dC, SIZE_C);
@@ -88,7 +96,13 @@ void DegridderGPU<T2>::degridder()
     cudaMalloc(&dIU, SIZE_IU);
     cudaMalloc(&dIV, SIZE_IV);
     cudaCheckErrors("cudaMalloc failure");
+    
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&tAlloc, start, stop);
 
+    cudaEventRecord(start);
+    cudaEventSynchronize(start);
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
     cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
@@ -96,16 +110,31 @@ void DegridderGPU<T2>::degridder()
     cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
     cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
     cudaCheckErrors("cudaMemcpy H2D failure");
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&tH2D, start, stop);
 
     // Kernel launch
+    cudaEventRecord(start);
+    cudaEventSynchronize(start);
     typedef cuComplex Complex;
-    degridHelper((const Complex*)dGrid, SSIZE, DSIZE, GSIZE, support, (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dData);
+    degridHelper((const Complex*)dGrid, SSIZE, DSIZE, GSIZE, support,
+                 (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dData);
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&tKernel, start, stop);
 
+    cudaEventRecord(start);
+    cudaEventSynchronize(start);
     cudaMemcpy(data.data(), dData, SIZE_DATA, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
-
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&tD2H, start, stop);
 
     // Deallocate device vectors
+    cudaEventRecord(start);
+    cudaEventSynchronize(start);
     cudaFree(dData);
     cudaFree(dGrid);
     cudaFree(dC);
@@ -113,6 +142,26 @@ void DegridderGPU<T2>::degridder()
     cudaFree(dIU);
     cudaFree(dIV);
     cudaCheckErrors("cudaFree failure");
+    cudaEventRecord(stop);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&tFrees, start, stop);
+
+    cout << "\nDegridderGPU IN MILLISECONDS:" << endl;
+    cout << left << setw(21) << "cudaMallocs"
+         << left << setw(21) << "cudaMemcpys (H2D)"
+         << left << setw(21) << "kernel"
+         << left << setw(21) << "cudaMemcpys (D2H)"
+         << left << setw(21) << "frees" << endl;;
+
+    cout << left << setw(21) << tAlloc
+         << left << setw(21) << tH2D
+         << left << setw(21) << tKernel
+         << left << setw(21) << tD2H
+         << left << setw(21) << tFrees << endl;
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+
 }
 
 template void DegridderGPU<std::complex<float>>::degridder();

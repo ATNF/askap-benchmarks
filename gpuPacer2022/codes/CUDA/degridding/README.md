@@ -1,11 +1,9 @@
 # Degridding
 ## Version 0
-- Initial commit
-- Tested in a local computer
-- GPU and CPU results are different
+- The pre-hackathon version
 
 ## Version 1
-- The pre-hackathon version
+- From Mitch's branch
 
 ## Version 2
 - A new launch configuration implemented

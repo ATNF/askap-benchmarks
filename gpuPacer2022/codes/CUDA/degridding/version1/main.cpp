@@ -147,8 +147,8 @@ int main()
     //printVectorComplex.printVector(cpuOutData);
     //printVectorComplex.printVector(gpuOutData);
 
-    cout << "Verify the code" << endl;
-    maximumError.maxError(cpuOutData, gpuOutData);
+ //   cout << "Verify the code" << endl;
+ //   maximumError.maxError(cpuOutData, gpuOutData);
     
     cout << "\nRUNTIME IN MILLISECONDS:" << endl;
     cout << left << setw(21) << "Setup"
