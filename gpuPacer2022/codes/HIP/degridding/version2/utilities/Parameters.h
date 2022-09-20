@@ -20,8 +20,16 @@ typedef double Coord;           // T1
 typedef std::complex<Real> Value;    // T2
 
 // Can be changed for testing purposes
-const int NSAMPLES = 160000;
-//const int NSAMPLES = 32;
+//const int NSAMPLES = 1<<28; // (268 M)
+//const int NSAMPLES = 1<<27; //(134 M)
+//const int NSAMPLES = 1<<25; //(34 M)
+//const int NSAMPLES = 1<<24; //(17 M)
+//const int NSAMPLES = 1<<23; //(8 M)
+//const int NSAMPLES = 1<<20; //(1 M)
+//const int NSAMPLES = 1<<19; //(524k)
+//const int NSAMPLES = 1<<18; //(262k)
+//const int NSAMPLES = 4096*32;
+//const int NSAMPLES = 1;
 const int WSIZE = 33;
 const int NCHAN = 1;
 
@@ -29,3 +37,8 @@ const int NCHAN = 1;
 const int GSIZE = 4096;
 const Coord CELLSIZE = 5.0;
 const int BASELINE = 2000;
+
+const int BLOCK_SIZE = 32; // dim3(BLOCK_SIZE, BLOCK_SIZE)
+const int GRID_SIZE = 1<<26;
+//const int GRID_SIZE = 1<<22;
+//const int GRID_SIZE = 1;

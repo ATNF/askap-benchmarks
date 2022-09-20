@@ -49,7 +49,6 @@
 #include "utilities/MaxError.h"
 #include "utilities/Parameters.h"
 #include "utilities/PrintVector.h"
-#include "utilities/RunInfo.h"
 
 #include "src/Setup.h"
 #include "src/DegridderCPU.h"
@@ -71,9 +70,6 @@ using std::left;
 using std::setprecision;
 using std::setw;
 using std::fixed;
-
-std::string randomType = "random";
-// std::string randomType = "controlled";
 
 int main()
 {

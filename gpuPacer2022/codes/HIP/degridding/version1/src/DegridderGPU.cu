@@ -5,6 +5,19 @@ using std::endl;
 using std::vector;
 using std::complex;
 
+// Error checking macro
+#define gpuCheckErrors(msg) \
+    do { \
+        hipError_t __err = hipGetLastError(); \
+        if (__err != hipSuccess) { \
+            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
+                msg, hipGetErrorString(__err), \
+                __FILE__, __LINE__); \
+            fprintf(stderr, "*** FAILED - ABORTING\n"); \
+            exit(1); \
+        } \
+    } while (0)
+
 void degridHelper(const Complex* dGrid,
     const int SSIZE,
     const int DSIZE,
@@ -36,7 +49,7 @@ void degridHelper(const Complex* dGrid,
         switch (support)
         {
         case 64:
-            devDegridKernel<64> <<< gridSize, SSIZE >>>(dGrid, GSIZE, dC, dCOffset, dIU, dIV, dData, dind);
+            devDegridKernel<64><<<gridSize, SSIZE>>>(dGrid, GSIZE, dC, dCOffset, dIU, dIV, dData, dind);
             break;
         default:
             assert(0);
@@ -68,37 +81,37 @@ void DegridderGPU<T2>::degridder()
     int* dIV;
 
     // Allocate device vectors
-    gpuErrchk(hipMalloc(&dData, SIZE_DATA));
-    gpuErrchk(hipMalloc(&dGrid, SIZE_GRID));
-    gpuErrchk(hipMalloc(&dC, SIZE_C));
-    gpuErrchk(hipMalloc(&dCOffset, SIZE_COFFSET));
-    gpuErrchk(hipMalloc(&dIU, SIZE_IU));
-    gpuErrchk(hipMalloc(&dIV, SIZE_IV));
+    hipMalloc(&dData, SIZE_DATA);
+    hipMalloc(&dGrid, SIZE_GRID);
+    hipMalloc(&dC, SIZE_C);
+    hipMalloc(&dCOffset, SIZE_COFFSET);
+    hipMalloc(&dIU, SIZE_IU);
+    hipMalloc(&dIV, SIZE_IV);
     gpuCheckErrors("hipMalloc failure");
 
-    gpuErrchk(hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice));
-    gpuErrchk(hipMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, hipMemcpyHostToDevice));
-    gpuErrchk(hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice));
-    gpuErrchk(hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice));
-    gpuErrchk(hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice));
-    gpuErrchk(hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice));
+    hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
+    hipMemcpy(dGrid, gpuGrid.data(), SIZE_GRID, hipMemcpyHostToDevice);
+    hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice);
+    hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
+    hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice);
+    hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice);
     gpuCheckErrors("hipMemcpy H2D failure");
 
     // Kernel launch
     typedef hipComplex Complex;
     degridHelper((const Complex*)dGrid, SSIZE, DSIZE, GSIZE, support, (const Complex*)dC, dCOffset, dIU, dIV, (Complex*)dData);
 
-    gpuErrchk(hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost));
+    hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 
 
     // Deallocate device vectors
-    gpuErrchk(hipFree(dData));
-    gpuErrchk(hipFree(dGrid));
-    gpuErrchk(hipFree(dC));
-    gpuErrchk(hipFree(dCOffset));
-    gpuErrchk(hipFree(dIU));
-    gpuErrchk(hipFree(dIV));
+    hipFree(dData);
+    hipFree(dGrid);
+    hipFree(dC);
+    hipFree(dCOffset);
+    hipFree(dIU);
+    hipFree(dIV);
     gpuCheckErrors("hipFree failure");
 }
 

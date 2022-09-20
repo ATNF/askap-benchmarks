@@ -1,11 +1,6 @@
-#include "hip/hip_runtime.h"
-#include "degridKernelGPU.h"
+#include "degridKernelGPU.cuh"
+#include <stdio.h>
 
-
-#define FULL_MASK 0xffffffff
-#define WARPSIZE 32
-
-// launch_bounds__(2*support+1, 8)
 template <int support>
 __global__
 void devDegridKernel(
@@ -16,69 +11,72 @@ void devDegridKernel(
     const int* iu,
     const int* iv,
     Complex* data,
-    const int dind)
+    const int i)
 {
-    int dindLocal = dind + blockIdx.x;
-    int gindStart = iu[dindLocal] + GSIZE*iv[dindLocal] - support;
-    int cindStart = cOffset[dindLocal];
-    int SSIZE = 2*support+1;
-    int suppu = threadIdx.x;
+    const int dind = i + blockIdx.x;
 
-    Complex dOrig = data[dindLocal];
-    // suppv loop
-    for (int suppv = 0; suppv < SSIZE; ++suppv)
+    __shared__ int gindShared;
+    __shared__ int cindShared;
+
+    int suppU = threadIdx.x;
+    int suppV = threadIdx.y;
+    int tID = blockDim.x * suppV + suppU;
+
+    if (tID == 0)
     {
-      int gind = gindStart + GSIZE * suppv;
-      int cind = cindStart + SSIZE * suppv;
-      Complex sum = hipCmulf(grid[gind + suppu], C[cind + suppu]);
+        gindShared = iu[dind] + GSIZE * iv[dind] - support;
+        cindShared = cOffset[dind];
+    }
 
-      __syncthreads();
-      // Reduce within each warp
-      if (suppu < SSIZE)
-      {
-        for (int offset = WARPSIZE/2; offset > 0; offset /=2 )
+    __syncthreads();
+
+    const int SSIZE = 2 * support + 1;
+
+    __shared__ float sdata_re[BLOCK_SIZE * BLOCK_SIZE];
+    __shared__ float sdata_im[BLOCK_SIZE * BLOCK_SIZE];
+ 
+    sdata_re[tID] = 0.0;
+    sdata_im[tID] = 0.0;
+
+    // Block-stride loading
+    while (suppV < SSIZE)
+    {
+        while (suppU < SSIZE)
         {
-#ifdef __NVCC__		
-          sum.x += __shfl_down_sync(FULL_MASK,sum.x,offset,WARPSIZE);
-          sum.y += __shfl_down_sync(FULL_MASK,sum.y,offset,WARPSIZE);
-#else	  
-          sum.x += __shfl_down(sum.x,offset,WARPSIZE);
-          sum.y += __shfl_down(sum.y,offset,WARPSIZE);
-#endif	  
+            int gind = gindShared + GSIZE * (suppV);
+            int cind = cindShared + SSIZE * (suppV);
+
+            // copy the local convolution product to shared memory
+            sdata_re[tID] += grid[gind + suppU].x * C[cind + suppU].x - grid[gind + suppU].y * C[cind + suppU].y;
+            sdata_im[tID] += grid[gind + suppU].x * C[cind + suppU].y + grid[gind + suppU].y * C[cind + suppU].x;
+      
+            suppU += blockDim.x;
         }
         
-      }
-
-      // Gather warp sums into shared memory
-      const int NUMWARPS = (2*support+1) / WARPSIZE + 1;
-      __shared__ Complex dataShared[NUMWARPS];
-
-      int warp = suppu / WARPSIZE;
-      int lane = threadIdx.x & (WARPSIZE-1); // the lead thread in the warp
-
-      if (lane == 0)
-      {
-          dataShared[warp] = sum;
-      }
-
-      __syncthreads();
-      // combine warp sums using a single thread in this block
-      if (suppu == 0)
-      {
-        for (int w = 1; w < NUMWARPS; w++)
-        {
-            sum = hipCaddf(sum, dataShared[w]);
-        }
-
-        dOrig = hipCaddf(dOrig, sum);
-      }
+        suppU = threadIdx.x;
+        suppV += blockDim.y;
+        
     }
-    if (suppu == 0)
+    
+    for (unsigned int s = (BLOCK_SIZE * BLOCK_SIZE) / 2; s > 0; s >>= 1)
     {
-      data[dindLocal] = dOrig;
+        __syncthreads();
+        if (tID < s)
+        {
+            sdata_re[tID] += sdata_re[tID + s];
+            sdata_im[tID] += sdata_im[tID + s];
+        }
+        
     }
+    
+
+    if (tID == 0)
+    {
+        data[dind].x = sdata_re[tID];
+        data[dind].y = sdata_im[tID];
+    }
+
 }
-  
 
 template
 __global__

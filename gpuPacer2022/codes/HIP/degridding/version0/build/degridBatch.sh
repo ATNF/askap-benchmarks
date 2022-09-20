@@ -7,5 +7,5 @@
 #SBATCH --account=director2196
 
 module load cuda/11.4.2 gcc/11.1.0
-nvcc ../main.cpp ../src/DegridderCPU.cpp ../src/DegridderGPU.cu ../src/degridKernelGPU.cu ../src/Setup.cpp ../utilities/MaxError.cpp ../utilities/PrintVector.cpp ../utilities/RandomVectorGenerator.cpp -o askapDegrid -std=c++17 -Xcompiler -fopenmp
-srun ./askapDegrid
+hipcc ../main.cpp ../src/DegridderCPU.cpp ../src/DegridderGPU.cu ../src/degridKernelGPU.cu ../src/Setup.cpp ../utilities/MaxError.cpp ../utilities/PrintVector.cpp ../utilities/RandomVectorGenerator.cpp -o degridder -std=c++17 -Xcompiler -fopenmp -O2
+srun ./degridder

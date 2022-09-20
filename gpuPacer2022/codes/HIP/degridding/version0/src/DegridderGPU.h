@@ -1,11 +1,11 @@
 #pragma once
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include "hip/hip_runtime.h"
+//#include "device_launch_parameters.h"
 
 #include <complex>
 #include <iostream>
-#include <cuComplex.h>
+#include <hip/hip_complex.h>
 #include <vector>
 #include <cassert>
 

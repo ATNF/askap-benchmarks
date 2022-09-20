@@ -71,9 +71,6 @@ using std::setprecision;
 using std::setw;
 using std::fixed;
 
-std::string randomType = "random";
-// std::string randomType = "controlled";
-
 int main()
 {
     // Print vector object

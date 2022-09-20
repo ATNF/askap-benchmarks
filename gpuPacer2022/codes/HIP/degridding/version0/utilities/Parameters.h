@@ -20,7 +20,7 @@ typedef double Coord;           // T1
 typedef std::complex<Real> Value;    // T2
 
 // Can be changed for testing purposes
-const int NSAMPLES = 160'000;
+const int NSAMPLES = 4096*32;;
 //const int NSAMPLES = 32;
 const int WSIZE = 33;
 const int NCHAN = 1;
