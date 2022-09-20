@@ -80,8 +80,10 @@ int main()
     // Maximum error evaluator
     MaxError<Value> maximumError;
 
+    cout << "NSAMPLES: " << NSAMPLES << endl;
+
     // Initialize the data to be gridded
-    auto tInit = omp_get_wtime();
+//    auto tInit = omp_get_wtime();
 
     vector<Coord> u(NSAMPLES, 0.0);
     vector<Coord> v(NSAMPLES, 0.0);
@@ -92,8 +94,8 @@ int main()
     vector<Value> cpuOutData(NSAMPLES * NCHAN, 0.0);
     vector<Value> gpuOutData(NSAMPLES * NCHAN, 0.0);
     
-    auto tFin = omp_get_wtime();
-    auto timeInitData = (tFin - tInit) * 1000.0; // in ms
+//    auto tFin = omp_get_wtime();
+//    auto timeInitData = (tFin - tInit) * 1000.0; // in ms
 
     // Measure frequency in inverse wavelengths
     vector<Coord> freq(NCHAN, 0.0);
@@ -111,10 +113,10 @@ int main()
 
     Setup<Real, Coord, Value> setup(support, overSample, wCellSize, u, v, w, freq, cOffset, iu, iv, C);
     
-    tInit = omp_get_wtime();
+  //  tInit = omp_get_wtime();
     setup.setup();
-    tFin = omp_get_wtime();
-    auto timeSetup = (tFin - tInit) * 1000.0; // in ms
+  //  tFin = omp_get_wtime();
+  //  auto timeSetup = (tFin - tInit) * 1000.0; // in ms
 
     const int SSIZE = 2 * support + 1;
     vector<Value> cpuGrid(GSIZE * GSIZE);
@@ -128,35 +130,35 @@ int main()
 
     // Degridding on CPU
     const size_t DSIZE = data.size();
-    DegridderCPU<Value> degridderCPU(cpuGrid, DSIZE, GSIZE, support, C, cOffset, iu, iv, cpuOutData);
-    tInit = omp_get_wtime();
-    degridderCPU.cpuKernel();
-    tFin = omp_get_wtime();
-    auto timeDegridCPU = (tFin - tInit) * 1000.0; // in ms
+   // DegridderCPU<Value> degridderCPU(cpuGrid, DSIZE, GSIZE, support, C, cOffset, iu, iv, cpuOutData);
+  //  tInit = omp_get_wtime();
+   // degridderCPU.cpuKernel();
+  //  tFin = omp_get_wtime();
+  //  auto timeDegridCPU = (tFin - tInit) * 1000.0; // in ms
 
     // Degridding on GPU
     DegridderGPU<Value> degridderGPU(gpuGrid, SSIZE, DSIZE, GSIZE, support, C, cOffset, iu, iv, gpuOutData);
-    tInit = omp_get_wtime();
+    auto tInit = omp_get_wtime();
     degridderGPU.degridder();
-    tFin = omp_get_wtime();
+    auto tFin = omp_get_wtime();
     auto timeDegridGPU = (tFin - tInit) * 1000.0; // in ms
     
     //printVectorComplex.printVector(cpuOutData);
     //printVectorComplex.printVector(gpuOutData);
 
-    cout << "Verify the code" << endl;
-    maximumError.maxError(cpuOutData, gpuOutData);
+ //   cout << "Verify the code" << endl;
+ //   maximumError.maxError(cpuOutData, gpuOutData);
     
     cout << "\nRUNTIME IN MILLISECONDS:" << endl;
-    cout << left << setw(21) << "Setup"
-        << left << setw(21) << "Gridding CPU"
-        << left << setw(21) << "Gridding GPU"
-        << left << setw(21) << "Speedup" << endl;;
+  //  cout << left << setw(21) << "Setup"
+    //    << left << setw(21) << "Gridding CPU"
+      cout << left << setw(21) << "Gridding GPU" << endl;
+       // << left << setw(21) << "Speedup" << endl;;
 
     cout << setprecision(2) << fixed;
-    cout << left << setw(21) << timeSetup
-        << left << setw(21) << timeDegridCPU
-        << left << setw(21) << timeDegridGPU 
-        << left << setw(21) << timeDegridCPU/timeDegridGPU << endl;
+   // cout << left << setw(21) << timeSetup
+     //   << left << setw(21) << timeDegridCPU
+        cout << left << setw(21) << timeDegridGPU << endl; 
+       // << left << setw(21) << timeDegridCPU/timeDegridGPU << endl;
         
 }

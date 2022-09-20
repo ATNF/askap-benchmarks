@@ -64,7 +64,7 @@ void devDegridKernel(
 
             // reductions 3 and 4 only work if support is a power of 2
             // 2 and 3 seem to be the fastest from a small amount of testing. 1 is about twice as slow
-            const int reduction = 2;
+            const int reduction = 3;
 
             switch (reduction)
             {
