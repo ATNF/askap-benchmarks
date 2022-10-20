@@ -8,7 +8,7 @@ This section of the repo includes the serial and accelerated codes for deconvolu
 - Find the new brightest pixel.
 - Continue the loop until a threshold is reached.
 
-## The united version
+## The United Versions
 - All the solver classes are located in the folder src/Solvers/. 
 - The strategy and factory patterns were applied to have a single version with various solvers.
 - In ***main()***, there are two solvers introduced
