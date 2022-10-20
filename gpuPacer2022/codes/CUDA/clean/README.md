@@ -12,7 +12,7 @@ This section of the repo includes the serial and accelerated codes for deconvolu
 - All the solver classes are located in the folder src/Solvers/. 
 - The strategy and factory patterns were applied to have a single version with various solvers.
 - In ***main()***, there are two solvers introduced
-    1. Reference solver: The solver, which is verified to be correct before (e.g. Cpu version "Golden") that we are going to use to verify the newly developed kernel.
+    1. Reference solver: The solver, which was verified to be correct before (e.g. CPU version "Golden") that we are going to use to verify the newly developed kernel.
     2. Test solver: The one that we develop and verify using the reference solver.
 - Every GPU solver introduced here can be used as a reference solver.
 - The reference and test solvers can be assigned via the file: Parameters.h.
