@@ -1,9 +1,19 @@
 # Gridding
-## Version 0
-- Initial commit
-- Tested in a local computer
-- Results verified
+## Solvers
+### cpu
+- CPU version
+- Using a single node, single thread (a serial version)
 
-## Version 1
-- CMake implemented
-- Going to be tested on Topaz
+### gpuOlder
+- Developed during the Nvidia-CUDA hackathon in 2017.
+
+### gpuAtomic
+- Atomic additions were added to the older version
+- ***This solver gives the best performance so far***
+
+### gpuAtomicTiled
+- Developed with the aim of improving ***gpuAtomic*** version by improving the kernel launch configuration.
+- Slower than ***gpuAtomic***
+
+
+
