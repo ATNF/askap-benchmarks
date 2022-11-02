@@ -162,8 +162,8 @@ int main()
 
     cout << "\nRUNTIME IN MILLISECONDS:" << endl;
     cout << left << setw(21) << "Setup"
-        << left << setw(21) << "Gridding CPU"
-        << left << setw(21) << "Gridding GPU"
+        << left << setw(21) << "Gridding - Ref"
+        << left << setw(21) << "Gridding - Test"
         << left << setw(21) << "Speedup" << endl;;
 
     cout << setprecision(2) << fixed;
