@@ -56,11 +56,8 @@ int main()
 	// WARMUP
 	if (refSolverName != "Golden")
 	{
-		for (int i = 0; i < 1; ++i)
-		{
-			// Warmup
-			warmupGPU.warmup();
-		}
+		// Warmup
+		warmupGPU.warmup();
 	}
 	
 	// REFERENCE SOLVER
@@ -78,11 +75,8 @@ int main()
 	// WARMUP
 	if (refSolverName == "Golden")
 	{
-		for (int i = 0; i < 1; ++i)
-		{
-			// Warmup
-			warmupGPU.warmup();
-		}
+		// Warmup
+		warmupGPU.warmup();
 	}
 
 	// NEW SOLVER TEST
