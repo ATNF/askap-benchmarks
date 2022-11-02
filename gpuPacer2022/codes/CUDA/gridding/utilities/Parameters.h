@@ -20,7 +20,7 @@ typedef double Coord;           // T1
 typedef std::complex<Real> Value;    // T2
 
 // Can be changed for testing purposes
-const int NSAMPLES = 160'000;
+const int NSAMPLES = 16'000;
 //const int NSAMPLES = 32;
 const int WSIZE = 33;
 const int NCHAN = 1;
@@ -29,3 +29,15 @@ const int NCHAN = 1;
 const int GSIZE = 4096;
 const Coord CELLSIZE = 5.0;
 const int BASELINE = 2000;
+
+// Solver selection
+static const std::string refSolverName = "gpuAtomicTiled";
+static const std::string testSolverName = "gpuAtomic";
+
+/*
+SOLVERS:
+cpu: 
+gpuOlder: 
+gpuAtomic:
+gpuAtomicTiled:
+*/

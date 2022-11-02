@@ -7,7 +7,6 @@ using std::vector;
 template <typename T2>
 void GridderCPU<T2>::gridder()
 {
-    cout << "\nGridding on CPU" << endl;
     const int SSIZE = 2 * support + 1;
     const int N = static_cast<int>(data.size());
 
@@ -21,7 +20,7 @@ void GridderCPU<T2>::gridder()
 
         for (int suppV = 0; suppV < SSIZE; ++suppV)
         {
-            T2* gptr = &cpuGrid[gind];
+            T2* gptr = &grid[gind];
             const T2* cptr = &C[cind];
             const T2 d = data[dind];
 
@@ -34,7 +33,6 @@ void GridderCPU<T2>::gridder()
             cind += SSIZE;
         }
     }
-    cout << "Completed..." << endl;
 }
 
 template void GridderCPU<std::complex<float>>::gridder();

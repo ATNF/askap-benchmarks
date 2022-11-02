@@ -50,10 +50,10 @@
 #include "utilities/MaxError.h"
 #include "utilities/Parameters.h"
 #include "utilities/PrintVector.h"
-
-#include "src/Setup.h"
-#include "src/GridderCPU.h"
-#include "src/GridderGPU.h"
+#include "utilities/Setup.h"
+#include "src/IGridder.h"
+#include "src/SolverFactory.h"
+#include "utilities/WarmupGPU.h"
 
 #include <iostream>
 #include <complex>
@@ -71,9 +71,6 @@ using std::left;
 using std::setprecision;
 using std::setw;
 using std::fixed;
-
-std::string randomType = "random";
-// std::string randomType = "controlled";
 
 int main()
 {
@@ -121,31 +118,47 @@ int main()
     auto timeSetup = (tFin - tInit) * 1000.0; // in ms
 
     const int SSIZE = 2 * support + 1;
-    vector<Value> cpuGrid(GSIZE * GSIZE);
-    cpuGrid.assign(cpuGrid.size(), static_cast<Value>(0.0));
-    vector<Value> gpuGrid(GSIZE * GSIZE);
-    gpuGrid.assign(gpuGrid.size(), static_cast<Value>(0.0));
+    vector<Value> refGrid(GSIZE * GSIZE);
+    refGrid.assign(refGrid.size(), static_cast<Value>(0.0));
+    vector<Value> testGrid(GSIZE * GSIZE);
+    testGrid.assign(testGrid.size(), static_cast<Value>(0.0));
 
-    // printVector.printVector(u);
-    // printVector.printVector(v);
-    // printVector.printVector(w);
+    WarmupGPU warmupGPU;
 
-    // Gridding on CPU
-    GridderCPU<Value> gridderCPU(support, GSIZE, data, C, cOffset, iu, iv, cpuGrid);
+    // WARMUP
+    if (refSolverName != "cpu")
+    {
+        // Warmup
+        warmupGPU.warmup();
+    }
+
+    // Reference gridder
+    cout << "\nSolver: " << refSolverName << endl;
+    SolverFactory<Value> refSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, refGrid);
+    std::shared_ptr<IGridder<Value>> refGridder = refSolverFactory.getSolver(refSolverName);
     tInit = omp_get_wtime();
-    gridderCPU.gridder();
+    refGridder->gridder();
     tFin = omp_get_wtime();
-    auto timeGridCPU = (tFin - tInit) * 1000.0; // in ms
+    auto timeGridRef = (tFin - tInit) * 1000.0; // in ms
 
-    // Gridding on GPU
-    GridderGPU<Value> gridderGPU(support, GSIZE, data, C, cOffset, iu, iv, gpuGrid);
+    // WARMUP
+    if (refSolverName == "cpu")
+    {
+        // Warmup
+        warmupGPU.warmup();
+    }
+
+    // Test gridder
+    cout << "\nSolver: " << testSolverName << endl;
+    SolverFactory<Value> testSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, testGrid);
+    std::shared_ptr<IGridder<Value>> testGridder = testSolverFactory.getSolver(testSolverName);
     tInit = omp_get_wtime();
-    gridderGPU.gridder();
+    testGridder->gridder();
     tFin = omp_get_wtime();
-    auto timeGridGPU = (tFin - tInit) * 1000.0; // in ms
+    auto timeGridTest = (tFin - tInit) * 1000.0; // in ms
     
-    cout << "Verify the code" << endl;
-    maximumError.maxError(cpuGrid, gpuGrid);
+    cout << "Verifying the code" << endl;
+    maximumError.maxError(refGrid, testGrid);
 
     cout << "\nRUNTIME IN MILLISECONDS:" << endl;
     cout << left << setw(21) << "Setup"
@@ -155,7 +168,7 @@ int main()
 
     cout << setprecision(2) << fixed;
     cout << left << setw(21) << timeSetup
-        << left << setw(21) << timeGridCPU
-        << left << setw(21) << timeGridGPU 
-        << left << setw(21) << timeGridCPU/timeGridGPU << endl;
+        << left << setw(21) << timeGridRef
+        << left << setw(21) << timeGridTest 
+        << left << setw(21) << timeGridRef/timeGridTest << endl;
 }

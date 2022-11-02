@@ -1,13 +1,16 @@
+// Solver interface 
 #pragma once
+
+#include "../utilities/Parameters.h"
 
 #include <vector>
 #include <iostream>
 #include <complex>
 
 template <typename T2>
-class GridderCPU
+class IGridder
 {
-private:
+protected:
     const size_t support;
     const size_t GSIZE;
     const std::vector<T2>& data;
@@ -15,17 +18,19 @@ private:
     const std::vector<int>& cOffset;
     const std::vector<int>& iu;
     const std::vector<int>& iv;
-    std::vector<T2>& cpuGrid;
-    
+    std::vector<T2>& grid;
+
 public:
-    GridderCPU(const size_t support,
+    IGridder(const size_t support,
         const size_t GSIZE,
         const std::vector<T2>& data,
         const std::vector<T2>& C,
         const std::vector<int>& cOffset,
         const std::vector<int>& iu,
         const std::vector<int>& iv,
-        std::vector<T2>& cpuGrid) : support{ support }, GSIZE{ GSIZE }, data{ data }, C{ C },
-        cOffset{ cOffset }, iu{ iu }, iv{ iv }, cpuGrid{ cpuGrid } {}
-    void gridder();
+        std::vector<T2>& grid) : support{ support }, GSIZE{ GSIZE }, data{ data }, C{ C },
+        cOffset{ cOffset }, iu{ iu }, iv{ iv }, grid{ grid } {}
+    virtual ~IGridder() {}
+    virtual void gridder() = 0;
 };
+
