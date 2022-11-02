@@ -47,11 +47,11 @@ public:
 		}
 		else if (solverType == "gpuAtomic")
 		{
-			solverSelect = std::make_shared<GridderGPUOlder<T2>>(support, GSIZE, data, C, cOffset, iu, iv, grid);
+			solverSelect = std::make_shared<GridderGPUAtomic<T2>>(support, GSIZE, data, C, cOffset, iu, iv, grid);
 		}
 		else if (solverType == "gpuAtomicTiled")
 		{
-			solverSelect = std::make_shared<GridderGPUOlder<T2>>(support, GSIZE, data, C, cOffset, iu, iv, grid);
+			solverSelect = std::make_shared<GridderGPUAtomicTiled<T2>>(support, GSIZE, data, C, cOffset, iu, iv, grid);
 		}
 
 		return solverSelect;
