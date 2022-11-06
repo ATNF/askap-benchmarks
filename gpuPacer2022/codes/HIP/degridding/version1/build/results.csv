@@ -1,2 +1,0 @@
-"Index","KernelName","gpu-id","queue-id","queue-index","pid","tid","grd","wgr","lds","scr","vgpr","sgpr","fbar","sig","obj","DispatchNs","BeginNs","EndNs","CompleteNs","DurationNs"
-0,"devDegridKernel(HIP_vector_type<float, 2u> const*, int, HIP_vector_type<float, 2u> const*, int, int const*, int const*, int const*, HIP_vector_type<float, 2u>*, int) [clone .kd]",0,0,5,3254283,3254283,16908288,129,2560,224,36,48,1769155941,0x0,0x14c5b7d8a8c0,13865538316035865,13865538316432933,13865538354592809,13865538354600931,38159876

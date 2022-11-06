@@ -1,2 +1,0 @@
-"Name","Calls","TotalDurationNs","AverageNs","Percentage"
-"void devDegridKernel<64>(HIP_vector_type<float, 2u> const*, int, HIP_vector_type<float, 2u> const*, int const*, int const*, int const*, HIP_vector_type<float, 2u>*, int) [clone .kd]",8,74023744085,9252968010,100.0

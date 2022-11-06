@@ -1,3 +1,0 @@
-"Name","Calls","TotalDurationNs","AverageNs","Percentage"
-dFindPeak(float const*, unsigned long, Peak*),1001,2125673972,2123550,94.25232803883837
-dSubtractPSF(float const*, int, float*, int, int, int, int, int, int, int, float, float),1000,129627320,129627,5.747671961161631
