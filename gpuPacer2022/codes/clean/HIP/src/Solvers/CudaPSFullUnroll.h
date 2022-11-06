@@ -3,9 +3,9 @@
 #include "../IHogbom.h"
 
 // CUDA libs
-#include <cuda_runtime_api.h>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include <hip/hip_runtime_api.h>
+#include "hip/hip_runtime.h"
+//#include "device_launch_parameters.h"
 
 #include <cmath>
 #include <iostream>
@@ -13,10 +13,10 @@
 // Error checking macro
 #define gpuCheckErrors(msg) \
     do { \
-        cudaError_t __err = cudaGetLastError(); \
-        if (__err != cudaSuccess) { \
+        hipError_t __err = hipGetLastError(); \
+        if (__err != hipSuccess) { \
             fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, cudaGetErrorString(__err), \
+                msg, hipGetErrorString(__err), \
                 __FILE__, __LINE__); \
             fprintf(stderr, "*** FAILED - ABORTING\n"); \
             exit(1); \

@@ -26,10 +26,10 @@ void CudaOlder::reportDevice()
 {
     // Report the type of device being used
     int device;
-    cudaDeviceProp devprop;
-    cudaGetDevice(&device);
-    cudaGetDeviceProperties(&devprop, device);
-    std::cout << "    Using GPU Device " << device << ": "
+    hipDeviceProp_t devprop;
+    hipGetDevice(&device);
+    hipGetDeviceProperties(&devprop, device);
+    std::cout << "    Using CUDA Device " << device << ": "
         << devprop.name << std::endl;
 }
 
@@ -197,7 +197,7 @@ Peak findPeak(const float* dData, size_t N)
     // Note: dPeaks array is not initialised (hence avoiding the memcpy)
     // It is up to do device function to do that.
     Peak* dPeak;
-    cudaMalloc(&dPeak, nBlocks * sizeof(Peak));
+    hipMalloc(&dPeak, nBlocks * sizeof(Peak));
     gpuCheckErrors("cudaMalloc failure in findPeak");
 
     // Find peak
@@ -205,13 +205,13 @@ Peak findPeak(const float* dData, size_t N)
     gpuCheckErrors("kernel launch failure in findPeak");
 
     // Get the peaks array back from the device
-    cudaMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), cudaMemcpyDeviceToHost);
+    hipMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), hipMemcpyDeviceToHost);
     gpuCheckErrors("cudaMemcpy D2H failure in findPeak");
 
-    cudaDeviceSynchronize();
+    hipDeviceSynchronize();
     gpuCheckErrors("cudaDeviceSynchronize failure in findPeak");
 
-    cudaFree(dPeak);
+    hipFree(dPeak);
     gpuCheckErrors("cudaFree failure in findPeak");
 
     // Each thread block return a peak, find the absolute maximum
@@ -232,31 +232,31 @@ Peak findPeak(const float* dData, size_t N)
 
 void CudaOlder::memAlloc()
 {
-    cudaMalloc(&dDirty, SIZE_IMAGE);
-    cudaMalloc(&dPsf, SIZE_IMAGE);
-    cudaMalloc(&dResidual, SIZE_IMAGE);
+    hipMalloc(&dDirty, SIZE_IMAGE);
+    hipMalloc(&dPsf, SIZE_IMAGE);
+    hipMalloc(&dResidual, SIZE_IMAGE);
     gpuCheckErrors("cudaMalloc failure");
 }
 
 CudaOlder::~CudaOlder()
 {
-    cudaFree(dDirty);
-    cudaFree(dPsf);
-    cudaFree(dResidual);
+    hipFree(dDirty);
+    hipFree(dPsf);
+    hipFree(dResidual);
     gpuCheckErrors("cudaFree failure");
     cout << "Cuda Older destructor" << endl;
 }
 
 void CudaOlder::copyH2D()
 {
-    cudaMemcpy(dDirty, dirty.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
-    cudaMemcpy(dPsf, psf.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
-    cudaMemcpy(dResidual, residual.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
+    hipMemcpy(dDirty, dirty.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
+    hipMemcpy(dPsf, psf.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
+    hipMemcpy(dResidual, residual.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
     gpuCheckErrors("cudaMemcpy H2D failure");
 }
 
 void CudaOlder::copyD2H()
 {
-    cudaMemcpy(residual.data(), dResidual, SIZE_IMAGE, cudaMemcpyDeviceToHost);
+    hipMemcpy(residual.data(), dResidual, SIZE_IMAGE, cudaMemcpyDeviceToHost);
     gpuCheckErrors("cudaMemcpy D2H failure");
 }
