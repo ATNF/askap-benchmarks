@@ -22,7 +22,7 @@ private:
 	void findPeak(const std::vector<float>& image, float& maxVal, size_t& maxPos);
 	void subtractPSF(const size_t peakPos,
 		const size_t psfPeakPos,
-		const float absPeakVal);
+		const float absPeakVal) override;
 
 public:
 	Golden(const std::vector<float>& dirty,

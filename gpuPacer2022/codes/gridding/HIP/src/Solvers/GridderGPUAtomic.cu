@@ -121,7 +121,7 @@ void GridderGPUAtomic<T2>::gridder()
 
         ++count;
 
-        devGridKernelAtomic << < gridSize, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelAtomic <<<gridSize, SSIZE>>> ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
 
         gpuCheckErrors("hip kernel launch failure");

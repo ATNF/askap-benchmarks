@@ -162,7 +162,7 @@ void DegridderGPUWarpShuffle<T2>::degridder()
         {
             gridSize = DSIZE - dind;
         }
-        devDegridKernelWarpShuffle << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelWarpShuffle <<< gridSize, SSIZE >>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
         cudaCheckErrors("cuda kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;

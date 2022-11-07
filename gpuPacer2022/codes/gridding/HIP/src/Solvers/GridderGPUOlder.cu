@@ -133,7 +133,7 @@ void GridderGPUOlder<T2>::gridder()
         step = gridStep(DSIZE, SSIZE, dind);
         dim3 gridDim(SSIZE, step);
         /// PJE: make sure any chevron is tightly packed
-        devGridKernelOlder << <gridDim, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelOlder <<<gridDim, SSIZE>>> ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
         gpuCheckErrors("kernel launch (devGridKernel_v0) failure");
         count++;

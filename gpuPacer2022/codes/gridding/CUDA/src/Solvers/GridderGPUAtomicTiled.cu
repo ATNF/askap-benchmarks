@@ -121,7 +121,7 @@ void GridderGPUAtomicTiled<T2>::gridder()
 
         ++count;
 
-        devGridKernelAtomicTiled << < gridSize, BLOCK_SIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelAtomicTiled <<< gridSize, BLOCK_SIZE >>> ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
 
         cudaCheckErrors("cuda kernel launch failure");

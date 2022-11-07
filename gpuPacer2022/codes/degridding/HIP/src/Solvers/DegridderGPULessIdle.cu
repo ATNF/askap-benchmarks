@@ -168,7 +168,7 @@ void DegridderGPULessIdle<T2>::degridder()
 
         ++count;
 
-        devDegridKernelLessIdle << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelLessIdle <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
 
         gpuCheckErrors("hip kernel launch failure");
     }

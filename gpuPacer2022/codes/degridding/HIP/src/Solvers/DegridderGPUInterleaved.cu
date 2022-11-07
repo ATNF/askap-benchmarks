@@ -159,7 +159,7 @@ void DegridderGPUInterleaved<T2>::degridder()
 
         ++count;
 
-        devDegridKernelInterleaved << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelInterleaved <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
 
         gpuCheckErrors("hip kernel launch failure");
     }

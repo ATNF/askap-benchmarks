@@ -261,7 +261,7 @@ void CudaPSFullUnroll::subtractPSF(const size_t peakPos,
 
     dim3 numBlocks(blocksx, blocksy);
     dim3 threadsPerBlock(blockDim, blockDim);
-    dSubtractPSF_FU << <numBlocks, threadsPerBlock >> > (dPsf, dResidual, imageWidth,
+    dSubtractPSF_FU <<<numBlocks, threadsPerBlock>>> (dPsf, dResidual, imageWidth,
         startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gGain);
     gpuCheckErrors("kernel launch failure in subtractPSF");
 }
@@ -341,37 +341,37 @@ CudaPSFullUnroll::Peak CudaPSFullUnroll::findPeak(const float* dData, size_t N)
     switch (BLOCK_SIZE)
     {
     case 1024:
-        dFindPeak_Step1_FU<1024> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<1024> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 512:
-        dFindPeak_Step1_FU<512> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<512> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 256:
-        dFindPeak_Step1_FU<256> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<256> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 128:
-        dFindPeak_Step1_FU<128> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<128> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 64:
-        dFindPeak_Step1_FU<64> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<64> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 32:
-        dFindPeak_Step1_FU<32> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<32> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 16:
-        dFindPeak_Step1_FU<16> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<16> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 8:
-        dFindPeak_Step1_FU<8> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<8> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 4:
-        dFindPeak_Step1_FU<4> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<4> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 2:
-        dFindPeak_Step1_FU<2> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<2> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     case 1:
-        dFindPeak_Step1_FU<1> << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+        dFindPeak_Step1_FU<1> <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
         break;
     }
 

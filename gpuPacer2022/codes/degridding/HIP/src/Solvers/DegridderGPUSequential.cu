@@ -164,7 +164,7 @@ void DegridderGPUSequential<T2>::degridder()
 
         ++count;
 
-        devDegridKernelSequential << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelSequential <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
 
         gpuCheckErrors("hip kernel launch failure");
     }

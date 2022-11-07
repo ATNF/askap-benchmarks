@@ -40,7 +40,7 @@ void WarmupGPU::warmup() const
 	const int blockSize = 1024;
 	const int gridSize = N / 1024;
 
-	vectorAdd << <gridSize, blockSize >> > (dA, dB, dC, N);
+	vectorAdd <<<gridSize, blockSize>>> (dA, dB, dC, N);
 
 	cudaMemcpy(c.data(), dC, SIZE, cudaMemcpyDeviceToHost);
 

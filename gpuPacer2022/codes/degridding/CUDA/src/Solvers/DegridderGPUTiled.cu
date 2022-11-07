@@ -152,7 +152,7 @@ void DegridderGPUTiled<T2>::degridder()
             gridSize = DSIZE - dind;
         }
 
-        devDegridKernelTiled << < GRID_SIZE, blockSize >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelTiled <<< GRID_SIZE, blockSize >>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
         ++count;
         cudaCheckErrors("cuda kernel launch failure");
     }

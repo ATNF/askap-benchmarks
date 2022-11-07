@@ -216,7 +216,7 @@ void CudaPSLastWUnrolled::subtractPSF(const size_t peakPos,
 
     dim3 numBlocks(blocksx, blocksy);
     dim3 threadsPerBlock(blockDim, blockDim);
-    dSubtractPSF_LW << <numBlocks, threadsPerBlock >> > (dPsf, dResidual, imageWidth,
+    dSubtractPSF_LW <<<numBlocks, threadsPerBlock>>> (dPsf, dResidual, imageWidth,
         startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gGain);
     gpuCheckErrors("kernel launch failure in subtractPSF");
 }
@@ -293,9 +293,9 @@ CudaPSLastWUnrolled::Peak CudaPSLastWUnrolled::findPeak(const float* dData, size
     gpuCheckErrors("cudaMalloc failure!");
 
 
-    dFindPeak_Step1_LW << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+    dFindPeak_Step1_LW <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
     gpuCheckErrors("cuda kernel launch 1 failure!");
-    dFindPeak_Step2_LW << <1, BLOCK_SIZE >> > (dMax, dIndex, d2Index, GRID_SIZE);
+    dFindPeak_Step2_LW <<<1, BLOCK_SIZE>>> (dMax, dIndex, d2Index, GRID_SIZE);
     gpuCheckErrors("cuda kernel launch 2 failure!");
 
     cudaMemcpy(hMax.data(), dMax, sizeof(float), cudaMemcpyDeviceToHost);
