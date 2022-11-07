@@ -13,10 +13,10 @@
 // Error checking macro
 #define gpuCheckErrors(msg) \
     do { \
-        hıpError_t __err = hıpGetLastError(); \
-        if (__err != hıpSuccess) { \
+        hipError_t __err = hipGetLastError(); \
+        if (__err != hipSuccess) { \
             fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
-                msg, hıpGetErrorString(__err), \
+                msg, hipGetErrorString(__err), \
                 __FILE__, __LINE__); \
             fprintf(stderr, "*** FAILED - ABORTING\n"); \
             exit(1); \
