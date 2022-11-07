@@ -4,9 +4,8 @@
 #include "MaxError.h"
 
 // CUDA libs
-#include <cuda_runtime_api.h>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include <hip/hip_runtime_api.h>
+#include "hip/hip_runtime.h"
 
 // Standard libs
 #include <vector>

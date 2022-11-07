@@ -30,25 +30,25 @@ void WarmupGPU::warmup() const
 	float* dB;
 	float* dC;
 
-	cudaMalloc(&dA, SIZE);
-	cudaMalloc(&dB, SIZE);
-	cudaMalloc(&dC, SIZE);
+	hipMalloc(&dA, SIZE);
+	hipMalloc(&dB, SIZE);
+	hipMalloc(&dC, SIZE);
 
-	cudaMemcpy(dA, a.data(), SIZE, cudaMemcpyHostToDevice);
-	cudaMemcpy(dB, b.data(), SIZE, cudaMemcpyHostToDevice);
+	hipMemcpy(dA, a.data(), SIZE, hipMemcpyHostToDevice);
+	hipMemcpy(dB, b.data(), SIZE, hipMemcpyHostToDevice);
 
 	const int blockSize = 1024;
 	const int gridSize = N / 1024;
 
-	vectorAdd << <gridSize, blockSize >> > (dA, dB, dC, N);
+	vectorAdd<<<gridSize, blockSize>>> (dA, dB, dC, N);
 
-	cudaMemcpy(c.data(), dC, SIZE, cudaMemcpyDeviceToHost);
+	hipMemcpy(c.data(), dC, SIZE, hipMemcpyDeviceToHost);
 
 	MaxError<float> maximumError;
 	cout << "Verifying warmup launch" << endl;
 	maximumError.maxError(c, cAnswer);
 
-	cudaFree(dA);
-	cudaFree(dB);
-	cudaFree(dC);
+	hipFree(dA);
+	hipFree(dB);
+	hipFree(dC);
 }

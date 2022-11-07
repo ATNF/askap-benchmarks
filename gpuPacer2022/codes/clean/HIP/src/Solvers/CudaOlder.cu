@@ -132,7 +132,7 @@ void CudaOlder::subtractPSF(const size_t peakPos,
 
     dim3 numBlocks(blocksx, blocksy);
     dim3 threadsPerBlock(blockDim, blockDim);
-    dSubtractPSF_Older << <numBlocks, threadsPerBlock >> > (dPsf, dResidual, imageWidth,
+    dSubtractPSF_Older <<<numBlocks, threadsPerBlock>>> (dPsf, dResidual, imageWidth,
         startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gGain);
     gpuCheckErrors("kernel launch failure in subtractPSF");
 }
@@ -201,7 +201,7 @@ Peak findPeak(const float* dData, size_t N)
     gpuCheckErrors("cudaMalloc failure in findPeak");
 
     // Find peak
-    dFindPeak << <nBlocks, findPeakWidth >> > (dData, N, dPeak);
+    dFindPeak <<<nBlocks, findPeakWidth>>> (dData, N, dPeak);
     gpuCheckErrors("kernel launch failure in findPeak");
 
     // Get the peaks array back from the device

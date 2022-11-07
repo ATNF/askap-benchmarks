@@ -176,7 +176,7 @@ void CudaPS::subtractPSF(const size_t peakPos,
 
     dim3 numBlocks(blocksx, blocksy);
     dim3 threadsPerBlock(blockDim, blockDim);
-    dSubtractPSF << <numBlocks, threadsPerBlock >> > (dPsf, dResidual, imageWidth,
+    dSubtractPSF <<<numBlocks, threadsPerBlock>>> (dPsf, dResidual, imageWidth,
         startx, starty, stopx, stopy, diffx, diffy, absPeakVal, gGain);
     gpuCheckErrors("kernel launch failure in subtractPSF");
 }
@@ -252,9 +252,9 @@ CudaPS::Peak CudaPS::findPeak(const float* dData, size_t N)
     hipMalloc(&d2Index, sizeof(size_t));
     gpuCheckErrors("hipMalloc failure!");
 
-    dFindPeak_Step1 << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
+    dFindPeak_Step1 <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
     gpuCheckErrors("cuda kernel launch 1 failure!");
-    dFindPeak_Step2 << <1, BLOCK_SIZE >> > (dMax, dIndex, d2Index, GRID_SIZE);
+    dFindPeak_Step2 <<<1, BLOCK_SIZE>>> (dMax, dIndex, d2Index, GRID_SIZE);
     gpuCheckErrors("cuda kernel launch 2 failure!");
 
     hipMemcpy(hMax.data(), dMax, sizeof(float), hipMemcpyDeviceToHost);
