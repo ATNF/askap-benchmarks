@@ -1,0 +1,1 @@
+hipcc -o gridder ../src/Solvers/GridderCPU.cpp ../src/Solvers/GridderGPUAtomic.cu ../src/Solvers/GridderGPUAtomicTiled.cu ../src/Solvers/GridderGPUOlder.cu ../utilities/WarmupGPU.cu ../utilities/Setup.cpp ../utilities/RandomVectorGenerator.cpp ../utilities/PrintVector.cpp ../utilities/MaxError.cpp ../main.cpp -std=c++17 -fopenmp -O2
