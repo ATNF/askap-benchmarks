@@ -287,62 +287,62 @@ CudaPSLastWUnrolled::Peak CudaPSLastWUnrolled::findPeak(const float* dData, size
     size_t* dIndex;
     size_t* d2Index;
 
-    hıpMalloc(&dMax, SIZE_MAX_VALUE);
-    hıpMalloc(&dIndex, SIZE_MAX_INDEX);
-    hıpMalloc(&d2Index, sizeof(size_t));
-    gpuCheckErrors("hıpMalloc failure!");
+    hipMalloc(&dMax, SIZE_MAX_VALUE);
+    hipMalloc(&dIndex, SIZE_MAX_INDEX);
+    hipMalloc(&d2Index, sizeof(size_t));
+    gpuCheckErrors("hipMalloc failure!");
 
 
     dFindPeak_Step1_LW << <GRID_SIZE, BLOCK_SIZE >> > (dData, dMax, dIndex, N);
-    gpuCheckErrors("hıp kernel launch 1 failure!");
+    gpuCheckErrors("hip kernel launch 1 failure!");
     dFindPeak_Step2_LW << <1, BLOCK_SIZE >> > (dMax, dIndex, d2Index, GRID_SIZE);
-    gpuCheckErrors("hıp kernel launch 2 failure!");
+    gpuCheckErrors("hip kernel launch 2 failure!");
 
-    hıpMemcpy(hMax.data(), dMax, sizeof(float), hıpMemcpyDeviceToHost);
-    gpuCheckErrors("hıpMemcpy D2H failure in findPeak (hmax)!");
-    hıpMemcpy(hIndex.data(), d2Index, sizeof(size_t), hıpMemcpyDeviceToHost);
-    gpuCheckErrors("hıpMemcpy D2H failure in findPeak (hindex)!");
+    hipMemcpy(hMax.data(), dMax, sizeof(float), hipMemcpyDeviceToHost);
+    gpuCheckErrors("hipMemcpy D2H failure in findPeak (hmax)!");
+    hipMemcpy(hIndex.data(), d2Index, sizeof(size_t), hipMemcpyDeviceToHost);
+    gpuCheckErrors("hipMemcpy D2H failure in findPeak (hindex)!");
 
     Peak p;
     p.val = hMax[0];
     p.pos = hIndex[0];
 
 
-    hıpFree(dMax);
-    hıpFree(dIndex);
-    hıpFree(d2Index);
-    gpuCheckErrors("hıpFree failure!");
+    hipFree(dMax);
+    hipFree(dIndex);
+    hipFree(d2Index);
+    gpuCheckErrors("hipFree failure!");
 
     return p;
 }
 
 void CudaPSLastWUnrolled::memAlloc()
 {
-    hıpMalloc(&dDirty, SIZE_IMAGE);
-    hıpMalloc(&dPsf, SIZE_IMAGE);
-    hıpMalloc(&dResidual, SIZE_IMAGE);
-    gpuCheckErrors("hıpMalloc failure");
+    hipMalloc(&dDirty, SIZE_IMAGE);
+    hipMalloc(&dPsf, SIZE_IMAGE);
+    hipMalloc(&dResidual, SIZE_IMAGE);
+    gpuCheckErrors("hipMalloc failure");
 }
 
 CudaPSLastWUnrolled::~CudaPSLastWUnrolled()
 {
-    hıpFree(dDirty);
-    hıpFree(dPsf);
-    hıpFree(dResidual);
-    gpuCheckErrors("hıpFree failure");
+    hipFree(dDirty);
+    hipFree(dPsf);
+    hipFree(dResidual);
+    gpuCheckErrors("hipFree failure");
     cout << "Cuda PS Full Unroll destructor" << endl;
 }
 
 void CudaPSLastWUnrolled::copyH2D()
 {
-    hıpMemcpy(dDirty, dirty.data(), SIZE_IMAGE, hıpMemcpyHostToDevice);
-    hıpMemcpy(dPsf, psf.data(), SIZE_IMAGE, hıpMemcpyHostToDevice);
-    hıpMemcpy(dResidual, residual.data(), SIZE_IMAGE, hıpMemcpyHostToDevice);
-    gpuCheckErrors("hıpMemcpy H2D failure");
+    hipMemcpy(dDirty, dirty.data(), SIZE_IMAGE, hipMemcpyHostToDevice);
+    hipMemcpy(dPsf, psf.data(), SIZE_IMAGE, hipMemcpyHostToDevice);
+    hipMemcpy(dResidual, residual.data(), SIZE_IMAGE, hipMemcpyHostToDevice);
+    gpuCheckErrors("hipMemcpy H2D failure");
 }
 
 void CudaPSLastWUnrolled::copyD2H()
 {
-    hıpMemcpy(residual.data(), dResidual, SIZE_IMAGE, hıpMemcpyDeviceToHost);
-    gpuCheckErrors("hıpMemcpy D2H failure");
+    hipMemcpy(residual.data(), dResidual, SIZE_IMAGE, hipMemcpyDeviceToHost);
+    gpuCheckErrors("hipMemcpy D2H failure");
 }
