@@ -76,38 +76,38 @@ template<typename T2>
 void GridderGPUOlder<T2>::deviceAllocations()
 {
     // Allocate device vectors
-    cudaMalloc(&dData, SIZE_DATA);
-    cudaMalloc(&dGrid, SIZE_GRID);
-    cudaMalloc(&dC, SIZE_C);
-    cudaMalloc(&dCOffset, SIZE_COFFSET);
-    cudaMalloc(&dIU, SIZE_IU);
-    cudaMalloc(&dIV, SIZE_IV);
-    cudaCheckErrors("cudaMalloc failure");
+    hipMalloc(&dData, SIZE_DATA);
+    hipMalloc(&dGrid, SIZE_GRID);
+    hipMalloc(&dC, SIZE_C);
+    hipMalloc(&dCOffset, SIZE_COFFSET);
+    hipMalloc(&dIU, SIZE_IU);
+    hipMalloc(&dIV, SIZE_IV);
+    gpuCheckErrors("hipMalloc failure");
 }
 
 template<typename T2>
 void GridderGPUOlder<T2>::copyH2D()
 {
-    cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
-    cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
-    cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
-    cudaMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
-    cudaCheckErrors("cudaMemcpy H2D failure");
+    hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
+    hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
+    hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice);
+    hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
+    hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice);
+    hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice);
+    gpuCheckErrors("hipMemcpy H2D failure");
 }
 
 template<typename T2>
 GridderGPUOlder<T2>::~GridderGPUOlder()
 {
     // Deallocate device vectors
-    cudaFree(dData);
-    cudaFree(dGrid);
-    cudaFree(dC);
-    cudaFree(dCOffset);
-    cudaFree(dIU);
-    cudaFree(dIV);
-    cudaCheckErrors("cudaFree failure");
+    hipFree(dData);
+    hipFree(dGrid);
+    hipFree(dC);
+    hipFree(dCOffset);
+    hipFree(dIU);
+    hipFree(dIV);
+    gpuCheckErrors("hipFree failure");
 }
 
 template <typename T2>
@@ -120,11 +120,11 @@ void GridderGPUOlder<T2>::gridder()
     // Kernel launch
     cout << "Kernel launch" << endl;
     const size_t DSIZE = data.size();
-    typedef cuComplex Complex;
+    typedef hipComplex Complex;
 
     const int SSIZE = 2 * support + 1;
 
-    cudaFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelOlder), cudaFuncCachePreferL1);
+    hipFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelOlder), hipFuncCachePreferL1);
 
     int step = 1;
     int count = 0;
@@ -135,13 +135,13 @@ void GridderGPUOlder<T2>::gridder()
         /// PJE: make sure any chevron is tightly packed
         devGridKernelOlder << <gridDim, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
-        cudaCheckErrors("kernel launch (devGridKernel_v0) failure");
+        gpuCheckErrors("kernel launch (devGridKernel_v0) failure");
         count++;
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
-    cudaCheckErrors("cudaMemcpy D2H failure");
+    hipMemcpy(grid.data(), dGrid, SIZE_GRID, hipMemcpyDeviceToHost);
+    gpuCheckErrors("hipMemcpy D2H failure");
 }
 
 template void GridderGPUOlder<std::complex<float>>::gridder();

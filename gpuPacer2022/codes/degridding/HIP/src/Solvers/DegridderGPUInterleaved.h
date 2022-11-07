@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../IGridder.h"
+#include "../IDegridder.h"
 
 #include <vector>
 #include <iostream>
@@ -29,7 +29,7 @@ typedef hipComplex Complex;
     } while (0)
 
 template <typename T2>
-class GridderGPUOlder : public IGridder<T2>
+class DegridderGPUInterleaved : public IDegridder<T2>
 {
 private:
     // Device vectors
@@ -56,31 +56,31 @@ private:
 
     friend
         __global__
-        void devGridKernelOlder(
-            const Complex* data,
-            const int support,
+        void devDegridKernelInterleaved(
+            const Complex* grid,
+            const int GSIZE,
             const Complex* C,
+            const int support,
             const int* cOffset,
             const int* iu,
             const int* iv,
-            Complex* grid,
-            const int GSIZE,
+            Complex* data,
             const int dind);
 
-    int gridStep(const int DSIZE, const int SSIZE, const int dind);
-
 public:
-    GridderGPUOlder(const size_t support,
+    DegridderGPUInterleaved(const std::vector<T2>& grid,
+        const size_t DSIZE,
+        const size_t SSIZE,
         const size_t GSIZE,
-        const std::vector<T2>& data,
+        const size_t support,
         const std::vector<T2>& C,
         const std::vector<int>& cOffset,
         const std::vector<int>& iu,
         const std::vector<int>& iv,
-        std::vector<T2>& grid) : IGridder<T2>(support, GSIZE, data, C, cOffset, iu, iv, grid) {}
+        std::vector<T2>& data) : IDegridder<T2>(grid, DSIZE, SSIZE, GSIZE, support, C, cOffset, iu, iv, data) {}
 
-    virtual ~GridderGPUOlder();
+    virtual ~DegridderGPUInterleaved();
 
-    void gridder() override;
+    void degridder() override;
 };
 

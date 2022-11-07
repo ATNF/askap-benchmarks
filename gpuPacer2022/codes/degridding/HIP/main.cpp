@@ -1,21 +1,72 @@
-#include <iostream>
-#include <iomanip>
-#include <vector>
-#include <omp.h>
-#include <memory>
+// ****************************************************************************************
+// ****************************************************************************************
+// ****************************************************************************************
+/// @copyright (c) 2009 CSIRO
+/// Australia Telescope National Facility (ATNF)
+/// Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+/// PO Box 76, Epping NSW 1710, Australia
+/// atnf-enquiries@csiro.au
+///
+/// This file is part of the ASKAP software distribution.
+///
+/// The ASKAP software distribution is free software: you can redistribute it
+/// and/or modify it under the terms of the GNU General Public License as
+/// published by the Free Software Foundation; either version 2 of the License,
+/// or (at your option) any later version.
+///
+/// This program is distributed in the hope that it will be useful,
+/// but WITHOUT ANY WARRANTY; without even the implied warranty of
+/// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+/// GNU General Public License for more details.
+///
+/// You should have received a copy of the GNU General Public License
+/// along with this program; if not, write to the Free Software
+/// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
+///
+/// @author Ben Humphreys <ben.humphreys@csiro.au>
+/// @author Tim Cornwell  <tim.cornwell@csiro.au>
+// ****************************************************************************************
+// ****************************************************************************************
+// ****************************************************************************************
 
-#include "utilities/ImageProcess.h"
-#include "utilities/Parameters.h"
+/* Parameters:
+    data      : values to be gridded in a 1D vector
+    support   : total width of the convolution function = 2*support + 1
+    C         : convolution function; shape: (2*support + 1, 2*support + 1, *)
+    cOffset   : offset into convolution function per data point
+    iu, iv    : integer locations of grid points
+    grid      : output grid; shape: (gSize, *)
+    gSize     : size of 1 axis of grid
+              : size of grid in pixels
+
+    freq      : temporal frequency (inverse wavelengths)
+    cellSize  : size of 1 grid cell in wavelengths
+    wCellSize : size of 1 w grid cell in wavelengths
+    wSize     : size of lookup table in w
+
+    nSamples  : number of visibility samples
+*/
+
 #include "utilities/MaxError.h"
+#include "utilities/Parameters.h"
+#include "utilities/PrintVector.h"
+#include "utilities/Setup.h"
+#include "src/IDegridder.h"
+#include "src/SolverFactory.h"
 #include "utilities/WarmupGPU.h"
 
-#include "src/IHogbom.h"
-#include "src/SolverFactory.h"
+#include <iostream>
+#include <complex>
+#include <vector>
+#include <string>
+#include <omp.h>
+#include <iomanip>
 
 using std::cout;
-using std::cerr;
 using std::endl;
+using std::complex;
 using std::vector;
+using std::polar;
 using std::left;
 using std::setprecision;
 using std::setw;
@@ -23,95 +74,99 @@ using std::fixed;
 
 int main()
 {
-	// Maximum error evaluator
-	MaxError<float> maximumError;
+    // Print vector object
+    PrintVector<Value> printVectorComplex;
+    PrintVector<Coord> printVector;
 
-	// Initiate an image process class
-	ImageProcess imagProc;
+    // Maximum error evaluator
+    MaxError<Value> maximumError;
 
-	// Load dirty image and psf
-	float runtimeImagProc = 0.0;
-	auto t0 = omp_get_wtime();
-	cout << "Reading dirty image & psf image" << endl;
-	vector<float> dirty = imagProc.readImage(gDirtyFile);
-	vector<float> psf = imagProc.readImage(gPsfFile);
-	const size_t DIRTY_DIM = imagProc.checkSquare(dirty);
-	const size_t PSF_DIM = imagProc.checkSquare(psf);
-	auto t1 = omp_get_wtime();
-	runtimeImagProc = t1 - t0;
+    // Initialize the data to be gridded
+    auto tInit = omp_get_wtime();
 
-	if (PSF_DIM != DIRTY_DIM)
-	{
-		cerr << "Wrong set of PSF and DIRTY images" << endl;
-		return -1;
-	}
-	
-	const size_t IMAGE_DIM = DIRTY_DIM;
+    vector<Coord> u(NSAMPLES, 0.0);
+    vector<Coord> v(NSAMPLES, 0.0);
+    vector<Coord> w(NSAMPLES, 0.0);
 
-	// Reports some parameters
-	cout << "Iterations: " << gNiters << endl;
-	cout << "Image dimension: " << DIRTY_DIM << " x " << DIRTY_DIM << endl;
-	WarmupGPU warmupGPU;
+    //vector<Value> data(NSAMPLES * NCHAN);
+    vector<Value> refData(NSAMPLES * NCHAN, 0.0);
+    vector<Value> testData(NSAMPLES * NCHAN, 0.0);
+    
+    auto tFin = omp_get_wtime();
+    auto timeInitData = (tFin - tInit) * 1000.0; // in ms
 
-	// WARMUP
-	if (refSolverName != "Golden")
-	{
-		// Warmup
-		warmupGPU.warmup();
-	}
-	
-	// REFERENCE SOLVER
-	vector<float> refResidual(dirty.size(), 0.0);
-	vector<float> refModel(dirty.size(), 0.0);
-	float runtimeRef = 0.0;
-	cout << "\nSolver: " << refSolverName << endl;
-	SolverFactory refSolverFactory(dirty, psf, IMAGE_DIM, refModel, refResidual);
-	std::shared_ptr<IHogbom> hogbom = refSolverFactory.getSolver(refSolverName);
-	t0 = omp_get_wtime();
-	hogbom->deconvolve();
-	t1 = omp_get_wtime();
-	runtimeRef = t1 - t0;
-	
-	// WARMUP
-	if (refSolverName == "Golden")
-	{
-		// Warmup
-		warmupGPU.warmup();
-	}
+    // Measure frequency in inverse wavelengths
+    vector<Coord> freq(NCHAN, 0.0);
 
-	// NEW SOLVER TEST
-	vector<float> testResidual(dirty.size(), 0.0);
-	vector<float> testModel(dirty.size(), 0.0);
-	float runtimeTest = 0.0;
-	cout << "\nSolver: " << testSolverName << endl;
-	SolverFactory testSolverFactory(dirty, psf, IMAGE_DIM, testModel, testResidual);
-	hogbom = testSolverFactory.getSolver(testSolverName);
-	t0 = omp_get_wtime();
-	hogbom->deconvolve();
-	t1 = omp_get_wtime();
-	runtimeTest = t1 - t0;
+    // Initialize convolution function & offsets
+    vector<Value> C;
+    int support;
+    int overSample;
+    vector<int> cOffset;
 
-	cout << "\nVerifying model..." << endl;
-	maximumError.maxError(refModel, testModel);
-	
-	cout << "Verifying residual..." << endl;
-	maximumError.maxError(refResidual, testResidual);
+    // Vectors of grid centers
+    vector<int> iu;
+    vector<int> iv;
+    Coord wCellSize;
 
-	cout << "\nRUNTIME IN SECONDS:" << endl;
-	cout << left << setw(21) << refSolverName
-		<< left << setw(21) << testSolverName
-		<< left << setw(21) << "Speedup" << endl;;
+    Setup<Real, Coord, Value> setup(support, overSample, wCellSize, u, v, w, freq, cOffset, iu, iv, C);
+    
+    tInit = omp_get_wtime();
+    setup.setup();
+    tFin = omp_get_wtime();
+    auto timeSetup = (tFin - tInit) * 1000.0; // in ms
 
-	cout << setprecision(2) << fixed;
-	cout << left << setw(21) << runtimeRef
-		<< left << setw(21) << runtimeTest
-		<< left << setw(21) << runtimeRef / runtimeTest << endl;
-		
-	/*
-	// Write images out
-	imagProc.writeImage("residual.img", refResidual);
-	imagProc.writeImage("model.img", refModel);
-	*/
-	
-	return 0;
+    const size_t SSIZE = 2 * support + 1;
+    const size_t DSIZE = NSAMPLES * NCHAN;
+    vector<Value> grid(GSIZE * GSIZE);
+    grid.assign(grid.size(), static_cast<Value>(1.0));
+
+    WarmupGPU warmupGPU;
+
+    // WARMUP
+    if (refSolverName != "cpu")
+    {
+        // Warmup
+        warmupGPU.warmup();
+    }
+   
+    // Reference degridder
+    cout << "\nSolver: " << refSolverName << endl;
+    SolverFactory<Value> refSolverFactory(grid, DSIZE, SSIZE, GSIZE, support, C, cOffset, iu, iv, refData);
+    std::shared_ptr<IDegridder<Value>> refGridder = refSolverFactory.getSolver(refSolverName);
+    tInit = omp_get_wtime();
+    refGridder->degridder();
+    tFin = omp_get_wtime();
+    auto timeDegridRef = (tFin - tInit) * 1000.0; // in ms
+
+    // WARMUP
+    if (refSolverName == "cpu")
+    {
+        // Warmup
+        warmupGPU.warmup();
+    }
+
+    // Test gridder
+    cout << "\nSolver: " << testSolverName << endl;
+    SolverFactory<Value> testSolverFactory(grid, DSIZE, SSIZE, GSIZE, support, C, cOffset, iu, iv, testData);
+    std::shared_ptr<IDegridder<Value>> testGridder = testSolverFactory.getSolver(testSolverName);
+    tInit = omp_get_wtime();
+    testGridder->degridder();
+    tFin = omp_get_wtime();
+    auto timeDegridTest = (tFin - tInit) * 1000.0; // in ms
+    
+    cout << "\nVerifying the code" << endl;
+    maximumError.maxError(refData, testData);
+
+    cout << "\nRUNTIME IN MILLISECONDS:" << endl;
+    cout << left << setw(21) << "Setup"
+        << left << setw(21) << "Degridding - Ref"
+        << left << setw(21) << "Degridding - Test"
+        << left << setw(21) << "Speedup" << endl;;
+
+    cout << setprecision(2) << fixed;
+    cout << left << setw(21) << timeSetup
+        << left << setw(21) << timeDegridRef
+        << left << setw(21) << timeDegridTest 
+        << left << setw(21) << timeDegridRef/timeDegridTest << endl;
 }

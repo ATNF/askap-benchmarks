@@ -1,35 +1,48 @@
 #pragma once
 
-#include <string>
-#include <iostream>
+/* Parameters:
+    GSIZE     : size of 1 axis of grid
+              : size of grid in pixels
 
-static const int IMAGE_WIDTH = 4096;
-
-static const std::string gDirtyFile = "data/dirty_" + std::to_string(IMAGE_WIDTH) + ".img";
-static const std::string gPsfFile = "data/psf_" + std::to_string(IMAGE_WIDTH) + ".img";
-
-static const size_t gNiters = 1000;
-static const float gGain = 0.1;
-static const float gThreshold = 0.00001;
-
-static const int BLOCK_SIZE = 128; // CUDA maximum is 1024
-static const int GRID_SIZE = 512;
-
-// Solver selection
-//static const std::string refSolverName = "Golden";
-static const std::string refSolverName = "CudaOlder";
-//static const std::string refSolverName = "CudaPS";
-//static const std::string refSolverName = "CudaPSFullUnroll";
-// static const std::string testSolverName = "CudaPS";
-static const std::string testSolverName = "CudaPSFullUnroll";
-
-/*
-	Solvers explanation:
-	- Golden: CPU solver
-	- CudaOlder: Cuda - Solver from the previous hackathon, uses shared memory, standard find max
-	- CudaPS: Cuda - parallel sweep
-	- CudaPSLastWUnrolled: Cuda - parallel sweep, last warp unrolled
-	- CudaPSFullUnroll: Cuda - parallel sweep, full unroll 
+    CELLSIZE  : size of 1 grid cell in wavelengths
+    WSIZE     : size of lookup table in w
+    NSAMPLES  : number of visibility samples
+    
+    
+    BASELINE  :
+    NCHAN     :
 */
 
+#include <complex>
 
+typedef float Real;             // T0
+typedef double Coord;           // T1
+typedef std::complex<Real> Value;    // T2
+
+// Can be changed for testing purposes
+//const int NSAMPLES = 1<<27; //(134 M)
+//const int NSAMPLES = 1<<25; //(34 M)
+const int NSAMPLES = 1<<24; //(17 M)
+//const int NSAMPLES = 1<<20; //(1 M)
+//const int NSAMPLES = 1 << 14; // (~16k)
+const int WSIZE = 33;
+const int NCHAN = 1;
+
+// Shouldn't be changed
+const int GSIZE = 4096;
+const Coord CELLSIZE = 5.0;
+const int BASELINE = 2000;
+
+// Solver selection
+static const std::string refSolverName = "gpuWarpShuffle";
+static const std::string testSolverName = "gpuTiled";
+
+/*
+SOLVERS:
+cpu: 
+gpuInterleaved: 
+gpuSequential
+gpuLessIdle
+gpuTiled
+gpuWarpShuffle
+*/

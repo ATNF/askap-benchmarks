@@ -44,53 +44,53 @@ void devGridKernelAtomicTiled(
     cind += SSIZE * suppV;
 
 
-    //Complex gLocal = cuCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
-    //grid[gind + suppU] = cuCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
+    //Complex gLocal = hipCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
+    //grid[gind + suppU] = hipCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
     //atomicAdd(&grid[gind + suppU].x, gLocal.x);
     //atomicAdd(&grid[gind + suppU].y, gLocal.y);
     //grid[gind + suppU].x += gLocal.x;
     atomicAdd(&grid[gind + suppU].x, dataLocal.x * C[cind + suppU].x - dataLocal.y * C[cind + suppU].y);
     atomicAdd(&grid[gind + suppU].y, dataLocal.x * C[cind + suppU].y + dataLocal.y * C[cind + suppU].x);
 
-    //grid[gind + suppU] = cuCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
+    //grid[gind + suppU] = hipCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
 }
 
 template<typename T2>
 void GridderGPUAtomicTiled<T2>::deviceAllocations()
 {
     // Allocate device vectors
-    cudaMalloc(&dData, SIZE_DATA);
-    cudaMalloc(&dGrid, SIZE_GRID);
-    cudaMalloc(&dC, SIZE_C);
-    cudaMalloc(&dCOffset, SIZE_COFFSET);
-    cudaMalloc(&dIU, SIZE_IU);
-    cudaMalloc(&dIV, SIZE_IV);
-    cudaCheckErrors("cudaMalloc failure");
+    hipMalloc(&dData, SIZE_DATA);
+    hipMalloc(&dGrid, SIZE_GRID);
+    hipMalloc(&dC, SIZE_C);
+    hipMalloc(&dCOffset, SIZE_COFFSET);
+    hipMalloc(&dIU, SIZE_IU);
+    hipMalloc(&dIV, SIZE_IV);
+    gpuCheckErrors("hipMalloc failure");
 }
 
 template<typename T2>
 void GridderGPUAtomicTiled<T2>::copyH2D()
 {
-    cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
-    cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
-    cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
-    cudaMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
-    cudaCheckErrors("cudaMemcpy H2D failure");
+    hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
+    hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
+    hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice);
+    hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
+    hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice);
+    hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice);
+    gpuCheckErrors("hipMemcpy H2D failure");
 }
 
 template<typename T2>
 GridderGPUAtomicTiled<T2>::~GridderGPUAtomic()
 {
     // Deallocate device vectors
-    cudaFree(dData);
-    cudaFree(dGrid);
-    cudaFree(dC);
-    cudaFree(dCOffset);
-    cudaFree(dIU);
-    cudaFree(dIV);
-    cudaCheckErrors("cudaFree failure");
+    hipFree(dData);
+    hipFree(dGrid);
+    hipFree(dC);
+    hipFree(dCOffset);
+    hipFree(dIU);
+    hipFree(dIV);
+    gpuCheckErrors("hipFree failure");
 }
 
 template <typename T2>
@@ -108,9 +108,9 @@ void GridderGPUAtomicTiled<T2>::gridder()
     // Kernel launch
     cout << "Kernel launch" << endl;
     const size_t DSIZE = data.size();
-    typedef cuComplex Complex;
+    typedef hipComplex Complex;
 
-    cudaFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelAtomicTiled), cudaFuncCachePreferL1);
+    hipFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelAtomicTiled), hipFuncCachePreferL1);
 
     dim3 gridSize(GRID_SIZE_X, GRID_SIZE_Y, GRID_SIZE_Z);
     int stepSize = GRID_SIZE_X * BLOCK_SIZE;
@@ -124,12 +124,12 @@ void GridderGPUAtomicTiled<T2>::gridder()
         devGridKernelAtomicTiled << < gridSize, BLOCK_SIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
 
-        cudaCheckErrors("cuda kernel launch failure");
+        gpuCheckErrors("hip kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
-    cudaCheckErrors("cudaMemcpy D2H failure");
+    hipMemcpy(grid.data(), dGrid, SIZE_GRID, hipMemcpyDeviceToHost);
+    gpuCheckErrors("hipMemcpy D2H failure");
 }
 
 template void GridderGPUAtomicTiled<std::complex<float>>::gridder();
