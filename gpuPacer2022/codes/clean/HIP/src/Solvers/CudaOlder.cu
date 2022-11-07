@@ -198,7 +198,7 @@ Peak findPeak(const float* dData, size_t N)
     // It is up to do device function to do that.
     Peak* dPeak;
     hipMalloc(&dPeak, nBlocks * sizeof(Peak));
-    gpuCheckErrors("cudaMalloc failure in findPeak");
+    gpuCheckErrors("hipMalloc failure in findPeak");
 
     // Find peak
     dFindPeak <<<nBlocks, findPeakWidth>>> (dData, N, dPeak);
@@ -206,13 +206,13 @@ Peak findPeak(const float* dData, size_t N)
 
     // Get the peaks array back from the device
     hipMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), hipMemcpyDeviceToHost);
-    gpuCheckErrors("cudaMemcpy D2H failure in findPeak");
+    gpuCheckErrors("hipMemcpy D2H failure in findPeak");
 
     hipDeviceSynchronize();
-    gpuCheckErrors("cudaDeviceSynchronize failure in findPeak");
+    gpuCheckErrors("hipDeviceSynchronize failure in findPeak");
 
     hipFree(dPeak);
-    gpuCheckErrors("cudaFree failure in findPeak");
+    gpuCheckErrors("hipFree failure in findPeak");
 
     // Each thread block return a peak, find the absolute maximum
     Peak p;
@@ -235,7 +235,7 @@ void CudaOlder::memAlloc()
     hipMalloc(&dDirty, SIZE_IMAGE);
     hipMalloc(&dPsf, SIZE_IMAGE);
     hipMalloc(&dResidual, SIZE_IMAGE);
-    gpuCheckErrors("cudaMalloc failure");
+    gpuCheckErrors("hipMalloc failure");
 }
 
 CudaOlder::~CudaOlder()
@@ -243,20 +243,20 @@ CudaOlder::~CudaOlder()
     hipFree(dDirty);
     hipFree(dPsf);
     hipFree(dResidual);
-    gpuCheckErrors("cudaFree failure");
+    gpuCheckErrors("hipFree failure");
     cout << "Cuda Older destructor" << endl;
 }
 
 void CudaOlder::copyH2D()
 {
-    hipMemcpy(dDirty, dirty.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
-    hipMemcpy(dPsf, psf.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
-    hipMemcpy(dResidual, residual.data(), SIZE_IMAGE, cudaMemcpyHostToDevice);
-    gpuCheckErrors("cudaMemcpy H2D failure");
+    hipMemcpy(dDirty, dirty.data(), SIZE_IMAGE, hipMemcpyHostToDevice);
+    hipMemcpy(dPsf, psf.data(), SIZE_IMAGE, hipMemcpyHostToDevice);
+    hipMemcpy(dResidual, residual.data(), SIZE_IMAGE, hipMemcpyHostToDevice);
+    gpuCheckErrors("hipMemcpy H2D failure");
 }
 
 void CudaOlder::copyD2H()
 {
-    hipMemcpy(residual.data(), dResidual, SIZE_IMAGE, cudaMemcpyDeviceToHost);
-    gpuCheckErrors("cudaMemcpy D2H failure");
+    hipMemcpy(residual.data(), dResidual, SIZE_IMAGE, hipMemcpyDeviceToHost);
+    gpuCheckErrors("hipMemcpy D2H failure");
 }

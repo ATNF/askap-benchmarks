@@ -253,9 +253,9 @@ CudaPS::Peak CudaPS::findPeak(const float* dData, size_t N)
     gpuCheckErrors("hipMalloc failure!");
 
     dFindPeak_Step1 <<<GRID_SIZE, BLOCK_SIZE>>> (dData, dMax, dIndex, N);
-    gpuCheckErrors("cuda kernel launch 1 failure!");
+    gpuCheckErrors("hip kernel launch 1 failure!");
     dFindPeak_Step2 <<<1, BLOCK_SIZE>>> (dMax, dIndex, d2Index, GRID_SIZE);
-    gpuCheckErrors("cuda kernel launch 2 failure!");
+    gpuCheckErrors("hip kernel launch 2 failure!");
 
     hipMemcpy(hMax.data(), dMax, sizeof(float), hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure in findPeak (hmax)!");
