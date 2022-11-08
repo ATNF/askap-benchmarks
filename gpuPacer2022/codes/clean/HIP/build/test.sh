@@ -1,1 +1,0 @@
-hipcc -o clean ../main.cpp ../src/Solvers/CudaPS.cu ../src/Solvers/CudaOlder.cu ../src/Solvers/CudaPSFullUnroll.cu ../src/Solvers/CudaPSLastWUnrolled.cu ../src/Solvers/Golden.cpp ../utilities/ImageProcess.cpp ../utilities/MaxError.cpp ../utilities/WarmupGPU.cu -fopenmp -O2 -std=c++17
