@@ -5,8 +5,8 @@
 
 static const int IMAGE_WIDTH = 4096;
 
-static const std::string gDirtyFile = "data/dirty_" + std::to_string(IMAGE_WIDTH) + ".img";
-static const std::string gPsfFile = "data/psf_" + std::to_string(IMAGE_WIDTH) + ".img";
+static const std::string gDirtyFile = "../data/dirty_" + std::to_string(IMAGE_WIDTH) + ".img";
+static const std::string gPsfFile = "../data/psf_" + std::to_string(IMAGE_WIDTH) + ".img";
 
 static const size_t gNiters = 1000;
 static const float gGain = 0.1;

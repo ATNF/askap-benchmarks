@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/src/IHogbom.h
+vector
+-
+iostream
+-
+../utilities/Parameters.h
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/utilities/Parameters.h
+
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/src/Solvers/Golden.cpp
+Golden.h
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/src/Solvers/Golden.h
+
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/src/Solvers/Golden.h
+../IHogbom.h
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/src/IHogbom.h
+cmath
+-
+iostream
+-
+
+/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/utilities/Parameters.h
+string
+-
+iostream
+-
+

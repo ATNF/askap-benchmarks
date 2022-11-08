@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUtilitiesCMake.a CMakeFiles/UtilitiesCMake.dir/ImageProcess.cpp.o CMakeFiles/UtilitiesCMake.dir/MaxError.cpp.o CMakeFiles/UtilitiesCMake.dir/WarmupGPU.cu.o
+/usr/bin/ranlib libUtilitiesCMake.a
