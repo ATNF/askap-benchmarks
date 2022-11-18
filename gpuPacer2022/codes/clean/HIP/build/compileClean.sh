@@ -1,0 +1,1 @@
+hipcc ../main.cpp ../src/Solvers/CudaOlder.cu ../src/Solvers/CudaPS.cu ../src/Solvers/CudaPSFullUnroll.cu ../src/Solvers/CudaPSLastWUnrolled.cu ../src/Solvers/Golden.cpp ../utilities/WarmupGPU.cu ../utilities/MaxError.cpp ../utilities/ImageProcess.cpp -o askapClean -std=c++17 -Xcompiler -fopenmp
