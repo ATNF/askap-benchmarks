@@ -134,8 +134,8 @@ int main()
 
     // Reference gridder
     cout << "\nSolver: " << refSolverName << endl;
-    SolverFactory<Value> refSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, refGrid);
-    std::shared_ptr<IGridder<Value>> refGridder = refSolverFactory.getSolver(refSolverName);
+    SolverFactory refSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, refGrid);
+    std::shared_ptr<IGridder> refGridder = refSolverFactory.getSolver(refSolverName);
     tInit = omp_get_wtime();
     refGridder->gridder();
     tFin = omp_get_wtime();
@@ -150,8 +150,8 @@ int main()
 
     // Test gridder
     cout << "\nSolver: " << testSolverName << endl;
-    SolverFactory<Value> testSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, testGrid);
-    std::shared_ptr<IGridder<Value>> testGridder = testSolverFactory.getSolver(testSolverName);
+    SolverFactory testSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, testGrid);
+    std::shared_ptr<IGridder> testGridder = testSolverFactory.getSolver(testSolverName);
     tInit = omp_get_wtime();
     testGridder->gridder();
     tFin = omp_get_wtime();

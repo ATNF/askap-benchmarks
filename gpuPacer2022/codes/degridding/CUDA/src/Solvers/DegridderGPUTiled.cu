@@ -83,8 +83,7 @@ void devDegridKernelTiled(
 
 }
 
-template<typename T2>
-void DegridderGPUTiled<T2>::deviceAllocations()
+void DegridderGPUTiled::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -96,8 +95,7 @@ void DegridderGPUTiled<T2>::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-template<typename T2>
-void DegridderGPUTiled<T2>::copyH2D()
+void DegridderGPUTiled::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -108,8 +106,7 @@ void DegridderGPUTiled<T2>::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-template<typename T2>
-DegridderGPUTiled<T2>::~DegridderGPUTiled()
+DegridderGPUTiled::~DegridderGPUTiled()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -121,8 +118,7 @@ DegridderGPUTiled<T2>::~DegridderGPUTiled()
     cudaCheckErrors("cudaFree failure");
 }
 
-template <typename T2>
-void DegridderGPUTiled<T2>::degridder()
+void DegridderGPUTiled::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -162,11 +158,3 @@ void DegridderGPUTiled<T2>::degridder()
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
 
-template void DegridderGPUTiled<std::complex<float>>::degridder();
-template void DegridderGPUTiled<std::complex<double>>::degridder();
-template void DegridderGPUTiled<std::complex<float>>::deviceAllocations();
-template void DegridderGPUTiled<std::complex<double>>::deviceAllocations();
-template void DegridderGPUTiled<std::complex<float>>::copyH2D();
-template void DegridderGPUTiled<std::complex<double>>::copyH2D();
-template DegridderGPUTiled<std::complex<float>>::~DegridderGPUTiled();
-template DegridderGPUTiled<std::complex<double>>::~DegridderGPUTiled();

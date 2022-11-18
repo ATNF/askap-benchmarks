@@ -5,8 +5,7 @@ using std::endl;
 using std::vector;
 
 
-template <typename T2>
-void DegridderCPU<T2>::degridder()
+void DegridderCPU::degridder()
 {
     cout << "Degridding on CPU" << endl;
     const int SSIZE = 2 * support + 1;
@@ -23,9 +22,9 @@ void DegridderCPU<T2>::degridder()
 
         for (int suppv = 0; suppv < SSIZE; ++suppv)
         {
-            T2* d = &data[dind];
-            const T2* gptr = &grid[gind];
-            const T2* cptr = &C[cind];
+            std::complex<float>* d = &data[dind];
+            const std::complex<float>* gptr = &grid[gind];
+            const std::complex<float>* cptr = &C[cind];
 
             for (int suppu = 0; suppu < SSIZE; ++suppu)
             {
@@ -37,6 +36,3 @@ void DegridderCPU<T2>::degridder()
         }
     }
 }
-
-template void DegridderCPU<std::complex<float>>::degridder();
-template void DegridderCPU<std::complex<double>>::degridder();

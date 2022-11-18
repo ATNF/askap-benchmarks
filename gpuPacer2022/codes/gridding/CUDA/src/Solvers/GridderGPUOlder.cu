@@ -53,8 +53,7 @@ void devGridKernelOlder(
     grid[gind + threadIdx.x] = cuCfmaf(dataLocal, C[cind + threadIdx.x], grid[gind + threadIdx.x]);
 }
 
-template<typename T2>
-int GridderGPUOlder<T2>::gridStep(const int DSIZE, const int SSIZE, const int dind)
+int GridderGPUOlder::gridStep(const int DSIZE, const int SSIZE, const int dind)
 {
     const int MAXSAMPLES = 32;
     for (int step = 1; step <= MAXSAMPLES; ++step)
@@ -72,8 +71,7 @@ int GridderGPUOlder<T2>::gridStep(const int DSIZE, const int SSIZE, const int di
     return MAXSAMPLES;
 }
 
-template<typename T2>
-void GridderGPUOlder<T2>::deviceAllocations()
+void GridderGPUOlder::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -85,8 +83,7 @@ void GridderGPUOlder<T2>::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-template<typename T2>
-void GridderGPUOlder<T2>::copyH2D()
+void GridderGPUOlder::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -97,8 +94,7 @@ void GridderGPUOlder<T2>::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-template<typename T2>
-GridderGPUOlder<T2>::~GridderGPUOlder()
+GridderGPUOlder::~GridderGPUOlder()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -110,8 +106,7 @@ GridderGPUOlder<T2>::~GridderGPUOlder()
     cudaCheckErrors("cudaFree failure");
 }
 
-template <typename T2>
-void GridderGPUOlder<T2>::gridder()
+void GridderGPUOlder::gridder()
 {
     cout << "\nGridding on GPU" << endl;
     deviceAllocations();
@@ -143,14 +138,3 @@ void GridderGPUOlder<T2>::gridder()
     cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
-
-template void GridderGPUOlder<std::complex<float>>::gridder();
-template void GridderGPUOlder<std::complex<double>>::gridder();
-template void GridderGPUOlder<std::complex<float>>::deviceAllocations();
-template void GridderGPUOlder<std::complex<double>>::deviceAllocations();
-template void GridderGPUOlder<std::complex<float>>::copyH2D();
-template void GridderGPUOlder<std::complex<double>>::copyH2D();
-template GridderGPUOlder<std::complex<float>>::~GridderGPUOlder();
-template GridderGPUOlder<std::complex<double>>::~GridderGPUOlder();
-template int GridderGPUOlder<std::complex<float>>::gridStep(const int DSIZE, const int SSIZE, const int dind);
-template int GridderGPUOlder<std::complex<double>>::gridStep(const int DSIZE, const int SSIZE, const int dind);

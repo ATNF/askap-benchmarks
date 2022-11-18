@@ -93,8 +93,7 @@ void devDegridKernelSequential(
 
 }
 
-template<typename T2>
-void DegridderGPUSequential<T2>::deviceAllocations()
+void DegridderGPUSequential::deviceAllocations()
 {
     // Allocate device vectors
     hipMalloc(&dData, SIZE_DATA);
@@ -106,8 +105,7 @@ void DegridderGPUSequential<T2>::deviceAllocations()
     gpuCheckErrors("hipMalloc failure");
 }
 
-template<typename T2>
-void DegridderGPUSequential<T2>::copyH2D()
+void DegridderGPUSequential::copyH2D()
 {
     hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
     hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
@@ -118,8 +116,7 @@ void DegridderGPUSequential<T2>::copyH2D()
     gpuCheckErrors("hipMemcpy H2D failure");
 }
 
-template<typename T2>
-DegridderGPUSequential<T2>::~DegridderGPUSequential()
+DegridderGPUSequential::~DegridderGPUSequential()
 {
     // Deallocate device vectors
     hipFree(dData);
@@ -131,8 +128,7 @@ DegridderGPUSequential<T2>::~DegridderGPUSequential()
     gpuCheckErrors("hipFree failure");
 }
 
-template <typename T2>
-void DegridderGPUSequential<T2>::degridder()
+void DegridderGPUSequential::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -173,12 +169,3 @@ void DegridderGPUSequential<T2>::degridder()
     hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 }
-
-template void DegridderGPUSequential<std::complex<float>>::degridder();
-template void DegridderGPUSequential<std::complex<double>>::degridder();
-template void DegridderGPUSequential<std::complex<float>>::deviceAllocations();
-template void DegridderGPUSequential<std::complex<double>>::deviceAllocations();
-template void DegridderGPUSequential<std::complex<float>>::copyH2D();
-template void DegridderGPUSequential<std::complex<double>>::copyH2D();
-template DegridderGPUSequential<std::complex<float>>::~DegridderGPUSequential();
-template DegridderGPUSequential<std::complex<double>>::~DegridderGPUSequential();

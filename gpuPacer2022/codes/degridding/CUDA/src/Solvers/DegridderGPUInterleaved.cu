@@ -87,9 +87,7 @@ void devDegridKernelInterleaved(
 
 }
 
-
-template<typename T2>
-void DegridderGPUInterleaved<T2>::deviceAllocations()
+void DegridderGPUInterleaved::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -101,8 +99,7 @@ void DegridderGPUInterleaved<T2>::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-template<typename T2>
-void DegridderGPUInterleaved<T2>::copyH2D()
+void DegridderGPUInterleaved::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -113,8 +110,7 @@ void DegridderGPUInterleaved<T2>::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-template<typename T2>
-DegridderGPUInterleaved<T2>::~DegridderGPUInterleaved()
+DegridderGPUInterleaved::~DegridderGPUInterleaved()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -126,8 +122,7 @@ DegridderGPUInterleaved<T2>::~DegridderGPUInterleaved()
     cudaCheckErrors("cudaFree failure");
 }
 
-template <typename T2>
-void DegridderGPUInterleaved<T2>::degridder()
+void DegridderGPUInterleaved::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -169,11 +164,3 @@ void DegridderGPUInterleaved<T2>::degridder()
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
 
-template void DegridderGPUInterleaved<std::complex<float>>::degridder();
-template void DegridderGPUInterleaved<std::complex<double>>::degridder();
-template void DegridderGPUInterleaved<std::complex<float>>::deviceAllocations();
-template void DegridderGPUInterleaved<std::complex<double>>::deviceAllocations();
-template void DegridderGPUInterleaved<std::complex<float>>::copyH2D();
-template void DegridderGPUInterleaved<std::complex<double>>::copyH2D();
-template DegridderGPUInterleaved<std::complex<float>>::~DegridderGPUInterleaved();
-template DegridderGPUInterleaved<std::complex<double>>::~DegridderGPUInterleaved();

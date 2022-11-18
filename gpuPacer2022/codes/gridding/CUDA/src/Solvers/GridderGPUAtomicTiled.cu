@@ -55,8 +55,7 @@ void devGridKernelAtomicTiled(
     //grid[gind + suppU] = cuCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
 }
 
-template<typename T2>
-void GridderGPUAtomicTiled<T2>::deviceAllocations()
+void GridderGPUAtomicTiled::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -68,8 +67,7 @@ void GridderGPUAtomicTiled<T2>::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-template<typename T2>
-void GridderGPUAtomicTiled<T2>::copyH2D()
+void GridderGPUAtomicTiled::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -80,8 +78,7 @@ void GridderGPUAtomicTiled<T2>::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-template<typename T2>
-GridderGPUAtomicTiled<T2>::~GridderGPUAtomic()
+GridderGPUAtomicTiled::~GridderGPUAtomic()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -93,8 +90,7 @@ GridderGPUAtomicTiled<T2>::~GridderGPUAtomic()
     cudaCheckErrors("cudaFree failure");
 }
 
-template <typename T2>
-void GridderGPUAtomicTiled<T2>::gridder()
+void GridderGPUAtomicTiled::gridder()
 {
     cout << "\nGridding on GPU" << endl;
     deviceAllocations();
@@ -131,12 +127,3 @@ void GridderGPUAtomicTiled<T2>::gridder()
     cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
-
-template void GridderGPUAtomicTiled<std::complex<float>>::gridder();
-template void GridderGPUAtomicTiled<std::complex<double>>::gridder();
-template void GridderGPUAtomicTiled<std::complex<float>>::deviceAllocations();
-template void GridderGPUAtomicTiled<std::complex<double>>::deviceAllocations();
-template void GridderGPUAtomicTiled<std::complex<float>>::copyH2D();
-template void GridderGPUAtomicTiled<std::complex<double>>::copyH2D();
-template GridderGPUAtomicTiled<std::complex<float>>::~GridderGPUAtomicTiled();
-template GridderGPUAtomicTiled<std::complex<double>>::~GridderGPUAtomicTiled();

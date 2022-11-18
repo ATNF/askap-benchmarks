@@ -28,22 +28,21 @@ typedef hipComplex Complex;
         } \
     } while (0)
 
-template <typename T2>
-class GridderGPUAtomic : public IGridder<T2>
+class GridderGPUAtomic : public IGridder
 {
 private:
     // Device vectors
-    T2* dData;
-    T2* dGrid;
-    T2* dC;
+    std::complex<float>* dData;
+    std::complex<float>* dGrid;
+    std::complex<float>* dC;
     int* dCOffset;
     int* dIU;
     int* dIV;
 
     // Device parameters
-    const size_t SIZE_DATA = data.size() * sizeof(T2);
-    const size_t SIZE_GRID = grid.size() * sizeof(T2);
-    const size_t SIZE_C = C.size() * sizeof(T2);
+    const size_t SIZE_DATA = data.size() * sizeof(std::complex<float>);
+    const size_t SIZE_GRID = grid.size() * sizeof(std::complex<float>);
+    const size_t SIZE_C = C.size() * sizeof(std::complex<float>);
     const size_t SIZE_COFFSET = cOffset.size() * sizeof(int);
     const size_t SIZE_IU = iu.size() * sizeof(int);
     const size_t SIZE_IV = iv.size() * sizeof(int);
@@ -70,12 +69,12 @@ private:
 public:
     GridderGPUAtomic(const size_t support,
         const size_t GSIZE,
-        const std::vector<T2>& data,
-        const std::vector<T2>& C,
+        const std::vector<std::complex<float>>& data,
+        const std::vector<std::complex<float>>& C,
         const std::vector<int>& cOffset,
         const std::vector<int>& iu,
         const std::vector<int>& iv,
-        std::vector<T2>& grid) : IGridder<T2>(support, GSIZE, data, C, cOffset, iu, iv, grid) {}
+        std::vector<std::complex<float>>& grid) : IGridder(support, GSIZE, data, C, cOffset, iu, iv, grid) {}
 
     virtual ~GridderGPUAtomic();
 
