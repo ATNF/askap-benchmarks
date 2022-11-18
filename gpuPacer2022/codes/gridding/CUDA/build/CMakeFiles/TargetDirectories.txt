@@ -1,0 +1,9 @@
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/CMakeFiles/rebuild_cache.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/CMakeFiles/edit_cache.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/CMakeFiles/askap.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/utilities/CMakeFiles/rebuild_cache.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/utilities/CMakeFiles/edit_cache.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/utilities/CMakeFiles/UtilitiesCMake.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/src/Solvers/CMakeFiles/rebuild_cache.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/src/Solvers/CMakeFiles/edit_cache.dir
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/gridding/CUDA/build/src/Solvers/CMakeFiles/SourceCodeCMake.dir

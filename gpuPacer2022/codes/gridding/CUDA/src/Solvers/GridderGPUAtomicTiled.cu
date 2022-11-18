@@ -78,7 +78,7 @@ void GridderGPUAtomicTiled::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-GridderGPUAtomicTiled::~GridderGPUAtomic()
+GridderGPUAtomicTiled::~GridderGPUAtomicTiled()
 {
     // Deallocate device vectors
     cudaFree(dData);

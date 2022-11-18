@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/MaxError.h
+vector
+-
+complex
+-
+iostream
+-
+
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/WarmupGPU.cu
+WarmupGPU.h
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/WarmupGPU.h
+
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/WarmupGPU.h
+MaxError.h
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/MaxError.h
+cuda_runtime_api.h
+-
+cuda_runtime.h
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/cuda_runtime.h
+device_launch_parameters.h
+/group/director2196/ocekmer/TheUnitedVersions/askap-benchmarks/gpuPacer2022/codes/degridding/CUDA/utilities/device_launch_parameters.h
+vector
+-
+iostream
+-
+

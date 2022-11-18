@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUtilitiesCMake.a CMakeFiles/UtilitiesCMake.dir/Setup.cpp.o CMakeFiles/UtilitiesCMake.dir/MaxError.cpp.o CMakeFiles/UtilitiesCMake.dir/WarmupGPU.cu.o CMakeFiles/UtilitiesCMake.dir/PrintVector.cpp.o CMakeFiles/UtilitiesCMake.dir/RandomVectorGenerator.cpp.o
+/usr/bin/ranlib libUtilitiesCMake.a
