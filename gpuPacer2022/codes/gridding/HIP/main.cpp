@@ -134,8 +134,8 @@ int main()
 
     // Reference gridder
     cout << "\nSolver: " << refSolverName << endl;
-    SolverFactory refSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, refGrid);
-    std::shared_ptr<IGridder> refGridder = refSolverFactory.getSolver(refSolverName);
+    SolverFactory<Value> refSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, refGrid);
+    std::shared_ptr<IGridder<Value>> refGridder = refSolverFactory.getSolver(refSolverName);
     tInit = omp_get_wtime();
     refGridder->gridder();
     tFin = omp_get_wtime();
@@ -150,8 +150,8 @@ int main()
 
     // Test gridder
     cout << "\nSolver: " << testSolverName << endl;
-    SolverFactory testSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, testGrid);
-    std::shared_ptr<IGridder> testGridder = testSolverFactory.getSolver(testSolverName);
+    SolverFactory<Value> testSolverFactory(support, GSIZE, data, C, cOffset, iu, iv, testGrid);
+    std::shared_ptr<IGridder<Value>> testGridder = testSolverFactory.getSolver(testSolverName);
     tInit = omp_get_wtime();
     testGridder->gridder();
     tFin = omp_get_wtime();
@@ -162,8 +162,8 @@ int main()
 
     cout << "\nRUNTIME IN MILLISECONDS:" << endl;
     cout << left << setw(21) << "Setup"
-        << left << setw(21) << "Gridding - Ref"
-        << left << setw(21) << "Gridding - Test"
+        << left << setw(21) << "Gridding CPU"
+        << left << setw(21) << "Gridding GPU"
         << left << setw(21) << "Speedup" << endl;;
 
     cout << setprecision(2) << fixed;

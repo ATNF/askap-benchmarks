@@ -97,7 +97,8 @@ void devDegridKernelLessIdle(
 
 }
 
-void DegridderGPULessIdle::deviceAllocations()
+template<typename T2>
+void DegridderGPULessIdle<T2>::deviceAllocations()
 {
     // Allocate device vectors
     hipMalloc(&dData, SIZE_DATA);
@@ -109,7 +110,8 @@ void DegridderGPULessIdle::deviceAllocations()
     gpuCheckErrors("hipMalloc failure");
 }
 
-void DegridderGPULessIdle::copyH2D()
+template<typename T2>
+void DegridderGPULessIdle<T2>::copyH2D()
 {
     hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
     hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
@@ -120,7 +122,8 @@ void DegridderGPULessIdle::copyH2D()
     gpuCheckErrors("hipMemcpy H2D failure");
 }
 
-DegridderGPULessIdle::~DegridderGPULessIdle()
+template<typename T2>
+DegridderGPULessIdle<T2>::~DegridderGPULessIdle()
 {
     // Deallocate device vectors
     hipFree(dData);
@@ -132,14 +135,15 @@ DegridderGPULessIdle::~DegridderGPULessIdle()
     gpuCheckErrors("hipFree failure");
 }
 
-void DegridderGPULessIdle::degridder()
+template <typename T2>
+void DegridderGPULessIdle<T2>::degridder()
 {
     deviceAllocations();
     copyH2D();
 
     // Kernel launch
     const size_t DSIZE = data.size();
-    typedef cuComplex Complex;
+    typedef hipComplex Complex;
 
     const int SSIZE = 2 * support + 1;
 
@@ -173,3 +177,12 @@ void DegridderGPULessIdle::degridder()
     hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 }
+
+template void DegridderGPULessIdle<std::complex<float>>::degridder();
+template void DegridderGPULessIdle<std::complex<double>>::degridder();
+template void DegridderGPULessIdle<std::complex<float>>::deviceAllocations();
+template void DegridderGPULessIdle<std::complex<double>>::deviceAllocations();
+template void DegridderGPULessIdle<std::complex<float>>::copyH2D();
+template void DegridderGPULessIdle<std::complex<double>>::copyH2D();
+template DegridderGPULessIdle<std::complex<float>>::~DegridderGPULessIdle();
+template DegridderGPULessIdle<std::complex<double>>::~DegridderGPULessIdle();

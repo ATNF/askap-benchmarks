@@ -55,7 +55,8 @@ void devGridKernelAtomicTiled(
     //grid[gind + suppU] = hipCfmaf(dataLocal, C[cind + suppU], grid[gind + suppU]);
 }
 
-void GridderGPUAtomicTiled::deviceAllocations()
+template<typename T2>
+void GridderGPUAtomicTiled<T2>::deviceAllocations()
 {
     // Allocate device vectors
     hipMalloc(&dData, SIZE_DATA);
@@ -67,7 +68,8 @@ void GridderGPUAtomicTiled::deviceAllocations()
     gpuCheckErrors("hipMalloc failure");
 }
 
-void GridderGPUAtomicTiled::copyH2D()
+template<typename T2>
+void GridderGPUAtomicTiled<T2>::copyH2D()
 {
     hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
     hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
@@ -78,7 +80,8 @@ void GridderGPUAtomicTiled::copyH2D()
     gpuCheckErrors("hipMemcpy H2D failure");
 }
 
-GridderGPUAtomicTiled::~GridderGPUAtomic()
+template<typename T2>
+GridderGPUAtomicTiled<T2>::~GridderGPUAtomic()
 {
     // Deallocate device vectors
     hipFree(dData);
@@ -90,7 +93,8 @@ GridderGPUAtomicTiled::~GridderGPUAtomic()
     gpuCheckErrors("hipFree failure");
 }
 
-void GridderGPUAtomicTiled::gridder()
+template <typename T2>
+void GridderGPUAtomicTiled<T2>::gridder()
 {
     cout << "\nGridding on GPU" << endl;
     deviceAllocations();
@@ -127,3 +131,12 @@ void GridderGPUAtomicTiled::gridder()
     hipMemcpy(grid.data(), dGrid, SIZE_GRID, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 }
+
+template void GridderGPUAtomicTiled<std::complex<float>>::gridder();
+template void GridderGPUAtomicTiled<std::complex<double>>::gridder();
+template void GridderGPUAtomicTiled<std::complex<float>>::deviceAllocations();
+template void GridderGPUAtomicTiled<std::complex<double>>::deviceAllocations();
+template void GridderGPUAtomicTiled<std::complex<float>>::copyH2D();
+template void GridderGPUAtomicTiled<std::complex<double>>::copyH2D();
+template GridderGPUAtomicTiled<std::complex<float>>::~GridderGPUAtomicTiled();
+template GridderGPUAtomicTiled<std::complex<double>>::~GridderGPUAtomicTiled();

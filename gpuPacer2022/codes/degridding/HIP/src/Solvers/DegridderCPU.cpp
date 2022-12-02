@@ -4,26 +4,27 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-void DegridderCPU::degridder()
+template <typename T2>
+void DegridderCPU<T2>::degridder()
 {
     cout << "Degridding on CPU" << endl;
-    const int SSIZE = 2 * support + 1;
+    const int SSIZE = 2 * this->support + 1;
     cout << "SSIZE = " << SSIZE << endl;
-    for (int dind = 0; dind < DSIZE; ++dind)
+    for (int dind = 0; dind < this->DSIZE; ++dind)
     {
-        data[dind] = 0.0;
+        this->data[dind] = 0.0;
 
         // The actual grid point from which we offset
-        int gind = iu[dind] + GSIZE * iv[dind] - support;
+        int gind = this->iu[dind] + GSIZE * this->iv[dind] - this->support;
 
         // The convolution function point from which we offset
-        int cind = cOffset[dind];
+        int cind = this->cOffset[dind];
 
         for (int suppv = 0; suppv < SSIZE; ++suppv)
         {
-            std::complex<float>* d = &data[dind];
-            const std::complex<float>* gptr = &grid[gind];
-            const std::complex<float>* cptr = &C[cind];
+            T2* d = &(this->data[dind]);
+            const T2* gptr = &(this->grid[gind]);
+            const T2* cptr = &(this->C[cind]);
 
             for (int suppu = 0; suppu < SSIZE; ++suppu)
             {
@@ -35,3 +36,6 @@ void DegridderCPU::degridder()
         }
     }
 }
+
+template void DegridderCPU<std::complex<float>>::degridder();
+template void DegridderCPU<std::complex<double>>::degridder();

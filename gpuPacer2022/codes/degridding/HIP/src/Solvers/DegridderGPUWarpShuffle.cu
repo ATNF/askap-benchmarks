@@ -90,7 +90,8 @@ void devDegridKernelWarpShuffle(
 }
 
 
-void DegridderGPUWarpShuffle::deviceAllocations()
+template<typename T2>
+void DegridderGPUWarpShuffle<T2>::deviceAllocations()
 {
     // Allocate device vectors
     hipMalloc(&dData, SIZE_DATA);
@@ -102,7 +103,8 @@ void DegridderGPUWarpShuffle::deviceAllocations()
     gpuCheckErrors("hipMalloc failure");
 }
 
-void DegridderGPUWarpShuffle::copyH2D()
+template<typename T2>
+void DegridderGPUWarpShuffle<T2>::copyH2D()
 {
     hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
     hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
@@ -113,7 +115,8 @@ void DegridderGPUWarpShuffle::copyH2D()
     gpuCheckErrors("hipMemcpy H2D failure");
 }
 
-DegridderGPUWarpShuffle::~DegridderGPUWarpShuffle()
+template<typename T2>
+DegridderGPUWarpShuffle<T2>::~DegridderGPUWarpShuffle()
 {
     // Deallocate device vectors
     hipFree(dData);
@@ -125,7 +128,8 @@ DegridderGPUWarpShuffle::~DegridderGPUWarpShuffle()
     gpuCheckErrors("hipFree failure");
 }
 
-void DegridderGPUWarpShuffle::degridder()
+template <typename T2>
+void DegridderGPUWarpShuffle<T2>::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -164,3 +168,12 @@ void DegridderGPUWarpShuffle::degridder()
     hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 }
+
+template void DegridderGPUWarpShuffle<std::complex<float>>::degridder();
+template void DegridderGPUWarpShuffle<std::complex<double>>::degridder();
+template void DegridderGPUWarpShuffle<std::complex<float>>::deviceAllocations();
+template void DegridderGPUWarpShuffle<std::complex<double>>::deviceAllocations();
+template void DegridderGPUWarpShuffle<std::complex<float>>::copyH2D();
+template void DegridderGPUWarpShuffle<std::complex<double>>::copyH2D();
+template DegridderGPUWarpShuffle<std::complex<float>>::~DegridderGPUWarpShuffle();
+template DegridderGPUWarpShuffle<std::complex<double>>::~DegridderGPUWarpShuffle();
