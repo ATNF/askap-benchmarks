@@ -7,22 +7,22 @@ using std::vector;
 template <typename T2>
 void GridderCPU<T2>::gridder()
 {
-    const int SSIZE = 2 * support + 1;
-    const int N = static_cast<int>(data.size());
+    const int SSIZE = 2 * this->support + 1;
+    const int N = static_cast<int>(this->data.size());
 
     for (int dind = 0; dind < N; ++dind)
     {
         // The actual grid point
-        int gind = iu[dind] + GSIZE * iv[dind] - support;
+        int gind = this->iu[dind] + GSIZE * this->iv[dind] - this->support;
 
         // The convolution function point from which we offset
-        int cind = cOffset[dind];
+        int cind = this->cOffset[dind];
 
         for (int suppV = 0; suppV < SSIZE; ++suppV)
         {
-            T2* gptr = &grid[gind];
-            const T2* cptr = &C[cind];
-            const T2 d = data[dind];
+            T2* gptr = &(this->grid[gind]);
+            const T2* cptr = &(this->C[cind]);
+            const T2 d = this->data[dind];
 
             for (int suppU = 0; suppU < SSIZE; ++suppU)
             {

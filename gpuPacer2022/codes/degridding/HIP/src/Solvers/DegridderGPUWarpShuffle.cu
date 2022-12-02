@@ -106,12 +106,12 @@ void DegridderGPUWarpShuffle<T2>::deviceAllocations()
 template<typename T2>
 void DegridderGPUWarpShuffle<T2>::copyH2D()
 {
-    hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
-    hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
-    hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice);
-    hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
-    hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice);
-    hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice);
+    hipMemcpy(dData, this->data.data(), SIZE_DATA, hipMemcpyHostToDevice);
+    hipMemcpy(dGrid, this->grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
+    hipMemcpy(dC, this->C.data(), SIZE_C, hipMemcpyHostToDevice);
+    hipMemcpy(dCOffset, this->cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
+    hipMemcpy(dIU, this->iu.data(), SIZE_IU, hipMemcpyHostToDevice);
+    hipMemcpy(dIV, this->iv.data(), SIZE_IV, hipMemcpyHostToDevice);
     gpuCheckErrors("hipMemcpy H2D failure");
 }
 
@@ -135,10 +135,10 @@ void DegridderGPUWarpShuffle<T2>::degridder()
     copyH2D();
 
     // Kernel launch
-    const size_t DSIZE = data.size();
+    const size_t DSIZE = this->data.size();
     typedef hipComplex Complex;
 
-    const int SSIZE = 2 * support + 1;
+    const int SSIZE = 2 * this->support + 1;
 
     // hipFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelOlder), hipFuncCachePreferL1);
 
@@ -147,7 +147,7 @@ void DegridderGPUWarpShuffle<T2>::degridder()
     hipDeviceProp devProp;
     hipGetDeviceProperties(&devProp, device);
 
-    int gridSize = devProp.maxGridSize[0] / (support + 1);  // launch kernels for this number of samples at a time
+    int gridSize = devProp.maxGridSize[0] / (this->support + 1);  // launch kernels for this number of samples at a time
     assert(SSIZE <= devProp.maxThreadsPerBlock);
 
     int count = 0;
@@ -160,12 +160,12 @@ void DegridderGPUWarpShuffle<T2>::degridder()
         {
             gridSize = DSIZE - dind;
         }
-        devDegridKernelWarpShuffle <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelWarpShuffle <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, this->support, dCOffset, dIU, dIV, (Complex*)dData, dind);
         gpuCheckErrors("hip kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    hipMemcpy(data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost);
+    hipMemcpy(this->data.data(), dData, SIZE_DATA, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 }
 

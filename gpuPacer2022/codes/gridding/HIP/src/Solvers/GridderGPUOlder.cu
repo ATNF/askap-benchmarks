@@ -62,8 +62,8 @@ int GridderGPUOlder<T2>::gridStep(const int DSIZE, const int SSIZE, const int di
         for (int check = (step - 1); check >= 0; --check)
         {
             if (!((dind + step) < DSIZE && (
-                abs(iu[dind + step] - iu[dind + check]) > SSIZE ||
-                abs(iv[dind + step] - iv[dind + check]) > SSIZE)))
+                abs(this->iu[dind + step] - this->iu[dind + check]) > SSIZE ||
+                abs(this->iv[dind + step] - this->iv[dind + check]) > SSIZE)))
             {
                 return step;
             }
@@ -88,12 +88,12 @@ void GridderGPUOlder<T2>::deviceAllocations()
 template<typename T2>
 void GridderGPUOlder<T2>::copyH2D()
 {
-    hipMemcpy(dData, data.data(), SIZE_DATA, hipMemcpyHostToDevice);
-    hipMemcpy(dGrid, grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
-    hipMemcpy(dC, C.data(), SIZE_C, hipMemcpyHostToDevice);
-    hipMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
-    hipMemcpy(dIU, iu.data(), SIZE_IU, hipMemcpyHostToDevice);
-    hipMemcpy(dIV, iv.data(), SIZE_IV, hipMemcpyHostToDevice);
+    hipMemcpy(dData, this->data.data(), SIZE_DATA, hipMemcpyHostToDevice);
+    hipMemcpy(dGrid, this->grid.data(), SIZE_GRID, hipMemcpyHostToDevice);
+    hipMemcpy(dC, this->C.data(), SIZE_C, hipMemcpyHostToDevice);
+    hipMemcpy(dCOffset, this->cOffset.data(), SIZE_COFFSET, hipMemcpyHostToDevice);
+    hipMemcpy(dIU, this->iu.data(), SIZE_IU, hipMemcpyHostToDevice);
+    hipMemcpy(dIV, this->iv.data(), SIZE_IV, hipMemcpyHostToDevice);
     gpuCheckErrors("hipMemcpy H2D failure");
 }
 
@@ -119,10 +119,10 @@ void GridderGPUOlder<T2>::gridder()
 
     // Kernel launch
     cout << "Kernel launch" << endl;
-    const size_t DSIZE = data.size();
+    const size_t DSIZE = this->data.size();
     typedef hipComplex Complex;
 
-    const int SSIZE = 2 * support + 1;
+    const int SSIZE = 2 * this->support + 1;
 
     hipFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelOlder), hipFuncCachePreferL1);
 
@@ -133,14 +133,14 @@ void GridderGPUOlder<T2>::gridder()
         step = gridStep(DSIZE, SSIZE, dind);
         dim3 gridDim(SSIZE, step);
         /// PJE: make sure any chevron is tightly packed
-        devGridKernelOlder <<<gridDim, SSIZE>>> ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelOlder <<<gridDim, SSIZE>>> ((const Complex*)dData, this->support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
         gpuCheckErrors("kernel launch (devGridKernel_v0) failure");
         count++;
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    hipMemcpy(grid.data(), dGrid, SIZE_GRID, hipMemcpyDeviceToHost);
+    hipMemcpy(this->grid.data(), dGrid, SIZE_GRID, hipMemcpyDeviceToHost);
     gpuCheckErrors("hipMemcpy D2H failure");
 }
 
