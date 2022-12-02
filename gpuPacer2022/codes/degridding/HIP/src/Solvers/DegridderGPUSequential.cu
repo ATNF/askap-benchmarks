@@ -147,7 +147,7 @@ void DegridderGPUSequential<T2>::degridder()
 
     int device;
     hipGetDevice(&device);
-    hipDeviceProp devProp;
+    hipDeviceProp_t devProp;
     hipGetDeviceProperties(&devProp, device);
 
     int gridSize = devProp.maxGridSize[0] / (this->support + 1);  // launch kernels for this number of samples at a time

@@ -40,7 +40,7 @@ void devDegridKernelWarpShuffle(
     {
         int gind = gindStart + GSIZE * suppv;
         int cind = cindStart + SSIZE * suppv;
-        Complex sum = cuCmulf(grid[gind + suppu], C[cind + suppu]);
+        Complex sum = hipCmulf(grid[gind + suppu], C[cind + suppu]);
 
         __syncthreads();
         // Reduce within each warp
@@ -144,7 +144,7 @@ void DegridderGPUWarpShuffle<T2>::degridder()
 
     int device;
     hipGetDevice(&device);
-    hipDeviceProp devProp;
+    hipDeviceProp_t devProp;
     hipGetDeviceProperties(&devProp, device);
 
     int gridSize = devProp.maxGridSize[0] / (this->support + 1);  // launch kernels for this number of samples at a time
@@ -162,6 +162,7 @@ void DegridderGPUWarpShuffle<T2>::degridder()
         }
         devDegridKernelWarpShuffle <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, this->support, dCOffset, dIU, dIV, (Complex*)dData, dind);
         gpuCheckErrors("hip kernel launch failure");
+	++count;
     }
     cout << "Used " << count << " kernel launches." << endl;
 

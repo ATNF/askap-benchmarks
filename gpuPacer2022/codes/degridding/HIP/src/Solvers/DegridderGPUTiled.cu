@@ -138,7 +138,7 @@ void DegridderGPUTiled<T2>::degridder()
 
     int device;
     hipGetDevice(&device);
-    hipDeviceProp devProp;
+    hipDeviceProp_t devProp;
     hipGetDeviceProperties(&devProp, device);
 
     int count = 0;
