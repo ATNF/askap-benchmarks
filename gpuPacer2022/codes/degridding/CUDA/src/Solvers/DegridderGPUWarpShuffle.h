@@ -40,12 +40,12 @@ private:
     int* dIV;
 
     // Device parameters
-    const size_t SIZE_DATA = data.size() * sizeof(T2);
-    const size_t SIZE_GRID = grid.size() * sizeof(T2);
-    const size_t SIZE_C = C.size() * sizeof(T2);
-    const size_t SIZE_COFFSET = cOffset.size() * sizeof(int);
-    const size_t SIZE_IU = iu.size() * sizeof(int);
-    const size_t SIZE_IV = iv.size() * sizeof(int);
+    const size_t SIZE_DATA = this->data.size() * sizeof(T2);
+    const size_t SIZE_GRID = this->grid.size() * sizeof(T2);
+    const size_t SIZE_C = this->C.size() * sizeof(T2);
+    const size_t SIZE_COFFSET = this->cOffset.size() * sizeof(int);
+    const size_t SIZE_IU = this->iu.size() * sizeof(int);
+    const size_t SIZE_IV = this->iv.size() * sizeof(int);
 
     // Private methods
     void deviceAllocations();

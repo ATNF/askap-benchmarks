@@ -109,12 +109,12 @@ void DegridderGPUSequential<T2>::deviceAllocations()
 template<typename T2>
 void DegridderGPUSequential<T2>::copyH2D()
 {
-    cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
-    cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
-    cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
-    cudaMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
+    cudaMemcpy(dData, this->data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
+    cudaMemcpy(dGrid, this->grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
+    cudaMemcpy(dC, this->C.data(), SIZE_C, cudaMemcpyHostToDevice);
+    cudaMemcpy(dCOffset, this->cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
+    cudaMemcpy(dIU, this->iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
+    cudaMemcpy(dIV, this->iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
@@ -138,10 +138,10 @@ void DegridderGPUSequential<T2>::degridder()
     copyH2D();
 
     // Kernel launch
-    const size_t DSIZE = data.size();
+    const size_t DSIZE = this->data.size();
     typedef cuComplex Complex;
 
-    const int SSIZE = 2 * support + 1;
+    const int SSIZE = 2 * this->support + 1;
 
     // cudaFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelOlder), cudaFuncCachePreferL1);
 
@@ -150,7 +150,7 @@ void DegridderGPUSequential<T2>::degridder()
     cudaDeviceProp devProp;
     cudaGetDeviceProperties(&devProp, device);
 
-    int gridSize = devProp.maxGridSize[0] / (support + 1);  // launch kernels for this number of samples at a time
+    int gridSize = devProp.maxGridSize[0] / (this->support + 1);  // launch kernels for this number of samples at a time
     assert(SSIZE <= devProp.maxThreadsPerBlock);
 
     int count = 0;
@@ -164,13 +164,13 @@ void DegridderGPUSequential<T2>::degridder()
 
         ++count;
 
-        devDegridKernelSequential << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelSequential << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, this->support, dCOffset, dIU, dIV, (Complex*)dData, dind);
 
         cudaCheckErrors("cuda kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    cudaMemcpy(data.data(), dData, SIZE_DATA, cudaMemcpyDeviceToHost);
+    cudaMemcpy(this->data.data(), dData, SIZE_DATA, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
 

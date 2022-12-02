@@ -71,17 +71,17 @@ void GridderGPUAtomicTiled<T2>::deviceAllocations()
 template<typename T2>
 void GridderGPUAtomicTiled<T2>::copyH2D()
 {
-    cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
-    cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
-    cudaMemcpy(dC, C.data(), SIZE_C, cudaMemcpyHostToDevice);
-    cudaMemcpy(dCOffset, cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIU, iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
-    cudaMemcpy(dIV, iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
+    cudaMemcpy(dData, this->data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
+    cudaMemcpy(dGrid, this->grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
+    cudaMemcpy(dC, this->C.data(), SIZE_C, cudaMemcpyHostToDevice);
+    cudaMemcpy(dCOffset, this->cOffset.data(), SIZE_COFFSET, cudaMemcpyHostToDevice);
+    cudaMemcpy(dIU, this->iu.data(), SIZE_IU, cudaMemcpyHostToDevice);
+    cudaMemcpy(dIV, this->iv.data(), SIZE_IV, cudaMemcpyHostToDevice);
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
 template<typename T2>
-GridderGPUAtomicTiled<T2>::~GridderGPUAtomic()
+GridderGPUAtomicTiled<T2>::~GridderGPUAtomicTiled()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -107,7 +107,7 @@ void GridderGPUAtomicTiled<T2>::gridder()
 
     // Kernel launch
     cout << "Kernel launch" << endl;
-    const size_t DSIZE = data.size();
+    const size_t DSIZE = this->data.size();
     typedef cuComplex Complex;
 
     cudaFuncSetCacheConfig(reinterpret_cast<const void*>(devGridKernelAtomicTiled), cudaFuncCachePreferL1);
@@ -121,14 +121,14 @@ void GridderGPUAtomicTiled<T2>::gridder()
 
         ++count;
 
-        devGridKernelAtomicTiled << < gridSize, BLOCK_SIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelAtomicTiled << < gridSize, BLOCK_SIZE >> > ((const Complex*)dData, this->support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
 
         cudaCheckErrors("cuda kernel launch failure");
     }
     cout << "Used " << count << " kernel launches." << endl;
 
-    cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
+    cudaMemcpy(this->grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
 
