@@ -83,7 +83,8 @@ void devDegridKernelTiled(
 
 }
 
-void DegridderGPUTiled::deviceAllocations()
+template<typename T2>
+void DegridderGPUTiled<T2>::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -95,7 +96,8 @@ void DegridderGPUTiled::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-void DegridderGPUTiled::copyH2D()
+template<typename T2>
+void DegridderGPUTiled<T2>::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -106,7 +108,8 @@ void DegridderGPUTiled::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-DegridderGPUTiled::~DegridderGPUTiled()
+template<typename T2>
+DegridderGPUTiled<T2>::~DegridderGPUTiled()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -118,7 +121,8 @@ DegridderGPUTiled::~DegridderGPUTiled()
     cudaCheckErrors("cudaFree failure");
 }
 
-void DegridderGPUTiled::degridder()
+template <typename T2>
+void DegridderGPUTiled<T2>::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -148,7 +152,7 @@ void DegridderGPUTiled::degridder()
             gridSize = DSIZE - dind;
         }
 
-        devDegridKernelTiled <<< GRID_SIZE, blockSize >>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelTiled << < GRID_SIZE, blockSize >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
         ++count;
         cudaCheckErrors("cuda kernel launch failure");
     }
@@ -158,3 +162,11 @@ void DegridderGPUTiled::degridder()
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
 
+template void DegridderGPUTiled<std::complex<float>>::degridder();
+template void DegridderGPUTiled<std::complex<double>>::degridder();
+template void DegridderGPUTiled<std::complex<float>>::deviceAllocations();
+template void DegridderGPUTiled<std::complex<double>>::deviceAllocations();
+template void DegridderGPUTiled<std::complex<float>>::copyH2D();
+template void DegridderGPUTiled<std::complex<double>>::copyH2D();
+template DegridderGPUTiled<std::complex<float>>::~DegridderGPUTiled();
+template DegridderGPUTiled<std::complex<double>>::~DegridderGPUTiled();

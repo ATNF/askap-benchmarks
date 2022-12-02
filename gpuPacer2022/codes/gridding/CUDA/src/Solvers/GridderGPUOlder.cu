@@ -53,7 +53,8 @@ void devGridKernelOlder(
     grid[gind + threadIdx.x] = cuCfmaf(dataLocal, C[cind + threadIdx.x], grid[gind + threadIdx.x]);
 }
 
-int GridderGPUOlder::gridStep(const int DSIZE, const int SSIZE, const int dind)
+template<typename T2>
+int GridderGPUOlder<T2>::gridStep(const int DSIZE, const int SSIZE, const int dind)
 {
     const int MAXSAMPLES = 32;
     for (int step = 1; step <= MAXSAMPLES; ++step)
@@ -71,7 +72,8 @@ int GridderGPUOlder::gridStep(const int DSIZE, const int SSIZE, const int dind)
     return MAXSAMPLES;
 }
 
-void GridderGPUOlder::deviceAllocations()
+template<typename T2>
+void GridderGPUOlder<T2>::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -83,7 +85,8 @@ void GridderGPUOlder::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-void GridderGPUOlder::copyH2D()
+template<typename T2>
+void GridderGPUOlder<T2>::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -94,7 +97,8 @@ void GridderGPUOlder::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-GridderGPUOlder::~GridderGPUOlder()
+template<typename T2>
+GridderGPUOlder<T2>::~GridderGPUOlder()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -106,7 +110,8 @@ GridderGPUOlder::~GridderGPUOlder()
     cudaCheckErrors("cudaFree failure");
 }
 
-void GridderGPUOlder::gridder()
+template <typename T2>
+void GridderGPUOlder<T2>::gridder()
 {
     cout << "\nGridding on GPU" << endl;
     deviceAllocations();
@@ -128,7 +133,7 @@ void GridderGPUOlder::gridder()
         step = gridStep(DSIZE, SSIZE, dind);
         dim3 gridDim(SSIZE, step);
         /// PJE: make sure any chevron is tightly packed
-        devGridKernelOlder <<<gridDim, SSIZE>>> ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelOlder << <gridDim, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
         cudaCheckErrors("kernel launch (devGridKernel_v0) failure");
         count++;
@@ -138,3 +143,14 @@ void GridderGPUOlder::gridder()
     cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
+
+template void GridderGPUOlder<std::complex<float>>::gridder();
+template void GridderGPUOlder<std::complex<double>>::gridder();
+template void GridderGPUOlder<std::complex<float>>::deviceAllocations();
+template void GridderGPUOlder<std::complex<double>>::deviceAllocations();
+template void GridderGPUOlder<std::complex<float>>::copyH2D();
+template void GridderGPUOlder<std::complex<double>>::copyH2D();
+template GridderGPUOlder<std::complex<float>>::~GridderGPUOlder();
+template GridderGPUOlder<std::complex<double>>::~GridderGPUOlder();
+template int GridderGPUOlder<std::complex<float>>::gridStep(const int DSIZE, const int SSIZE, const int dind);
+template int GridderGPUOlder<std::complex<double>>::gridStep(const int DSIZE, const int SSIZE, const int dind);

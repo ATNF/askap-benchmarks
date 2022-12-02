@@ -4,7 +4,8 @@ using std::cout;
 using std::endl;
 using std::vector;
 
-void GridderCPU::gridder()
+template <typename T2>
+void GridderCPU<T2>::gridder()
 {
     const int SSIZE = 2 * support + 1;
     const int N = static_cast<int>(data.size());
@@ -19,9 +20,9 @@ void GridderCPU::gridder()
 
         for (int suppV = 0; suppV < SSIZE; ++suppV)
         {
-            std::complex<float>* gptr = &grid[gind];
-            const std::complex<float>* cptr = &C[cind];
-            const std::complex<float> d = data[dind];
+            T2* gptr = &grid[gind];
+            const T2* cptr = &C[cind];
+            const T2 d = data[dind];
 
             for (int suppU = 0; suppU < SSIZE; ++suppU)
             {
@@ -33,3 +34,6 @@ void GridderCPU::gridder()
         }
     }
 }
+
+template void GridderCPU<std::complex<float>>::gridder();
+template void GridderCPU<std::complex<double>>::gridder();

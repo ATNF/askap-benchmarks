@@ -93,7 +93,8 @@ void devDegridKernelSequential(
 
 }
 
-void DegridderGPUSequential::deviceAllocations()
+template<typename T2>
+void DegridderGPUSequential<T2>::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -105,7 +106,8 @@ void DegridderGPUSequential::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-void DegridderGPUSequential::copyH2D()
+template<typename T2>
+void DegridderGPUSequential<T2>::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -116,7 +118,8 @@ void DegridderGPUSequential::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-DegridderGPUSequential::~DegridderGPUSequential()
+template<typename T2>
+DegridderGPUSequential<T2>::~DegridderGPUSequential()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -128,7 +131,8 @@ DegridderGPUSequential::~DegridderGPUSequential()
     cudaCheckErrors("cudaFree failure");
 }
 
-void DegridderGPUSequential::degridder()
+template <typename T2>
+void DegridderGPUSequential<T2>::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -160,7 +164,7 @@ void DegridderGPUSequential::degridder()
 
         ++count;
 
-        devDegridKernelSequential <<< gridSize, SSIZE >>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelSequential << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
 
         cudaCheckErrors("cuda kernel launch failure");
     }
@@ -169,3 +173,12 @@ void DegridderGPUSequential::degridder()
     cudaMemcpy(data.data(), dData, SIZE_DATA, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
+
+template void DegridderGPUSequential<std::complex<float>>::degridder();
+template void DegridderGPUSequential<std::complex<double>>::degridder();
+template void DegridderGPUSequential<std::complex<float>>::deviceAllocations();
+template void DegridderGPUSequential<std::complex<double>>::deviceAllocations();
+template void DegridderGPUSequential<std::complex<float>>::copyH2D();
+template void DegridderGPUSequential<std::complex<double>>::copyH2D();
+template DegridderGPUSequential<std::complex<float>>::~DegridderGPUSequential();
+template DegridderGPUSequential<std::complex<double>>::~DegridderGPUSequential();

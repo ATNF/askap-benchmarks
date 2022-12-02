@@ -97,7 +97,8 @@ void devDegridKernelLessIdle(
 
 }
 
-void DegridderGPULessIdle::deviceAllocations()
+template<typename T2>
+void DegridderGPULessIdle<T2>::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -109,7 +110,8 @@ void DegridderGPULessIdle::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-void DegridderGPULessIdle::copyH2D()
+template<typename T2>
+void DegridderGPULessIdle<T2>::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -120,7 +122,8 @@ void DegridderGPULessIdle::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-DegridderGPULessIdle::~DegridderGPULessIdle()
+template<typename T2>
+DegridderGPULessIdle<T2>::~DegridderGPULessIdle()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -132,7 +135,8 @@ DegridderGPULessIdle::~DegridderGPULessIdle()
     cudaCheckErrors("cudaFree failure");
 }
 
-void DegridderGPULessIdle::degridder()
+template <typename T2>
+void DegridderGPULessIdle<T2>::degridder()
 {
     deviceAllocations();
     copyH2D();
@@ -164,7 +168,7 @@ void DegridderGPULessIdle::degridder()
 
         ++count;
 
-        devDegridKernelLessIdle <<<gridSize, SSIZE>>> ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
+        devDegridKernelLessIdle << < gridSize, SSIZE >> > ((const Complex*)dGrid, GSIZE, (const Complex*)dC, support, dCOffset, dIU, dIV, (Complex*)dData, dind);
 
         cudaCheckErrors("cuda kernel launch failure");
     }
@@ -174,3 +178,11 @@ void DegridderGPULessIdle::degridder()
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
 
+template void DegridderGPULessIdle<std::complex<float>>::degridder();
+template void DegridderGPULessIdle<std::complex<double>>::degridder();
+template void DegridderGPULessIdle<std::complex<float>>::deviceAllocations();
+template void DegridderGPULessIdle<std::complex<double>>::deviceAllocations();
+template void DegridderGPULessIdle<std::complex<float>>::copyH2D();
+template void DegridderGPULessIdle<std::complex<double>>::copyH2D();
+template DegridderGPULessIdle<std::complex<float>>::~DegridderGPULessIdle();
+template DegridderGPULessIdle<std::complex<double>>::~DegridderGPULessIdle();

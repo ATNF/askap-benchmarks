@@ -1,1 +1,0 @@
-/pawsey/centos7.6/devel/gcc/4.8.5/gcc/11.1.0/bin/g++ CMakeFiles/askap.dir/main.cpp.o -o askap   -L/pawsey/centos7.6/devel/binary/cuda/11.4.2/targets/x86_64-linux/lib/stubs  utilities/libUtilitiesCMake.a src/Solvers/libSourceCodeCMake.a /pawsey/centos7.6/devel/gcc/4.8.5/gcc/11.1.0/lib64/libgomp.so -lpthread -lcudadevrt -lcudart_static -lrt -lpthread -ldl 

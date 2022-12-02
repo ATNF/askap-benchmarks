@@ -1,2 +1,0 @@
-/usr/bin/ar qc libSourceCodeCMake.a CMakeFiles/SourceCodeCMake.dir/GridderCPU.cpp.o CMakeFiles/SourceCodeCMake.dir/GridderGPUOlder.cu.o CMakeFiles/SourceCodeCMake.dir/GridderGPUAtomicTiled.cu.o CMakeFiles/SourceCodeCMake.dir/GridderGPUAtomic.cu.o
-/usr/bin/ranlib libSourceCodeCMake.a

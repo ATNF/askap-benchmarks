@@ -48,7 +48,8 @@ void devGridKernelAtomic(
     }
 }
 
-void GridderGPUAtomic::deviceAllocations()
+template<typename T2>
+void GridderGPUAtomic<T2>::deviceAllocations()
 {
     // Allocate device vectors
     cudaMalloc(&dData, SIZE_DATA);
@@ -60,7 +61,8 @@ void GridderGPUAtomic::deviceAllocations()
     cudaCheckErrors("cudaMalloc failure");
 }
 
-void GridderGPUAtomic::copyH2D()
+template<typename T2>
+void GridderGPUAtomic<T2>::copyH2D()
 {
     cudaMemcpy(dData, data.data(), SIZE_DATA, cudaMemcpyHostToDevice);
     cudaMemcpy(dGrid, grid.data(), SIZE_GRID, cudaMemcpyHostToDevice);
@@ -71,7 +73,8 @@ void GridderGPUAtomic::copyH2D()
     cudaCheckErrors("cudaMemcpy H2D failure");
 }
 
-GridderGPUAtomic::~GridderGPUAtomic()
+template<typename T2>
+GridderGPUAtomic<T2>::~GridderGPUAtomic()
 {
     // Deallocate device vectors
     cudaFree(dData);
@@ -83,7 +86,8 @@ GridderGPUAtomic::~GridderGPUAtomic()
     cudaCheckErrors("cudaFree failure");
 }
 
-void GridderGPUAtomic::gridder()
+template <typename T2>
+void GridderGPUAtomic<T2>::gridder()
 {
     cout << "\nGridding on GPU" << endl;
     deviceAllocations();
@@ -117,7 +121,7 @@ void GridderGPUAtomic::gridder()
 
         ++count;
 
-        devGridKernelAtomic <<< gridSize, SSIZE >>> ((const Complex*)dData, support, (const Complex*)dC,
+        devGridKernelAtomic << < gridSize, SSIZE >> > ((const Complex*)dData, support, (const Complex*)dC,
             dCOffset, dIU, dIV, (Complex*)dGrid, GSIZE, dind);
 
         cudaCheckErrors("cuda kernel launch failure");
@@ -127,3 +131,12 @@ void GridderGPUAtomic::gridder()
     cudaMemcpy(grid.data(), dGrid, SIZE_GRID, cudaMemcpyDeviceToHost);
     cudaCheckErrors("cudaMemcpy D2H failure");
 }
+
+template void GridderGPUAtomic<std::complex<float>>::gridder();
+template void GridderGPUAtomic<std::complex<double>>::gridder();
+template void GridderGPUAtomic<std::complex<float>>::deviceAllocations();
+template void GridderGPUAtomic<std::complex<double>>::deviceAllocations();
+template void GridderGPUAtomic<std::complex<float>>::copyH2D();
+template void GridderGPUAtomic<std::complex<double>>::copyH2D();
+template GridderGPUAtomic<std::complex<float>>::~GridderGPUAtomic();
+template GridderGPUAtomic<std::complex<double>>::~GridderGPUAtomic();

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libSourceCodeCMake.a CMakeFiles/SourceCodeCMake.dir/DegridderCPU.cpp.o CMakeFiles/SourceCodeCMake.dir/DegridderGPULessIdle.cu.o CMakeFiles/SourceCodeCMake.dir/DegridderGPUSequential.cu.o CMakeFiles/SourceCodeCMake.dir/DegridderGPUInterleaved.cu.o CMakeFiles/SourceCodeCMake.dir/DegridderGPUWarpShuffle.cu.o CMakeFiles/SourceCodeCMake.dir/DegridderGPUTiled.cu.o
-/usr/bin/ranlib libSourceCodeCMake.a
