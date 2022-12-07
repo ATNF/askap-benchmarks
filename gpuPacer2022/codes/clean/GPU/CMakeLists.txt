@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.18)
 
 # set the project name
 project(askap
@@ -8,6 +8,10 @@ project(askap
 # specify C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+macro(askap_option optname optdesc status)
+	option(ASKAP_${optname} "${optdesc}" "${status}")
+endmacro()
 
 askap_option(USE_HIP "Attempt to use HIP instead of CUDA" OFF)
 
@@ -21,7 +25,7 @@ if (ASKAP_USE_HIP)
     endif()
 else()
     enable_language(CUDA)
-    add_definitions(USECUDA)
+    add_definitions("-DUSECUDA")
     if(NOT DEFINED CMAKE_CUDA_STANDARD)
         set(CMAKE_CUDA_STANDARD 17)
         set(CMAKE_CUDA_STANDARD_REQUIRED ON)

@@ -1,9 +1,0 @@
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/CMakeFiles/rebuild_cache.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/CMakeFiles/edit_cache.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/CMakeFiles/askap.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/utilities/CMakeFiles/rebuild_cache.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/utilities/CMakeFiles/edit_cache.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/utilities/CMakeFiles/UtilitiesCMake.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/src/Solvers/CMakeFiles/rebuild_cache.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/src/Solvers/CMakeFiles/edit_cache.dir
-/scratch/director2196/ocekmer/askap-benchmarks/gpuPacer2022/codes/clean/CUDA/build/src/Solvers/CMakeFiles/SourceCodeCMake.dir

@@ -142,13 +142,7 @@ void dFindPeak_Step1_LW(const float* data, float* outMax, size_t* outIndex, size
 __host__
 void gpuPSLastWUnrolled::reportDevice()
 {
-    // Report the type of device being used
-    int device;
-    gpuDeviceProp_t devprop;
-    gpuGetDevice(&device);
-    gpuGetDeviceProperties(&devprop, device);
-    std::cout << "    Using CUDA Device " << device << ": "
-        << devprop.name << std::endl;
+    //GPUReportDevice();
 }
 
 __host__ __device__
@@ -306,7 +300,6 @@ gpuPSLastWUnrolled::Peak gpuPSLastWUnrolled::findPeak(const float* dData, size_t
     Peak p;
     p.val = hMax[0];
     p.pos = hIndex[0];
-
 
     gpuFree(dMax);
     gpuFree(dIndex);

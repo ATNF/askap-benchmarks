@@ -3,12 +3,12 @@
 #include "../IHogbom.h"
 
 //gpu include
-#include "../utilities/gpuCommon.h"
+#include "../../utilities/gpuCommon.h"
 
 #include <cmath>
 #include <iostream>
 
-class CudaPSLastWUnrolled : public IHogbom
+class gpuPSLastWUnrolled : public IHogbom
 {
 private:
 	// device vectors
@@ -63,14 +63,14 @@ private:
 			const float absPeakVal, const float gain);
 
 public:
-	CudaPSLastWUnrolled(const std::vector<float>& dirty,
+	gpuPSLastWUnrolled(const std::vector<float>& dirty,
 		const std::vector<float>& psf,
 		const size_t imageWidth,
 		std::vector<float>& model,
 		std::vector<float>& residual) : IHogbom(dirty, psf, imageWidth,
 			model, residual) {}
 
-	virtual ~CudaPSLastWUnrolled();
+	virtual ~gpuPSLastWUnrolled();
 
 	// Public methods
 	void deconvolve() override;

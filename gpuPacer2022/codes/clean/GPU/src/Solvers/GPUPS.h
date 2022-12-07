@@ -3,7 +3,7 @@
 #include "../IHogbom.h"
 
 //gpu include
-#include "../utilities/gpuCommon.h"
+#include "../../utilities/gpuCommon.h"
 
 #include <cmath>
 #include <iostream>

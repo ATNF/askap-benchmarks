@@ -1,2 +1,0 @@
-/usr/bin/ar qc libSourceCodeCMake.a CMakeFiles/SourceCodeCMake.dir/Golden.cpp.o CMakeFiles/SourceCodeCMake.dir/CudaOlder.cu.o CMakeFiles/SourceCodeCMake.dir/CudaPS.cu.o CMakeFiles/SourceCodeCMake.dir/CudaPSFullUnroll.cu.o CMakeFiles/SourceCodeCMake.dir/CudaPSLastWUnrolled.cu.o
-/usr/bin/ranlib libSourceCodeCMake.a

@@ -1,4 +1,4 @@
-#include "gpuPS.h"
+#include "GPUPS.h"
 
 using std::vector;
 using std::cout;
@@ -103,7 +103,7 @@ void dFindPeak_Step1(const float* data, float* outMax, size_t* outIndex, size_t 
 __host__
 void gpuPS::reportDevice()
 {
-    GPUReportDevice();
+//    GPUReportDevice();
 }
 
 __host__ __device__

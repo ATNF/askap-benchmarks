@@ -11,12 +11,13 @@
 
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
-#define __GPU_API "HIP"
+#define __GPU_API__ "HIP"
 
 #define gpuGetDeviceCount hipGetDeviceCount
 #define gpuGetDevice hipGetDevice
 #define gpuSetDevice hipSetDevice
 #define gpuGetDeviceProperties hipGetDeviceProperties
+#define gpuDeviceProp_t hipDeviceProp_t
 #define gpuMemGetInfo hipMemGetInfo
 #define gpuMalloc hipMalloc
 #define gpuFree hipFree
@@ -28,9 +29,10 @@
 #define gpuEventDestroy hipEventDestroy
 #define gpuEventRecord hipEventRecord
 #define gpuEventSynchronize hipEventSynchronize
+#define gpuDeviceSynchronize hipDeviceSynchronize
 #define gpuEventElapsedTime hipEventElapsedTime
 #define gpuError_t hipError_t
-#define gpuGetLastError hipGetLastErorr
+#define gpuGetLastError hipGetLastError
 #define gpuSuccess hipSuccess
 #define gpuGetErrorString(__err) hipGetErrorString(__err)
 
@@ -40,12 +42,13 @@
 #include <cuda_runtime_api.h>
 #include <device_launch_parameters.h>
 
-#define __GPU_API "CUDA"
+#define __GPU_API__ "CUDA"
 
 #define gpuGetDeviceCount cudaGetDeviceCount
 #define gpuGetDevice cudaGetDevice
 #define gpuSetDevice cudaSetDevice
 #define gpuGetDeviceProperties cudaGetDeviceProperties
+#define gpuDeviceProp_t cudaDeviceProp
 #define gpuMemGetInfo cudaMemGetInfo
 #define gpuMalloc cudaMalloc
 #define gpuFree cudaFree
@@ -58,8 +61,9 @@
 #define gpuEventRecord cudaEventRecord
 #define gpuEventSynchronize cudaEventSynchronize
 #define gpuEventElapsedTime cudaEventElapsedTime
+#define gpuDeviceSynchronize cudaDeviceSynchronize
 #define gpuError_t cudaError_t
-#define gpuGetLastError cudaGetLastErorr
+#define gpuGetLastError cudaGetLastError
 #define gpuSuccess cudaSuccess
 #define gpuGetErrorString(__err) cudaGetErrorString(__err)
 
@@ -80,12 +84,11 @@
 
 #define GPUReportDevice() \
     { \
-    int device;
-    gpuDeviceProp_t devprop;
-    gpuGetDevice(&device);
-    gpuGetDeviceProperties(&devprop, device);
-    std::cout << "[@" << __func__ << " L" << __LINE__ << "] :" <<
-        "Using " << __GPU_API__ << " Device " << device << ": " << devprop.name << std::endl;
+    int device; \
+    gpuDeviceProp_t devprop; \
+    gpuGetDevice(&device); \
+    gpuGetDeviceProperties(&devprop, device); \
+    //std::cout << "[@" << __func__ << " L" << __LINE__ << "] :" << "Using " << __GPU_API__ << " Device " << device << ": " << devprop.name << std::endl; \
     }
 
 #endif

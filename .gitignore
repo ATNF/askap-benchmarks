@@ -20,3 +20,6 @@
 
 # executables 
 *.exe
+
+# build directories
+build/

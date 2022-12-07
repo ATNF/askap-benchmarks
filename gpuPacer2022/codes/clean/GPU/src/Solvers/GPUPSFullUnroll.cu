@@ -187,7 +187,7 @@ void dFindPeak_Step1_FU(const float* data, float* outMax, size_t* outIndex, size
 __host__
 void gpuPSFullUnroll::reportDevice()
 {
-    GPUReportDevice();
+//    GPUReportDevice();
 }
 
 __host__ __device__

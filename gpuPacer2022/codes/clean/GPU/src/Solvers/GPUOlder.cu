@@ -24,7 +24,7 @@ static Peak findPeak(const float* dData, size_t N);
 __host__
 void gpuOlder::reportDevice()
 {
-    GPUReportDevice();
+//    GPUReportDevice();
 }
 
 __host__ __device__
@@ -199,7 +199,7 @@ Peak findPeak(const float* dData, size_t N)
     gpuCheckErrors("kernel launch failure in findPeak");
 
     // Get the peaks array back from the device
-    gpuMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), hipMemcpyDeviceToHost);
+    gpuMemcpy(peaks.data(), dPeak, nBlocks * sizeof(Peak), gpuMemcpyDeviceToHost);
     gpuCheckErrors("gpuMemcpy D2H failure in findPeak");
 
     gpuDeviceSynchronize();
