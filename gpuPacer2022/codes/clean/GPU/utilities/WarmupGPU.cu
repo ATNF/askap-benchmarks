@@ -45,7 +45,7 @@ void WarmupGPU::warmup() const
 	gpuMemcpy(c.data(), dC, SIZE, gpuMemcpyDeviceToHost);
 
 	MaxError<float> maximumError;
-	cout << "Verifying warmup launch" << endl;
+	LocalLog() << "Verifying warmup launch" << endl;
 	maximumError.maxError(c, cAnswer);
 
 	gpuFree(dA);

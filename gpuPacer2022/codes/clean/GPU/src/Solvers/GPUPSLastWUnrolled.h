@@ -4,6 +4,7 @@
 
 //gpu include
 #include "../../utilities/gpuCommon.h"
+#include "../../utilities/LoggerUtil.h"
 
 #include <cmath>
 #include <iostream>

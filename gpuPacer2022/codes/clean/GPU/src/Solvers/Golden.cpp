@@ -73,7 +73,7 @@ void Golden::deconvolve()
 	size_t psfPeakPos = 0;
 	findPeak(psf, psfPeakVal, psfPeakPos);
 
-	cout << "PSF peak: " << psfPeakVal << ", at location: " << idxToPos(psfPeakPos, imageWidth).x
+	LocalLog() << "PSF peak: " << psfPeakVal << ", at location: " << idxToPos(psfPeakPos, imageWidth).x
 		<< ", " << idxToPos(psfPeakPos, imageWidth).y << endl;
 
 	for (unsigned int i = 0; i < gNiters; ++i)

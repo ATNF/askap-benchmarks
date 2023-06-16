@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../IHogbom.h"
+#include "../../utilities/LoggerUtil.h"
 
 #include <cmath>
 #include <iostream>
