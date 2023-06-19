@@ -77,11 +77,13 @@ typedef hipComplex Complex;
 #define gpuEventSynchronize cudaEventSynchronize
 #define gpuEventElapsedTime cudaEventElapsedTime
 #define gpuDeviceSynchronize cudaDeviceSynchronize
+#define gpuGetErrorString cudaGetErrorString
 #define gpuError_t cudaError_t
 #define gpuErr cudaErr
+#define gpuGetLastError cudaGetLastError
 #define gpuSuccess cudaSuccess
 #define gpuGetDeviceCount cudaGetDeviceCount
-#define gpuDeviceProp_t cudaDeviceProp_t
+#define gpuDeviceProp_t cudaDeviceProp
 #define gpuGetDevice cudaGetDevice
 #define gpuSetDevice cudaSetDevice
 #define gpuGetDeviceProperties cudaGetDeviceProperties
@@ -91,12 +93,15 @@ typedef hipComplex Complex;
 #define gpuLaunchKernel(...) cudaLaunchKernel(__VA_ARGS__)
 
 // specific instrinsics
-#define gpuCmulf cudaCmulf
-#define gpuCaddf cudaCaddf
-#define make_gpuComplex make_cudaComplex
+#define gpuCmulf cuCmulf
+#define gpuCaddf cuCaddf
+#define make_gpuComplex make_cuComplex
 
 // types
 typedef cuComplex Complex;
+
+// useful parameters
+#define MAX_SSIZE 256
 
 #endif
 
