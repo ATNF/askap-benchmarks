@@ -64,11 +64,13 @@
 #define gpuEventSynchronize cudaEventSynchronize
 #define gpuEventElapsedTime cudaEventElapsedTime
 #define gpuDeviceSynchronize cudaDeviceSynchronize
+#define gpuGetErrorString cudaGetErrorString
 #define gpuError_t cudaError_t
 #define gpuErr cudaErr
+#define gpuGetLastError cudaGetLastError
 #define gpuSuccess cudaSuccess
 #define gpuGetDeviceCount cudaGetDeviceCount
-#define gpuDeviceProp_t cudaDeviceProp_t
+#define gpuDeviceProp_t cudaDeviceProp
 #define gpuGetDevice cudaGetDevice
 #define gpuSetDevice cudaSetDevice
 #define gpuGetDeviceProperties cudaGetDeviceProperties
