@@ -138,6 +138,7 @@ void gridKernel(const std::vector<Value>& data, const int support,
     }
 }
 
+#pragma GCC optimize("prefetch-loop-arrays")
 int gridKernelOMP(const std::vector<Value>& data, const int support,
         const std::vector<Value>& C, const std::vector<int>& cOffset,
         const std::vector<int>& iu, const std::vector<int>& iv,
@@ -179,6 +180,7 @@ int gridKernelOMP(const std::vector<Value>& data, const int support,
 
     return omp_get_max_threads();
 }
+#pragma GCC optimize("no-prefetch-loop-arrays")
 
 // Perform degridding
 void degridKernel(const std::vector<Value>& grid, const int gSize, const int support,
