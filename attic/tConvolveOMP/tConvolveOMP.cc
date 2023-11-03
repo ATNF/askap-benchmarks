@@ -138,6 +138,7 @@ void gridKernel(const std::vector<Value>& data, const int support,
     }
 }
 
+#pragma GCC optimize("prefetch-loop-arrays")
 int gridKernelOMP(const std::vector<Value>& data, const int support,
         const std::vector<Value>& C, const std::vector<int>& cOffset,
         const std::vector<int>& iu, const std::vector<int>& iv,
@@ -154,9 +155,9 @@ int gridKernelOMP(const std::vector<Value>& data, const int support,
             int gind = iu[dind] + gSize * iv[dind] - support;
             // The Convoluton function point from which we offset
             int cind = cOffset[dind];
-            int row = iv[dind];
+            int row = iv[dind] % nthreads;
             for (int suppv = 0; suppv < sSize; suppv++) {
-                if (row % nthreads == tid) {
+                if (row == tid) {
 #ifdef USEBLAS
                     CAXPY(sSize, &data[dind], &C[cind], 1, &grid[gind], 1);
 #else
@@ -172,12 +173,14 @@ int gridKernelOMP(const std::vector<Value>& data, const int support,
                 gind += gSize;
                 cind += sSize;
                 row++;
+                row = (row >= nthreads) ? 0 : row;
             }
         }
     } // End omp parallel
 
     return omp_get_max_threads();
 }
+#pragma GCC optimize("no-prefetch-loop-arrays")
 
 // Perform degridding
 void degridKernel(const std::vector<Value>& grid, const int gSize, const int support,

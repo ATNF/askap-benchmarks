@@ -125,9 +125,9 @@ int gridKernelMIC(const Value* data, const size_t dataSize,
                 int gind = iu[dind] + gSize * iv[dind] - support;
                 // The Convoluton function point from which we offset
                 int cind = cOffset[dind];
-                int row = iv[dind];
+                int row = iv[dind] % nthreads;
                 for (int suppv = 0; suppv < sSize; suppv++) {
-                    if (row % nthreads == tid) {
+                    if (row == tid) {
 #ifdef USEBLAS
                         cblas_caxpy(sSize, &data[dind], &C[cind], 1, &grid[gind], 1);
 #else
@@ -143,6 +143,7 @@ int gridKernelMIC(const Value* data, const size_t dataSize,
                     gind += gSize;
                     cind += sSize;
                     row++;
+                    row = (row >= nthreads) ? 0 : row;
                 }
             }
         } // End omp parallel
